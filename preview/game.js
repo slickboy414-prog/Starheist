@@ -736,7 +736,7 @@ const game = {
   spawnT: 0, stealCd: 25, playerStealCd: 85, eventT: 100, event: null, incomeMult: 1, luck: 1,
   up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 },
   stats: { earned: 0, steals: 0, bestNet: 0, lastScore: 0 },
-  tut: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
+  tut: 0, adminForceUntil: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
 };
 let player;
 
@@ -1395,21 +1395,37 @@ el.play.addEventListener('click', () => { Snd.init(); startGame(); });
 //  Events (Star Storm / Golden Hour)
 // ---------------------------------------------------------------------
 let eventIdx = 0;
+// Admin Abuse: once a week, same moment for every player (Saturday 18:00 UTC, 15 minutes)
+const WEEK = 7 * 864e5, ADMIN_LEN = 15 * 60e3;
+const ADMIN_ANCHOR = Date.UTC(2026, 0, 3, 18, 0, 0); // a Saturday, 18:00 UTC
+function adminInfo(now = Date.now()) {
+  if (game.adminForceUntil > now) return { active: true, left: (game.adminForceUntil - now) / 1000 };
+  const since = ((now - ADMIN_ANCHOR) % WEEK + WEEK) % WEEK;
+  if (since < ADMIN_LEN) return { active: true, left: (ADMIN_LEN - since) / 1000 };
+  return { active: false, next: now + (WEEK - since) };
+}
+function fmtWait(ms) { const m = Math.floor(ms / 60e3), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60); return d ? `${d}d ${h}h` : h ? `${h}h ${m % 60}m` : `${m % 60}m`; }
 function updateEvents(dt) {
   if (!game.playing) return;
+  const ad = adminInfo();
+  if (ad.active && (!game.event || game.event.id !== 'admin')) {
+    game.event = { id: 'admin', label: '👑 ADMIN ABUSE — Superstars only!', t: ad.left };
+    game.luck = 6; game.incomeMult = 3; game.spawnT = 0;
+    banner('👑 ADMIN ABUSE! Only SUPERSTARS & ICONS spawn!', '#ff5cf4');
+    feed('👑 <b>WEEKLY ADMIN ABUSE</b>: superstars only, cash x3!'); Snd.play('legend');
+    return;
+  }
   if (!game.event) {
     game.eventT -= dt;
     if (game.eventT <= 0) {
-      const e = Math.random() < 0.1 ? { id: 'admin', label: '👑 ADMIN ABUSE — Superstars only!', t: 35 }
-        : eventIdx++ % 2 === 0 ? { id: 'storm', label: '🌟 STAR STORM — Luck x4!', t: 40 } : { id: 'gold', label: '🌅 GOLDEN HOUR — Cash x2!', t: 45 };
+      const e = eventIdx++ % 2 === 0 ? { id: 'storm', label: '🌟 STAR STORM — Luck x4!', t: 40 } : { id: 'gold', label: '🌅 GOLDEN HOUR — Cash x2!', t: 45 };
       game.event = e;
-      if (e.id === 'admin') { game.luck = 6; game.incomeMult = 3; game.spawnT = 0; banner('👑 ADMIN ABUSE! Only SUPERSTARS & ICONS spawn!', '#ff5cf4'); feed('👑 <b>ADMIN ABUSE</b> (very rare): superstars only, cash x3 for 35s!'); }
-      else if (e.id === 'storm') { game.luck = 4; banner('🌟 STAR STORM! Rare celebs incoming!', '#ffcc00'); }
+      if (e.id === 'storm') { game.luck = 4; banner('🌟 STAR STORM! Rare celebs incoming!', '#ffcc00'); }
       else { game.incomeMult = 2; banner('🌅 GOLDEN HOUR! All income x2!', '#ff9d00'); }
       Snd.play('legend');
     }
   } else {
-    game.event.t -= dt;
+    if (game.event.id === 'admin') { const ai = adminInfo(); game.event.t = ai.active ? ai.left : 0; } else game.event.t -= dt;
     if (game.event.t <= 0) { game.event = null; game.luck = 1; game.incomeMult = 1; game.eventT = rand(110, 150); }
   }
 }
@@ -1622,8 +1638,10 @@ async function boot() {
   setupBots();
   game.loaded = true;
   el.play.disabled = false; el.play.textContent = '▶ PLAY';
+  const ai = adminInfo(), an = document.getElementById('adminNext');
+  if (an) an.textContent = ai.active ? '👑 ADMIN ABUSE IS LIVE RIGHT NOW!' : `👑 Weekly Admin Abuse: ${new Date(ai.next).toLocaleString([], { weekday: 'long', hour: 'numeric', minute: '2-digit' })} (in ${fmtWait(ai.next - Date.now())})`;
   SDK.ready();
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { forceAdmin() { game.event = null; game.eventT = 0; const o = Math.random; Math.random = () => 0.01; updateEvents(0.016); Math.random = o; }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
