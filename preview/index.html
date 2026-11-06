@@ -1,0 +1,167 @@
+
+<title>Star Heist</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root{color-scheme:dark;
+    --ink:#1a0b2e; --pink:#ff4fa3; --teal:#2ee6d6; --gold:#ffcc00; --red:#ff4d6d; --green:#5dff7a;
+    --font:"Arial Black","Segoe UI Black","Helvetica Neue",Impact,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#1a0b2e;font-family:var(--font);color:#fff;
+    user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none}
+  #game,#game canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .hidden{display:none!important}
+  .stroke{text-shadow:0 3px 0 #000,2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000,0 0 12px rgba(0,0,0,.4)}
+  button{font-family:var(--font);cursor:pointer;border:none;color:#fff}
+
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;inset:0;pointer-events:none}
+  #hud button{pointer-events:auto}
+  #cashBox{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));
+    background:linear-gradient(180deg,#3ddc6a,#1f9e46);border:4px solid #0d3d1d;border-radius:18px;padding:6px 16px 6px 12px;
+    box-shadow:0 5px 0 #0d3d1d;min-width:150px}
+  #cash{font-size:30px;line-height:1.05}
+  #cps{font-size:14px;color:#eaffd8}
+  #btnShop{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 78px);
+    background:linear-gradient(180deg,#ffd84d,#ff9d00);border:4px solid #5c3300;border-radius:14px;padding:7px 12px;font-size:15px;box-shadow:0 4px 0 #5c3300}
+  #btnShop:active{transform:translateY(3px);box-shadow:0 1px 0 #5c3300}
+  #eventChip{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 128px);
+    background:rgba(40,10,70,.85);border:3px solid var(--gold);border-radius:12px;padding:6px 10px;font-size:13px;animation:pulse 1s infinite alternate}
+  @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.06)}}
+  #board{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));
+    background:rgba(26,11,46,.72);border:3px solid rgba(255,255,255,.25);border-radius:14px;padding:6px 10px;font-size:12px;min-width:170px}
+  #board .t{font-size:11px;color:#ffd84d;letter-spacing:1px;margin-bottom:2px}
+  #board .r{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
+  #board .r.me{color:var(--teal)}
+  #board .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;border:1px solid #000}
+  #minimap{position:absolute;right:max(10px,env(safe-area-inset-right));top:calc(max(10px,env(safe-area-inset-top)) + 150px);
+    width:160px;height:110px;border-radius:12px;border:3px solid rgba(255,255,255,.25);background:rgba(26,11,46,.6)}
+  #banner{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-size:clamp(22px,5vw,42px);text-align:center;
+    white-space:nowrap;opacity:0;pointer-events:none}
+  #banner.show{animation:bannerPop 2.4s ease-out forwards}
+  @keyframes bannerPop{0%{opacity:0;transform:translateX(-50%) scale(.4)}10%{opacity:1;transform:translateX(-50%) scale(1.15)}
+    18%{transform:translateX(-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+  #hint{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);max-width:min(560px,52vw);
+    background:rgba(26,11,46,.82);border:3px solid var(--gold);border-radius:14px;padding:8px 14px;font-size:clamp(12px,2.2vw,16px);text-align:center}
+  #feed{position:absolute;left:max(12px,env(safe-area-inset-left));top:44%;width:min(330px,60vw);font-size:13px;display:flex;flex-direction:column;gap:4px}
+  #feed div{background:rgba(26,11,46,.72);border-left:4px solid var(--pink);padding:4px 8px;border-radius:6px;transition:opacity .6s}
+  #thiefArrow{position:absolute;transform:translate(-50%,-50%);font-size:15px;background:var(--red);border:3px solid #fff;
+    border-radius:12px;padding:4px 8px;white-space:nowrap;animation:pulse .35s infinite alternate}
+  #controls{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));
+    display:grid;grid-template-columns:auto auto;grid-template-areas:"sell action" "flash lock";gap:10px;align-items:end;justify-items:end}
+  .cbtn{width:78px;height:78px;border-radius:50%;font-size:28px;border:4px solid #000;box-shadow:0 5px 0 #000;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  .cbtn span{font-size:11px;margin-top:3px}
+  .cbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+  .cbtn.dim{filter:grayscale(.8) brightness(.7)}
+  #btnFlash{grid-area:flash;background:radial-gradient(circle at 35% 30%,#fff,#9be7ff 45%,#2a8fd6)}
+  #btnLock{grid-area:lock;background:radial-gradient(circle at 35% 30%,#ffb3d1,#ff4fa3 50%,#b0115c)}
+  #btnAction{grid-area:action;min-width:150px;height:84px;border-radius:22px;font-size:20px;padding:0 16px;border:4px solid #000;box-shadow:0 6px 0 #000;
+    background:linear-gradient(180deg,#5dff7a,#1fae44)}
+  #btnAction.steal{background:linear-gradient(180deg,#d68bff,#8a2be2)}
+  #btnAction.no{background:linear-gradient(180deg,#ff8a8a,#c62828)}
+  #btnAction.carry{background:linear-gradient(180deg,#ffd84d,#ff9d00)}
+  #btnAction:active{transform:translateY(4px);box-shadow:0 2px 0 #000}
+  #btnSell{grid-area:sell;height:56px;border-radius:16px;font-size:14px;padding:0 12px;border:4px solid #000;box-shadow:0 4px 0 #000;background:linear-gradient(180deg,#ffd84d,#e08a00)}
+  .key{display:inline-block;font-size:10px;background:rgba(0,0,0,.35);border-radius:5px;padding:1px 4px;margin-left:4px;vertical-align:middle}
+  .touch .key{display:none}
+  #joyBase{position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);
+    left:calc(max(24px,env(safe-area-inset-left)) + 0px);bottom:calc(max(24px,env(safe-area-inset-bottom)) + 0px);transform:translate(0,0)}
+  #joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,255,255,.7);border:3px solid #000}
+  body:not(.touch) #joyBase{display:none}
+  #keysHint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;opacity:.85;white-space:nowrap}
+  .touch #keysHint{display:none}
+
+  /* ---------- Shop ---------- */
+  #shop{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
+  #shop .panel{width:min(520px,92vw);max-height:86vh;overflow:auto;background:linear-gradient(180deg,#3a1c71,#24104a);border:5px solid var(--gold);
+    border-radius:24px;padding:14px 16px;box-shadow:0 10px 0 #120624}
+  #shop h2{margin:2px 0 10px;text-align:center;font-size:28px;color:var(--gold)}
+  .up{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:14px;padding:8px 10px;margin-bottom:8px}
+  .up .ic{font-size:30px;width:40px;text-align:center}
+  .up .tx{flex:1;font-size:15px}
+  .up .tx small{display:block;font-family:system-ui,sans-serif;font-weight:700;font-size:12px;color:#d9c9ff}
+  .up button{min-width:104px;padding:10px;border-radius:12px;border:3px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);font-size:14px;box-shadow:0 3px 0 #000}
+  .up button.no{background:linear-gradient(180deg,#888,#555)}
+  .up button.max{background:linear-gradient(180deg,#ffd84d,#e08a00)}
+  #shopClose{display:block;margin:8px auto 2px;padding:10px 28px;border-radius:14px;border:3px solid #000;background:var(--red);font-size:18px;box-shadow:0 4px 0 #000}
+
+  /* ---------- Title ---------- */
+  #title{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;
+    background:radial-gradient(ellipse at center,rgba(26,11,46,.15),rgba(26,11,46,.75));text-align:center;padding:20px}
+  #logo{font-size:clamp(48px,12vw,112px);line-height:.9;letter-spacing:2px;transform:rotate(-4deg);
+    background:linear-gradient(180deg,#fff6a0,#ffcc00 45%,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 6px 0 #5c1d00) drop-shadow(0 0 18px rgba(255,180,0,.55));animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{50%{transform:rotate(-2deg) translateY(-8px)}}
+  #sub{font-size:clamp(18px,4.4vw,34px);margin-top:10px;color:#fff;transform:rotate(-2deg)}
+  #sub b{color:var(--pink)}
+  #feat{margin:18px 0 22px;font-size:clamp(13px,2.6vw,18px);display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #feat div{background:rgba(26,11,46,.75);border:3px solid rgba(255,255,255,.3);border-radius:14px;padding:7px 12px}
+  #playBtn{font-size:clamp(26px,6vw,40px);padding:14px 54px;border-radius:24px;border:5px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);
+    box-shadow:0 8px 0 #000;animation:pulse .7s infinite alternate}
+  #playBtn:disabled{filter:grayscale(1);animation:none}
+  #fine{position:absolute;bottom:max(10px,env(safe-area-inset-bottom));font-family:system-ui,sans-serif;font-weight:700;font-size:12px;opacity:.8}
+
+  #popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:min(420px,88vw);text-align:center;
+    background:linear-gradient(180deg,#3a1c71,#24104a);border:5px solid var(--gold);border-radius:24px;padding:18px;box-shadow:0 10px 0 #120624}
+  #popup h3{margin:0 0 8px;font-size:26px;color:var(--gold)}
+  #popup p{font-size:30px;margin:6px 0 14px;color:var(--green)}
+  #popup button{padding:10px 30px;border-radius:14px;border:3px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);font-size:20px;box-shadow:0 4px 0 #000}
+
+  @media (max-width:640px){
+    #board{min-width:140px;font-size:10.5px;padding:4px 8px}
+    #minimap{width:104px;height:72px;top:calc(max(10px,env(safe-area-inset-top)) + 128px)}
+    #cash{font-size:24px}
+    #hint{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 190px);max-width:86vw}
+    .cbtn{width:66px;height:66px;font-size:24px}
+    #btnAction{min-width:128px;height:72px;font-size:17px}
+    #feed{top:40%;font-size:10.5px;width:56vw}
+  }
+  @media (max-height:460px){
+    #minimap{display:none}
+    #feed{top:34%}
+  }
+</style>
+
+<div id="game"></div>
+
+<div id="hud" class="hidden">
+  <div id="cashBox" class="stroke"><div id="cash">$0</div><div id="cps">+$0/s</div></div>
+  <button id="btnShop" class="stroke">🛒 UPGRADES<span class="key">B</span></button>
+  <div id="eventChip" class="hidden stroke"></div>
+  <div id="board" class="stroke"></div>
+  <canvas id="minimap" width="160" height="110"></canvas>
+  <div id="hint" class="stroke hidden"></div>
+  <div id="banner" class="stroke"></div>
+  <div id="feed" class="stroke"></div>
+  <div id="thiefArrow" class="hidden stroke">🚨 THIEF!</div>
+  <div id="controls">
+    <button id="btnSell" class="hidden stroke">💸 SELL</button>
+    <button id="btnAction" class="hidden stroke">BUY</button>
+    <button id="btnFlash" class="cbtn stroke">📸<span>FLASH <i class="key">F</i></span></button>
+    <button id="btnLock" class="cbtn stroke">🔒<span>LOCK <i class="key">L</i></span></button>
+  </div>
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <div id="keysHint" class="stroke">WASD / Arrows = move · Drag mouse = look · Scroll = zoom · E = buy/steal · F = flash · L = lock</div>
+</div>
+
+<div id="shop" class="hidden"><div class="panel">
+  <h2 class="stroke">⭐ UPGRADES ⭐</h2>
+  <div id="shopList"></div>
+  <button id="shopClose" class="stroke">CLOSE</button>
+</div></div>
+
+<div id="popup" class="hidden"></div>
+
+<div id="title">
+  <div id="logo">STAR<br>HEIST</div>
+  <div id="sub" class="stroke">SIGN THE STARS. <b>STEAL</b> THE STARS.</div>
+  <div id="feat" class="stroke">
+    <div>🌟 Sign celebs on the red carpet</div>
+    <div>😈 Steal from rival bot agencies</div>
+    <div>🔒 Lock up before they steal back</div>
+  </div>
+  <button id="playBtn" class="stroke" disabled>LOADING…</button>
+  <div id="fine">All celebrities in this game are fictional characters.</div>
+</div>
+
+<script type="module" src="game.js"></script>
