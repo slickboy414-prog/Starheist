@@ -12,7 +12,9 @@ Welcome to Starville! 🌟 Celebrities strut down the red carpet. Sign them to Y
 Rival bot agencies want them too. Sneak into their HQ, grab their best star, and RUN home before they catch you! 😈
 Bots will steal from you too, so step on your laser LOCK pad to keep thieves out. 🔒
 📸 Use your Paparazzi FLASH to stun chasers and save your celebs.
-⭐ Hunt GOLD, DIAMOND and RAINBOW stars, and chase the SECRET celebs during STAR STORM.
+⭐ Climb the fame ladder: LOCAL STAR → VIRAL → FAMOUS → SUPERSTAR → ICON → ALL-TIME GOAT. The more famous, the rarer!
+👑 Pray for ADMIN ABUSE, a super-rare event where only superstars and icons hit the carpet.
+💎 Hunt GOLD, DIAMOND and RAINBOW versions.
 🏆 Climb the Richest Agencies leaderboard!
 All celebrities are fictional characters.
 
@@ -31,9 +33,10 @@ All celebrities are fictional characters.
 2. **Steal loop:** you grab a celeb, a bot chases you, you flash it, and you get a "STOLEN!" confetti burst. That's a clip-worthy moment every minute.
 3. **Being robbed:** a siren, a red beam and a "THIEF" arrow make you want revenge, so you steal it back.
 4. **Rarity drops:** server-style banners say "LEGENDARY … hit the red carpet!", plus mutations (Gold x2, Diamond x3, Rainbow x5) and two SECRET celebs.
-5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes.
-6. **Comeback reward:** "Welcome back! +$X" offline earnings.
-7. **Leaderboard:** "Richest Agencies" in the corner, and your best net worth goes to YouTube via `sendScore`.
+5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes. **ADMIN ABUSE** is a 10% chance per event (about once every 20 minutes): for 35 s only Superstar, Icon and GOAT tiers spawn, and cash is x3.
+6. **Fame = rarity:** every nameplate shows the tier's spawn chance (Local Star 55%, Viral 28%, Famous 11%, Superstar 4.5%, Icon 1.3%, GOAT 0.22%).
+7. **Comeback reward:** "Welcome back! +$X" offline earnings.
+8. **Leaderboard:** "Richest Agencies" in the corner, and your best net worth goes to YouTube via `sendScore`.
 
 ## YouTube Playables compliance checklist
 | Requirement | Status |
@@ -49,7 +52,7 @@ All celebrities are fictional characters.
 | Small bundle | ✅ ~205 KB zipped, ~800 KB unzipped |
 | Mobile + desktop, portrait + landscape, safe areas | ✅ |
 | Kid-safe content | ✅ cartoon style, no violence (the camera flash "stuns"), no strobe effects |
-| No real people's names or likenesses | ✅ all 17 celebs and 5 bots are original |
+| No real people's names or likenesses | ✅ all 21 celebs and 5 bots are original fictional archetypes (no real names) |
 | Not a copy of another game's name, art or characters | ✅ original name, art and characters; only the "buy/steal" genre is shared |
 
 ## How to submit

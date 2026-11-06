@@ -63,12 +63,12 @@ if (isTouch) document.body.classList.add('touch');
 //  Game data
 // ---------------------------------------------------------------------
 const RARITIES = [
-  { name: 'COMMON', color: '#d0d0d0', hex: 0xd0d0d0, w: 55 },
-  { name: 'RARE', color: '#4da6ff', hex: 0x4da6ff, w: 28 },
-  { name: 'EPIC', color: '#c06bff', hex: 0xc06bff, w: 11 },
-  { name: 'LEGENDARY', color: '#ffcc00', hex: 0xffcc00, w: 4.5 },
-  { name: 'MYTHIC', color: '#ff3b6b', hex: 0xff3b6b, w: 1.3 },
-  { name: 'SECRET', color: 'rainbow', hex: 0xffffff, w: 0.22 },
+  { name: 'LOCAL STAR', color: '#d0d0d0', hex: 0xd0d0d0, w: 55 },
+  { name: 'VIRAL', color: '#4da6ff', hex: 0x4da6ff, w: 28 },
+  { name: 'FAMOUS', color: '#c06bff', hex: 0xc06bff, w: 11 },
+  { name: 'SUPERSTAR', color: '#ffcc00', hex: 0xffcc00, w: 4.5 },
+  { name: 'ICON', color: '#ff3b6b', hex: 0xff3b6b, w: 1.3 },
+  { name: 'ALL-TIME GOAT', color: 'rainbow', hex: 0xffffff, w: 0.22 },
 ];
 const MUTS = [
   { id: 0, name: '', mult: 1, w: 86 },
@@ -78,23 +78,27 @@ const MUTS = [
 ];
 // Original, fictional celebrities only.
 const CELEBS = [
-  { name: 'Flex McMuscle', r: 0, cost: 40, inc: 2, look: { skin: 0xf1c27d, hair: 0x3b2314, hairStyle: 'short', top: 0xff4d4d, bottom: 0x2d3561, shoes: 0xffffff, muscle: true, sleeveless: true, acc: ['dumbbell', 'headband'] } },
-  { name: 'Selfie Sally', r: 0, cost: 65, inc: 3, look: { skin: 0xffdbac, hair: 0xf5d76e, hairStyle: 'ponytail', top: 0xff8fd8, bottom: 0x6ec6ff, shoes: 0xffffff, acc: ['phone'] } },
-  { name: 'Pixel Pete', r: 0, cost: 90, inc: 4, look: { skin: 0xe0ac69, hair: 0x5a3a1a, hairStyle: 'spiky', top: 0x3ddc84, bottom: 0x333344, shoes: 0x222222, acc: ['headphones'] } },
-  { name: 'Stormy Skies', r: 0, cost: 120, inc: 5, look: { skin: 0xc68642, hair: 0x222222, hairStyle: 'short', top: 0x34495e, bottom: 0x34495e, shoes: 0x111111, acc: ['tie', 'umbrella'] } },
-  { name: 'Lil Icebox', r: 1, cost: 350, inc: 12, look: { skin: 0x8d5524, hair: 0x111111, hairStyle: 'buzz', top: 0x7fdfff, bottom: 0x222222, shoes: 0xff3355, acc: ['shades', 'chain', 'cap'], capColor: 0xffffff } },
-  { name: 'DJ Bass Drop', r: 1, cost: 550, inc: 18, look: { skin: 0xc68642, hair: 0xff33cc, hairStyle: 'mohawk', top: 0x1a1a2e, bottom: 0x333333, shoes: 0x00ffcc, acc: ['headphones', 'shades'] } },
-  { name: 'Kiki Glow', r: 1, cost: 800, inc: 26, look: { skin: 0xffe0bd, hair: 0xc77dff, hairStyle: 'long', top: 0xff66aa, bottom: 0xff66aa, shoes: 0xffffff, dress: true, acc: ['phone', 'shades'] } },
-  { name: 'Riff Raven', r: 2, cost: 2400, inc: 65, look: { skin: 0xf3d2b3, hair: 0x111111, hairStyle: 'long', top: 0x222222, bottom: 0x1b1b3a, shoes: 0x111111, acc: ['guitar', 'shades', 'chain'] } },
-  { name: 'Chef Flambé', r: 2, cost: 3500, inc: 90, look: { skin: 0xf1c27d, hair: 0x777777, hairStyle: 'short', top: 0xffffff, bottom: 0x222222, shoes: 0x111111, acc: ['chefhat', 'pan', 'mustache'] } },
-  { name: 'Rex Steel', r: 2, cost: 5000, inc: 125, look: { skin: 0xd1a17a, hair: 0x3b2314, hairStyle: 'buzz', top: 0x556b2f, bottom: 0x3d3d29, shoes: 0x222222, muscle: true, sleeveless: true, acc: ['shades', 'bandana'] } },
-  { name: 'Nova Starling', r: 3, cost: 15000, inc: 320, look: { skin: 0xffe0bd, hair: 0xffb3e6, hairStyle: 'long', top: 0xff3fd0, bottom: 0xff3fd0, shoes: 0xffffff, dress: true, acc: ['mic', 'tiara'] } },
-  { name: 'Duke Dazzle', r: 3, cost: 22000, inc: 450, look: { skin: 0xe8b98a, hair: 0xffe066, hairStyle: 'spiky', top: 0x9b5de5, bottom: 0xffffff, shoes: 0xffffff, acc: ['mic', 'chain', 'shades'] } },
-  { name: 'Dusty Boots', r: 3, cost: 30000, inc: 600, look: { skin: 0xf1c27d, hair: 0x8b5a2b, hairStyle: 'short', top: 0xc0392b, bottom: 0x3b5b92, shoes: 0x6b3e1e, acc: ['cowboy', 'guitar'], guitarColor: 0xe0a050 } },
-  { name: 'Diva Diamond', r: 4, cost: 110000, inc: 1800, look: { skin: 0xc68642, hair: 0x111111, hairStyle: 'bun', top: 0xffd700, bottom: 0xffd700, shoes: 0xffd700, dress: true, acc: ['shades', 'tiara', 'boa'] } },
-  { name: 'Mystic Max', r: 4, cost: 160000, inc: 2600, look: { skin: 0xffdbac, hair: 0x222222, hairStyle: 'short', top: 0x2b1055, bottom: 0x111111, shoes: 0x111111, acc: ['tophat', 'cape', 'wand', 'mustache'], capeColor: 0x6a0dad } },
-  { name: 'The Ultra GOAT', r: 5, cost: 800000, inc: 11000, look: { skin: 0xf1c27d, hair: 0xffffff, hairStyle: 'spiky', top: 0xffffff, bottom: 0xdddddd, shoes: 0xffd700, acc: ['crown', 'cape', 'chain', 'shades'], capeColor: 0xffd700 } },
-  { name: 'Captain Cosmo', r: 5, cost: 1200000, inc: 16000, look: { skin: 0xe0ac69, hair: 0x222222, hairStyle: 'buzz', top: 0xf0f0f0, bottom: 0xf0f0f0, shoes: 0x888888, acc: ['helmet', 'cape'], capeColor: 0x3b82f6 } },
+  { name: 'Flex McMuscle', title: 'Gym Influencer', r: 0, cost: 40, inc: 2, look: { skin: 0xf1c27d, hair: 0x3b2314, hairStyle: 'short', top: 0xff4d4d, bottom: 0x2d3561, shoes: 0xffffff, muscle: true, sleeveless: true, acc: ['dumbbell', 'headband'] } },
+  { name: 'Selfie Sally', title: 'Small-Town Selfie Queen', r: 0, cost: 65, inc: 3, look: { skin: 0xffdbac, hair: 0xf5d76e, hairStyle: 'ponytail', top: 0xff8fd8, bottom: 0x6ec6ff, shoes: 0xffffff, acc: ['phone'] } },
+  { name: 'Pixel Pete', title: 'Viral Game Streamer', r: 0, cost: 90, inc: 4, look: { skin: 0xe0ac69, hair: 0x5a3a1a, hairStyle: 'spiky', top: 0x3ddc84, bottom: 0x333344, shoes: 0x222222, acc: ['headphones'] } },
+  { name: 'Stormy Skies', title: 'Local TV Weatherman', r: 0, cost: 120, inc: 5, look: { skin: 0xc68642, hair: 0x222222, hairStyle: 'short', top: 0x34495e, bottom: 0x34495e, shoes: 0x111111, acc: ['tie', 'umbrella'] } },
+  { name: 'Lil Icebox', title: 'Rising Rap Star', r: 1, cost: 350, inc: 12, look: { skin: 0x8d5524, hair: 0x111111, hairStyle: 'buzz', top: 0x7fdfff, bottom: 0x222222, shoes: 0xff3355, acc: ['shades', 'chain', 'cap'], capColor: 0xffffff } },
+  { name: 'DJ Bass Drop', title: 'Club DJ', r: 1, cost: 550, inc: 18, look: { skin: 0xc68642, hair: 0xff33cc, hairStyle: 'mohawk', top: 0x1a1a2e, bottom: 0x333333, shoes: 0x00ffcc, acc: ['headphones', 'shades'] } },
+  { name: 'Kiki Glow', title: 'Beauty Vlogger', r: 1, cost: 800, inc: 26, look: { skin: 0xffe0bd, hair: 0xc77dff, hairStyle: 'long', top: 0xff66aa, bottom: 0xff66aa, shoes: 0xffffff, dress: true, acc: ['phone', 'shades'] } },
+  { name: 'Riff Raven', title: 'Rock Band Frontman', r: 2, cost: 2400, inc: 65, look: { skin: 0xf3d2b3, hair: 0x111111, hairStyle: 'long', top: 0x222222, bottom: 0x1b1b3a, shoes: 0x111111, acc: ['guitar', 'shades', 'chain'] } },
+  { name: 'Chef Flambé', title: 'TV Celebrity Chef', r: 2, cost: 3500, inc: 90, look: { skin: 0xf1c27d, hair: 0x777777, hairStyle: 'short', top: 0xffffff, bottom: 0x222222, shoes: 0x111111, acc: ['chefhat', 'pan', 'mustache'] } },
+  { name: 'Rex Steel', title: 'Action Movie Star', r: 2, cost: 5000, inc: 125, look: { skin: 0xd1a17a, hair: 0x3b2314, hairStyle: 'buzz', top: 0x556b2f, bottom: 0x3d3d29, shoes: 0x222222, muscle: true, sleeveless: true, acc: ['shades', 'bandana'] } },
+  { name: 'Nova Starling', title: 'World-Tour Pop Megastar', r: 3, cost: 15000, inc: 320, look: { skin: 0xffe0bd, hair: 0xffb3e6, hairStyle: 'long', top: 0xff3fd0, bottom: 0xff3fd0, shoes: 0xffffff, dress: true, acc: ['mic', 'tiara'] } },
+  { name: 'Duke Dazzle', title: 'Boy Band Heartthrob', r: 3, cost: 22000, inc: 450, look: { skin: 0xe8b98a, hair: 0xffe066, hairStyle: 'spiky', top: 0x9b5de5, bottom: 0xffffff, shoes: 0xffffff, acc: ['mic', 'chain', 'shades'] } },
+  { name: 'Dusty Boots', title: 'Country Music Superstar', r: 3, cost: 30000, inc: 600, look: { skin: 0xf1c27d, hair: 0x8b5a2b, hairStyle: 'short', top: 0xc0392b, bottom: 0x3b5b92, shoes: 0x6b3e1e, acc: ['cowboy', 'guitar'], guitarColor: 0xe0a050 } },
+  { name: 'Diva Diamond', title: 'Hollywood Screen Icon', r: 4, cost: 110000, inc: 1800, look: { skin: 0xc68642, hair: 0x111111, hairStyle: 'bun', top: 0xffd700, bottom: 0xffd700, shoes: 0xffd700, dress: true, acc: ['shades', 'tiara', 'boa'] } },
+  { name: 'Mystic Max', title: 'Las Vegas Legend', r: 4, cost: 160000, inc: 2600, look: { skin: 0xffdbac, hair: 0x222222, hairStyle: 'short', top: 0x2b1055, bottom: 0x111111, shoes: 0x111111, acc: ['tophat', 'cape', 'wand', 'mustache'], capeColor: 0x6a0dad } },
+  { name: 'The Ultra GOAT', title: 'Greatest Athlete Ever', r: 5, cost: 800000, inc: 11000, look: { skin: 0xf1c27d, hair: 0xffffff, hairStyle: 'spiky', top: 0xffffff, bottom: 0xdddddd, shoes: 0xffd700, acc: ['crown', 'cape', 'chain', 'shades'], capeColor: 0xffd700 } },
+  { name: 'Captain Cosmo', title: 'Celebrity Astronaut', r: 5, cost: 1200000, inc: 16000, look: { skin: 0xe0ac69, hair: 0x222222, hairStyle: 'buzz', top: 0xf0f0f0, bottom: 0xf0f0f0, shoes: 0x888888, acc: ['helmet', 'cape'], capeColor: 0x3b82f6 } },
+  { name: 'Morning Mike', title: 'Local Radio Host', r: 0, cost: 150, inc: 6, look: { skin: 0xffdbac, hair: 0x6b4423, hairStyle: 'short', top: 0xf39c12, bottom: 0x2c3e50, shoes: 0x111111, acc: ['headphones', 'mic'] } },
+  { name: 'Dunk Dynamo', title: 'Pro Basketball Star', r: 2, cost: 4200, inc: 105, look: { skin: 0x8d5524, hair: 0x111111, hairStyle: 'buzz', top: 0x7b2cbf, bottom: 0x7b2cbf, shoes: 0xffffff, sleeveless: true, acc: ['ball', 'headband'], scale: 1.22 } },
+  { name: 'Goalden Boy', title: 'World Cup Soccer Superstar', r: 3, cost: 40000, inc: 780, look: { skin: 0xe0ac69, hair: 0x2b1d0e, hairStyle: 'spiky', top: 0x1e88e5, bottom: 0xffffff, shoes: 0xffd700, acc: ['trophy'] } },
+  { name: 'Velvet Vortex', title: 'Billion-Stream Music Icon', r: 4, cost: 220000, inc: 3500, look: { skin: 0xc68642, hair: 0xe8e8e8, hairStyle: 'long', top: 0x8e24aa, bottom: 0x8e24aa, shoes: 0xc0c0c0, dress: true, acc: ['mic', 'shades', 'crown'] } },
 ];
 CELEBS.forEach((c, i) => (c.id = i));
 const price = (c) => c.def.cost * c.mut.mult;
@@ -251,6 +255,8 @@ function addAcc(a, P, L) {
     case 'boa': m = M(torG(0.32, 0.1, 6, 14), toon(0xff7ad9), 0, 1.66, 0, body); m.rotation.x = Math.PI / 2; break;
     case 'pan': m = M(cylG(0.03, 0.03, 0.35, 6), black, 0, -0.84, 0.2, armR); m.rotation.x = Math.PI / 2; M(cylG(0.22, 0.2, 0.05, 12), toon(0x333333), 0, -0.84, 0.48, armR); break;
     case 'mustache': m = M(boxG(0.3, 0.07, 0.04), toon(0x3b2314), 0, -0.06, 0.305, head); m.userData.keep = true; break;
+    case 'ball': M(sphG(0.24, 12, 8), toon(0xf57c00), 0, -0.9, 0.12, armR); break;
+    case 'trophy': M(cylG(0.2, 0.08, 0.3, 10), gold, 0, -0.72, 0.15, armL); M(cylG(0.05, 0.05, 0.15, 6), gold, 0, -0.93, 0.15, armL); M(boxG(0.22, 0.08, 0.22), toon(0x3b2314), 0, -1.03, 0.15, armL); break;
     case 'camera': M(boxG(0.28, 0.2, 0.16), black, 0, -0.84, 0.16, armR); m = M(cylG(0.07, 0.07, 0.12, 10), metal, 0, -0.84, 0.3, armR); m.rotation.x = Math.PI / 2; break;
   }
 }
@@ -755,7 +761,7 @@ function createCeleb(def, mut) {
   const p = buildPerson(def.look, mut);
   const sc = def.look.scale || (1 + def.r * 0.06);
   p.root.scale.setScalar(sc);
-  const label = makeCanvasSprite(512, 230, 1.95); label.sprite.position.y = 3.4; p.root.add(label.sprite);
+  const label = makeCanvasSprite(512, 260, 2.15); label.sprite.position.y = 3.4; p.root.add(label.sprite);
   if (def.r >= 3 || mut.id >= 2) {
     const ringMat = new THREE.MeshBasicMaterial({ color: def.r >= 3 ? RARITIES[def.r].hex : 0x9ff8ff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
     const ring = new THREE.Mesh(torG(0.8, 0.07, 6, 28), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08; p.root.add(ring); p.aura = ring;
@@ -767,13 +773,14 @@ function createCeleb(def, mut) {
   return c;
 }
 function drawCelebLabel(c) {
-  const { ctx, tex } = c.label; ctx.clearRect(0, 0, 512, 230); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const { ctx, tex } = c.label; ctx.clearRect(0, 0, 512, 260); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const r = RARITIES[c.def.r]; const lines = [];
   if (c.mut.id) lines.push([c.mut.name, 34, c.mut.color]);
-  lines.push([c.def.name, 50, '#ffffff']);
+  lines.push([c.def.name, 48, '#ffffff']);
+  if (c.def.title) lines.push([c.def.title, 28, '#ffd9f5']);
   lines.push([c.state === 'carpet' ? `$${fmt(price(c))}  •  +$${fmt(c.income)}/s` : `+$${fmt(c.income)}/s`, 36, c.state === 'carpet' ? '#ffe14d' : '#5dff7a']);
-  lines.push([r.name, 32, r.color]);
-  let total = lines.reduce((s, l) => s + l[1] * 1.18, 0); let y = 230 - total - 4;
+  lines.push([`${r.name} • ${rarityChance(c.def.r)}`, 32, r.color]);
+  let total = lines.reduce((s, l) => s + l[1] * 1.18, 0); let y = 260 - total - 4;
   for (const [t, s, col] of lines) { y += s * 0.59; strokeText(ctx, t, 256, y, s, col, 500); y += s * 0.59; }
   tex.needsUpdate = true;
 }
@@ -783,14 +790,20 @@ function removeCeleb(c) {
   c.p.root.traverse((o) => { if (o.isMesh && o.userData.merged) o.geometry.dispose(); });
   if (c.p.aura) { const k = rainbowBasics.indexOf(c.p.aura.material); if (k >= 0) rainbowBasics.splice(k, 1); c.p.aura.material.dispose(); }
 }
-function rollRarity() { return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 2 ? game.luck : 1)); }
+function rarityChance(i) {
+  const tot = RARITIES.reduce((s, r) => s + r.w, 0), p = RARITIES[i].w / tot * 100;
+  return (p >= 1 ? +p.toFixed(1) : +p.toFixed(2)) + '%';
+}
+function rollRarity() {
+  if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [70, 24, 6][i - 3]);
+ return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 2 ? game.luck : 1)); }
 function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? game.luck : 1)); }
 function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
   const r = forceR ?? rollRarity();
   const def = pick(CELEBS.filter((c) => c.r === r));
   const c = createCeleb(def, rollMut());
   c.pos.set(x, 0.08, rand(-1.5, 1.5)); c.state = 'carpet';
-  if (game.playing && (r >= 3 || c.mut.id >= 2)) {
+  if (game.playing && (r >= (game.event && game.event.id === 'admin' ? 4 : 3) || c.mut.id >= 2)) {
     const col = r >= 3 ? RARITIES[r].color : c.mut.color;
     banner(`✨ ${r >= 3 ? RARITIES[r].name : c.mut.name} ${def.name} hit the red carpet!`, col === 'rainbow' ? '#ff8cf0' : col);
     Snd.play('legend');
@@ -1387,9 +1400,11 @@ function updateEvents(dt) {
   if (!game.event) {
     game.eventT -= dt;
     if (game.eventT <= 0) {
-      const e = eventIdx++ % 2 === 0 ? { id: 'storm', label: '🌟 STAR STORM — Luck x4!', t: 40 } : { id: 'gold', label: '🌅 GOLDEN HOUR — Cash x2!', t: 45 };
+      const e = Math.random() < 0.1 ? { id: 'admin', label: '👑 ADMIN ABUSE — Superstars only!', t: 35 }
+        : eventIdx++ % 2 === 0 ? { id: 'storm', label: '🌟 STAR STORM — Luck x4!', t: 40 } : { id: 'gold', label: '🌅 GOLDEN HOUR — Cash x2!', t: 45 };
       game.event = e;
-      if (e.id === 'storm') { game.luck = 4; banner('🌟 STAR STORM! Rare celebs incoming!', '#ffcc00'); }
+      if (e.id === 'admin') { game.luck = 6; game.incomeMult = 3; game.spawnT = 0; banner('👑 ADMIN ABUSE! Only SUPERSTARS & ICONS spawn!', '#ff5cf4'); feed('👑 <b>ADMIN ABUSE</b> (very rare): superstars only, cash x3 for 35s!'); }
+      else if (e.id === 'storm') { game.luck = 4; banner('🌟 STAR STORM! Rare celebs incoming!', '#ffcc00'); }
       else { game.incomeMult = 2; banner('🌅 GOLDEN HOUR! All income x2!', '#ff9d00'); }
       Snd.play('legend');
     }
@@ -1524,7 +1539,7 @@ function update(dt) {
   game.stealCd -= dt; if (game.playing) game.playerStealCd -= dt;
   updateEvents(dt);
   game.spawnT -= dt;
-  if (game.spawnT <= 0) { game.spawnT = rand(2.0, 2.9); spawnCarpetCeleb(); }
+  if (game.spawnT <= 0) { const adm = game.event && game.event.id === 'admin'; game.spawnT = adm ? rand(1.1, 1.6) : rand(2.0, 2.9); spawnCarpetCeleb(); if (adm) burst(rand(-55, 55), 8, rand(-3, 3), 25, [0xff5cf4, 0xffcc00, 0xffffff], 3, 2); }
   carpetTex.offset.x -= dt * CARPET_SPEED / 6;
   for (const b of bases) {
     if (b.locked) { b.lockT -= dt; if (b.lockT <= 0) { b.locked = false; b.laser.visible = false; b.lockCd = b.owner.isPlayer ? 8 : rand(45, 80); } else b.laser.children[0].material.opacity = 0.25 + Math.sin(game.t * 12) * 0.1; }
@@ -1611,4 +1626,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { forceAdmin() { game.event = null; game.eventT = 0; const o = Math.random; Math.random = () => 0.01; updateEvents(0.016); Math.random = o; }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
