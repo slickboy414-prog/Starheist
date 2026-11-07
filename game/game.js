@@ -521,7 +521,7 @@ function buildAgencyInterior(b, col) {
     M(boxG(+(w + 0.04).toFixed(2), 0.1, +(d + 0.04).toFixed(2)), chrome, mx, 2.5, mz, deco);
     M(boxG(+(w * 0.995).toFixed(2), 1.5, +(d * 0.4).toFixed(2)), glassC, mx, 1.7, mz, glass);
     const long = w > d ? w : d, n = Math.max(1, Math.round(long / 2.6));
-    for (let k = 0; k <= n; k++) { const t = -long / 2 + k * long / n; M(boxG(w > d ? 0.09 : +(d + 0.03).toFixed(2), 1.6, w > d ? +(d + 0.03).toFixed(2) : 0.09), chrome, w > d ? mx + t : mx, 1.7, w > d ? mz : mz + t, deco); }
+    for (let k = 0; k <= n; k++) { const t = -long / 2 + k * long / n; M(boxG(w > d ? 0.09 : +(w + 0.03).toFixed(2), 1.6, w > d ? +(d + 0.03).toFixed(2) : 0.09), chrome, w > d ? mx + t : mx, 1.7, w > d ? mz : mz + t, deco); }
   };
   glassWall(-11.3, -10.7, -8.3, 8.3); glassWall(10.7, 11.3, -8.3, 8.3); glassWall(-11, -3.4, 7.7, 8.3); glassWall(3.4, 11, 7.7, 8.3);
   // office tower behind the stage wall (fades when it blocks the camera)
@@ -537,12 +537,6 @@ function buildAgencyInterior(b, col) {
   L(boxG(22, 0.12, 0.3), accent, 0, 2.75, -8.1);
   const posterCols = [0xff4fa3, 0xffcc00, 0x2ee6d6, 0x9b5de5, 0xff7a3d];
   [-9.6, -5, 0, 5, 9.6].forEach((x, k) => { L(boxG(1.7, 2, 0.08), black, x, 1.55, -7.95); L(boxG(1.45, 1.75, 0.05), toon(posterCols[(k + b.i) % 5]), x, 1.55, -7.9); L(cylG(0.32, 0.32, 0.04, 5), gold, x, 1.7, -7.86).rotation.x = Math.PI / 2; });
-  // stage lighting truss with spotlights over every podium
-  for (const rz of [-5, -1]) {
-    const t = L(boxG(21.6, 0.16, 0.16), chrome, 0, 4.4, rz); t.updateMatrix();
-    for (const sx of [-7.5, -2.5, 2.5, 7.5]) { L(cylG(0.16, 0.24, 0.4, 8), black, sx, 4.15, rz); const c = L(G('spotCone', () => { const g = new THREE.CylinderGeometry(0.18, 0.85, 3.4, 14, 1, true); return g; }), toon(0xfff3c4), sx, 2.15, rz, spots); }
-  }
-  for (const sx of [-10.9, 10.9]) for (const rz of [-5, -1]) L(cylG(0.07, 0.07, 1.9, 6), chrome, sx, 3.45, rz);
   // star plaques
   for (const rz of [-5, -1]) for (const sx of [-7.5, -2.5, 2.5, 7.5]) L(cylG(0.34, 0.34, 0.02, 5), gold, sx, 0.14, rz + 1.55);
   // reception desk + receptionist
@@ -1743,4 +1737,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
