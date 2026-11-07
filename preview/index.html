@@ -120,6 +120,31 @@
     #minimap{display:none}
     #feed{top:34%}
   }
+  #btnRebirth{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 128px);
+    background:linear-gradient(180deg,#9dffc8,#22b26b);border:4px solid #0b4a2b;border-radius:14px;padding:7px 12px;font-size:15px;box-shadow:0 4px 0 #0b4a2b}
+  #btnRebirth.ready{animation:pulse .5s infinite alternate;box-shadow:0 4px 0 #0b4a2b,0 0 18px #7dffb0}
+  #btnRebirth:active{transform:translateY(3px);box-shadow:0 1px 0 #0b4a2b}
+  #rebirth{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
+  #rebirth .panel{width:min(460px,92vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#0f4a3a,#0a2a26);border:5px solid #7dffb0;
+    border-radius:24px;padding:14px 18px;box-shadow:0 10px 0 #04140f}
+  #rebirth h2{margin:2px 0 8px;text-align:center;font-size:28px;color:#7dffb0}
+  #rebirth h4{margin:12px 0 6px;font-size:13px;letter-spacing:1.5px;color:#ffd84d}
+  #rebirth h4.warn{color:#ff8a8a}
+  .rb-row{display:flex;align-items:center;justify-content:center;gap:14px}
+  .rb-lvl{font-size:30px;background:rgba(255,255,255,.1);border-radius:14px;padding:6px 14px}
+  .rb-lvl.next{background:rgba(125,255,176,.25)}
+  .rb-arrow{font-size:28px;color:#7dffb0}
+  .rb-req,.rb-rew,.rb-warn{font-family:system-ui,sans-serif;font-weight:800;font-size:14px;background:rgba(255,255,255,.07);border-radius:10px;padding:7px 10px;margin-bottom:5px}
+  .rb-req small{font-weight:600;color:#cfe}
+  .rb-req.ok{background:rgba(93,255,122,.18)}
+  .rb-warn{background:rgba(255,77,109,.16)}
+  .rb-big{font-size:26px;text-align:center;color:#7dffb0}
+  #rbGo{display:block;width:100%;margin:12px 0 4px;padding:13px;border-radius:16px;border:4px solid #000;font-size:20px;
+    background:linear-gradient(180deg,#9dffc8,#22b26b);box-shadow:0 5px 0 #000}
+  #rbGo.sure{background:linear-gradient(180deg,#ffd84d,#ff7a00);animation:pulse .3s infinite alternate}
+  #rbGo.no{background:linear-gradient(180deg,#888,#555)}
+  #rebirthClose{display:block;margin:8px auto 2px;padding:9px 26px;border-radius:14px;border:3px solid #000;background:var(--red);font-size:16px;box-shadow:0 4px 0 #000}
+  #eventChip{top:calc(max(10px,env(safe-area-inset-top)) + 178px)!important}
 </style>
 
 <div id="game"></div>
@@ -127,6 +152,7 @@
 <div id="hud" class="hidden">
   <div id="cashBox" class="stroke"><div id="cash">$0</div><div id="cps">+$0/s</div></div>
   <button id="btnShop" class="stroke">🛒 UPGRADES<span class="key">B</span></button>
+  <button id="btnRebirth" class="stroke">♻️ REBIRTH 0<span class="key">R</span></button>
   <div id="eventChip" class="hidden stroke"></div>
   <div id="board" class="stroke"></div>
   <canvas id="minimap" width="160" height="110"></canvas>
@@ -148,6 +174,12 @@
   <h2 class="stroke">⭐ UPGRADES ⭐</h2>
   <div id="shopList"></div>
   <button id="shopClose" class="stroke">CLOSE</button>
+</div></div>
+
+<div id="rebirth" class="hidden"><div class="panel">
+  <h2 class="stroke">♻️ REBIRTH ♻️</h2>
+  <div id="rebirthBody"></div>
+  <button id="rebirthClose" class="stroke">CLOSE</button>
 </div></div>
 
 <div id="popup" class="hidden"></div>

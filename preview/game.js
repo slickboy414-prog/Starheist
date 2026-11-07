@@ -646,7 +646,79 @@ function drawSign(b) {
 }
 const inside = (b, x, z) => Math.abs(x - b.cx) < b.W / 2 && Math.abs(z - b.cz) < b.D / 2;
 const baseAt = (x, z) => { for (const b of bases) if (inside(b, x, z)) return b; return null; };
-const unlockedSlots = (a) => a.isPlayer ? 4 + game.up.slots : 8;
+const unlockedSlots = (a) => a.isPlayer ? Math.min(8, 4 + game.up.slots + rebirthSlots()) : 8;
+// ---------- Rebirth ----------
+const REBIRTHS = [
+  { cash: 25e3, tier: 2 }, { cash: 150e3, tier: 2 }, { cash: 750e3, tier: 3 }, { cash: 3e6, tier: 3 }, { cash: 12e6, tier: 4 },
+  { cash: 50e6, tier: 4 }, { cash: 200e6, tier: 4 }, { cash: 800e6, tier: 5 }, { cash: 3e9, tier: 5 }, { cash: 12e9, tier: 5 },
+];
+const rebirthMult = (r = game.rebirth) => 1 + 0.5 * r;
+const rebirthSlots = (r = game.rebirth) => Math.min(4, Math.floor((r + 1) / 2));
+const rebirthStartCash = (r = game.rebirth) => r ? 250 * Math.pow(4, r) : 100;
+const rebirthSpeed = (r = game.rebirth) => 1 + 0.03 * r;
+function rebirthStatus() {
+  const r = game.rebirth, req = REBIRTHS[r]; if (!req) return { max: true };
+  const hasCash = player.cash >= req.cash;
+  const hasTier = celebs.some((c) => c.owner === player && c.def.r >= req.tier && (c.state === 'placed' || c.state === 'walkToBase'));
+  return { req, hasCash, hasTier, ok: hasCash && hasTier };
+}
+function renderRebirth() {
+  const r = game.rebirth, st = rebirthStatus(), box = document.getElementById('rebirthBody');
+  if (st.max) { box.innerHTML = `<p class="rb-big stroke">♻️ MAX REBIRTH (${r})</p><p>You are a Starville legend. Income is x${rebirthMult()} forever.</p>`; return; }
+  const t = RARITIES[st.req.tier], tc = t.color === 'rainbow' ? '#ff8cf0' : t.color;
+  const sure = game.rebirthConfirm;
+  box.innerHTML = `
+    <div class="rb-row"><div class="rb-lvl stroke">♻️ ${r}</div><div class="rb-arrow">→</div><div class="rb-lvl next stroke">♻️ ${r + 1}</div></div>
+    <h4>NEED</h4>
+    <div class="rb-req ${st.hasCash ? 'ok' : ''}">${st.hasCash ? '✅' : '❌'} $${fmt(st.req.cash)} cash <small>(you have $${fmt(player.cash)})</small></div>
+    <div class="rb-req ${st.hasTier ? 'ok' : ''}">${st.hasTier ? '✅' : '❌'} Own a <b style="color:${tc}">${t.name}</b> celeb (or better)</div>
+    <h4>YOU GET (FOREVER)</h4>
+    <div class="rb-rew">💰 Income <b>x${rebirthMult(r)} → x${rebirthMult(r + 1)}</b></div>
+    <div class="rb-rew">💵 Start cash <b>$${fmt(rebirthStartCash(r + 1))}</b></div>
+    <div class="rb-rew">👟 Run speed <b>+${Math.round((rebirthSpeed(r + 1) - 1) * 100)}%</b></div>
+    ${rebirthSlots(r + 1) > rebirthSlots(r) ? '<div class="rb-rew">🏢 <b>+1 free podium</b></div>' : ''}
+    <div class="rb-rew">🏷️ ♻️${r + 1} badge on your name</div>
+    <h4 class="warn">YOU LOSE</h4>
+    <div class="rb-warn">Your cash, all your celebs and your upgrades reset.</div>
+    <button id="rbGo" class="stroke ${st.ok ? (sure ? 'sure' : '') : 'no'}">${!st.ok ? 'NOT READY' : sure ? 'TAP AGAIN TO REBIRTH!' : '♻️ REBIRTH'}</button>`;
+}
+function doRebirth() {
+  const st = rebirthStatus(); if (!st.ok) { Snd.play('error'); return; }
+  if (!game.rebirthConfirm) { game.rebirthConfirm = true; renderRebirth(); return; }
+  game.rebirthConfirm = false;
+  if (player.carrying) returnHome(player.carrying);
+  for (const c of [...celebs]) {
+    if (c.owner !== player) continue;
+    if (c.state === 'carried') returnHome(c);
+    clearSlot(c.slot); removeCeleb(c);
+  }
+  game.rebirth++;
+  for (const k of Object.keys(game.up)) game.up[k] = 0;
+  player.cash = rebirthStartCash();
+  refreshPlayerPodiums(); updateNameTag();
+  toggleRebirth(false);
+  const p = player.base.doorIn; player.pos.set(p.x, 0.12, p.z);
+  banner(`♻️ REBIRTH ${game.rebirth}! Income x${rebirthMult()} forever!`, '#7dffb0');
+  feed(`♻️ You reached <b>Rebirth ${game.rebirth}</b>. Build your agency again, stronger!`);
+  Snd.play('legend'); setTimeout(() => Snd.play('win'), 400); game.shake = 0.6;
+  for (let i = 0; i < 6; i++) burst(player.pos.x + rand(-4, 4), 3, player.pos.z + rand(-4, 4), 50);
+  doSave();
+}
+function toggleRebirth(force) {
+  if (!game.playing) return;
+  const panel = document.getElementById('rebirth');
+  const open = force ?? panel.classList.contains('hidden');
+  if (open && !el.shop.classList.contains('hidden')) toggleShop(false);
+  if (!open && panel.classList.contains('hidden')) return;
+  game.shopOpen = open; game.rebirthConfirm = false;
+  panel.classList.toggle('hidden', !open);
+  if (open) renderRebirth();
+}
+function updateNameTag() {
+  const tag = player && player.tagSprite; if (!tag) return;
+  tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
+  strokeText(tag.ctx, game.rebirth ? `★ YOU ♻️${game.rebirth} ★` : '★ YOU ★', 256, 50, 58, '#2ee6d6', 500); tag.tex.needsUpdate = true;
+}
 function freeSlot(a) { const n = unlockedSlots(a); for (let i = 0; i < n; i++) if (!a.base.slots[i].celeb) return a.base.slots[i]; return null; }
 const ownedCelebs = (a) => celebs.filter((c) => c.owner === a);
 function weakest(a) { let w = null; for (const c of celebs) if (c.owner === a && c.state === 'placed' && (!w || c.income < w.income)) w = c; return w; }
@@ -825,7 +897,7 @@ SDK.onAudioChange((on) => { Snd.ytOn = on; Snd.apply(); });
 const game = {
   t: 0, time: 0, playing: false, paused: false, shopOpen: false, loaded: false,
   spawnT: 0, stealCd: 25, playerStealCd: 85, eventT: 100, event: null, incomeMult: 1, luck: 1,
-  up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 },
+  up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 }, rebirth: 0, rebirthConfirm: false,
   stats: { earned: 0, steals: 0, bestNet: 0, lastScore: 0 },
   tut: 0, adminForceUntil: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
 };
@@ -839,7 +911,7 @@ function createAgent(o) {
   st.sprite.position.y = 3.5; st.sprite.visible = false; p.root.add(st.sprite); a.stars = st.sprite;
   const tag = makeCanvasSprite(512, 96, 0.62); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
   strokeText(tag.ctx, o.isPlayer ? '★ YOU ★' : '🤖 ' + o.name, 256, 50, 58, '#' + new THREE.Color(o.color).getHexString(), 500); tag.tex.needsUpdate = true;
-  tag.sprite.position.y = 2.95; p.root.add(tag.sprite); a.tag = tag.sprite;
+  tag.sprite.position.y = 2.95; p.root.add(tag.sprite); a.tag = tag.sprite; a.tagSprite = tag;
   agents.push(a);
   return a;
 }
@@ -1167,7 +1239,7 @@ const look = { id: null, lx: 0, ly: 0 };
 let camYaw = 0, camPitch = 0.62, camDist = 15;
 const camTarget = new THREE.Vector3();
 let target = { kind: null, c: null }, sellTarget = null, collectT = 0;
-function playerSpeed() { return 7 * (1 + 0.08 * game.up.speed) * (player.carrying ? 0.8 : 1); }
+function playerSpeed() { return 7 * rebirthSpeed() * (1 + 0.08 * game.up.speed) * (player.carrying ? 0.8 : 1); }
 function updatePlayer(dt) {
   const P = player;
   P.flashCd = Math.max(0, P.flashCd - dt);
@@ -1237,7 +1309,7 @@ function doSell() { if (sellTarget) sell(sellTarget); }
 //  Celeb update
 // ---------------------------------------------------------------------
 function updateCelebs(dt) {
-  const mult = game.incomeMult, pm = 1 + 0.25 * game.up.star;
+  const mult = game.incomeMult, pm = (1 + 0.25 * game.up.star) * rebirthMult();
   for (let i = celebs.length - 1; i >= 0; i--) {
     const c = celebs[i];
     switch (c.state) {
@@ -1335,7 +1407,7 @@ function setTut(n) {
 const keyHint = (k) => isTouch ? '' : `<span class="key">${k}</span>`;
 let hudT = 0, boardT = 0, miniT = 0;
 function netWorth(a) { let n = a.cash; for (const c of celebs) if (c.owner === a) n += price(c); return n; }
-function playerCps() { let s = 0; for (const c of celebs) if (c.owner === player && c.state === 'placed') s += c.income; return s * game.incomeMult * (1 + 0.25 * game.up.star); }
+function playerCps() { let s = 0; for (const c of celebs) if (c.owner === player && c.state === 'placed') s += c.income; return s * game.incomeMult * (1 + 0.25 * game.up.star) * rebirthMult(); }
 function updateHUD(dt) {
   hudT -= dt; boardT -= dt; miniT -= dt;
   if (hudT <= 0) {
@@ -1353,6 +1425,7 @@ function updateHUD(dt) {
     } else if (t.kind === 'steal') { a.innerHTML = `😈 STEAL!${keyHint('E')}`; a.classList.add('steal'); }
     else a.classList.add('hidden');
     if (sellTarget && !t.c) { el.sell.classList.remove('hidden'); el.sell.innerHTML = `💸 SELL $${fmt(price(sellTarget) * 0.5)}${keyHint('Q')}`; } else el.sell.classList.add('hidden');
+    { const rs = rebirthStatus(); const rb = document.getElementById('btnRebirth'); rb.classList.toggle('ready', !!rs.ok); rb.innerHTML = `♻️ REBIRTH ${game.rebirth}${keyHint('R')}`; }
     // flash/lock
     const fcd = player.flashCd;
     el.flash.classList.toggle('dim', fcd > 0);
@@ -1377,7 +1450,7 @@ function updateHUD(dt) {
   if (boardT <= 0) {
     boardT = 1;
     const rows = agents.map((a) => ({ a, n: netWorth(a) })).sort((x, y) => y.n - x.n);
-    el.board.innerHTML = '<div class="t">🏆 RICHEST AGENCIES</div>' + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? 'YOU' : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
+    el.board.innerHTML = '<div class="t">🏆 RICHEST AGENCIES</div>' + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? 'YOU' + (game.rebirth ? ' ♻️' + game.rebirth : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
     const nw = netWorth(player);
     if (nw > game.stats.bestNet) game.stats.bestNet = nw;
   }
@@ -1408,7 +1481,7 @@ function drawMinimap() {
 function upCost(u) { return Math.round(u.cost(game.up[u.id])); }
 function renderShop() {
   el.shopList.innerHTML = UPGRADES.map((u) => {
-    const l = game.up[u.id], max = l >= u.max, cost = upCost(u), ok = player.cash >= cost;
+    const l = game.up[u.id], max = l >= u.max || (u.id === 'slots' && unlockedSlots(player) >= 8), cost = upCost(u), ok = player.cash >= cost;
     return `<div class="up"><div class="ic">${u.icon}</div><div class="tx">${u.name} <span style="color:#ffd84d">Lv ${l}/${u.max}</span><small>${u.desc}</small></div>
       <button data-u="${u.id}" class="${max ? 'max' : ok ? '' : 'no'} stroke">${max ? 'MAXED' : '$' + fmt(cost)}</button></div>`;
   }).join('');
@@ -1416,7 +1489,7 @@ function renderShop() {
 el.shopList.addEventListener('pointerdown', (e) => {
   const b = e.target.closest('button'); if (!b) return; e.preventDefault();
   const u = UPGRADES.find((x) => x.id === b.dataset.u); if (!u) return;
-  const l = game.up[u.id]; if (l >= u.max) return;
+  const l = game.up[u.id]; if (l >= u.max || (u.id === 'slots' && unlockedSlots(player) >= 8)) return;
   const cost = upCost(u);
   if (player.cash < cost) { Snd.play('error'); return; }
   player.cash -= cost; game.up[u.id]++; Snd.play('upgrade');
@@ -1445,7 +1518,8 @@ addEventListener('keydown', (e) => {
     case 'KeyL': doLockBtn(); break;
     case 'KeyQ': doSell(); break;
     case 'KeyB': toggleShop(); break;
-    case 'Escape': toggleShop(false); break;
+    case 'KeyR': toggleRebirth(); break;
+    case 'Escape': toggleShop(false); toggleRebirth(false); break;
   }
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -1479,7 +1553,8 @@ cvs.addEventListener('pointerup', ptrUp); cvs.addEventListener('pointercancel', 
 cvs.addEventListener('wheel', (e) => { camDist = clamp(camDist + e.deltaY * 0.012, 8, 26); e.preventDefault(); }, { passive: false });
 function bindBtn(b, fn) { b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Snd.init(); fn(); }); }
 bindBtn(el.action, doAction); bindBtn(el.sell, doSell); bindBtn(el.flash, doFlash); bindBtn(el.lock, doLockBtn);
-bindBtn($('btnShop'), () => toggleShop()); bindBtn($('shopClose'), () => toggleShop(false));
+bindBtn($('btnShop'), () => toggleShop()); bindBtn($('btnRebirth'), () => toggleRebirth()); bindBtn($('rebirthClose'), () => toggleRebirth(false));
+$('rebirthBody').addEventListener('pointerdown', (e) => { if (e.target.closest('#rbGo')) { e.preventDefault(); doRebirth(); } }); bindBtn($('shopClose'), () => toggleShop(false));
 el.play.addEventListener('click', () => { Snd.init(); startGame(); });
 
 // ---------------------------------------------------------------------
@@ -1531,7 +1606,7 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, tut: game.tut, stats: game.stats, celebs: list });
+  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, tut: game.tut, stats: game.stats, celebs: list });
 }
 let saving = false;
 async function doSave() {
@@ -1549,6 +1624,7 @@ function applySave(str) {
   player.cash = Math.max(0, +d.cash || 0);
   for (const k of Object.keys(game.up)) game.up[k] = clamp(Math.floor(d.up?.[k] || 0), 0, UPGRADES.find((u) => u.id === k).max);
   game.tut = clamp(d.tut | 0, 0, 4);
+  game.rebirth = clamp(d.rb | 0, 0, REBIRTHS.length); updateNameTag();
   Object.assign(game.stats, d.stats || {});
   refreshPlayerPodiums();
   let incSum = 0;
@@ -1561,7 +1637,7 @@ function applySave(str) {
     incSum += c.income;
   }
   const away = clamp((Date.now() - (d.t || Date.now())) / 1000, 0, 7200);
-  const offline = Math.floor(incSum * (1 + 0.25 * game.up.star) * away * 0.25);
+  const offline = Math.floor(incSum * (1 + 0.25 * game.up.star) * rebirthMult() * away * 0.25);
   return away > 60 ? offline : 0;
 }
 
@@ -1737,4 +1813,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };

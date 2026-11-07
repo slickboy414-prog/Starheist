@@ -15,6 +15,7 @@ Bots will steal from you too, so step on your laser LOCK pad to keep thieves out
 ⭐ Climb the fame ladder: LOCAL STAR → VIRAL → FAMOUS → SUPERSTAR → ICON → ALL-TIME GOAT. The more famous, the rarer!
 👑 WEEKLY ADMIN ABUSE every Saturday: for 15 minutes only superstars and icons hit the carpet!
 💎 Hunt GOLD, DIAMOND and RAINBOW versions.
+♻️ REBIRTH for permanent income multipliers, extra podiums and a badge on your name.
 🏆 Climb the Richest Agencies leaderboard!
 All celebrities are fictional characters.
 
@@ -67,4 +68,4 @@ cd game && python3 -m http.server 8000
 Then open http://localhost:8000. Add `?debug` to expose `window.__sh` for testing.
 
 ## Ideas for v2
-Rebirth/prestige, more celeb packs (sports stars, chefs), cosmetic skins for your agency, and daily login rewards.
+More celeb packs (sports stars, chefs), cosmetic skins for your agency, and daily login rewards.
