@@ -485,6 +485,109 @@ function palm(x, z) {
 // ---------------------------------------------------------------------
 const laserMat = new THREE.MeshBasicMaterial({ color: 0xff2a6d, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
 const laserBarMat = new THREE.MeshBasicMaterial({ color: 0xff7aa8, transparent: true, opacity: 0.9 });
+// ---------- realistic agency HQ ----------
+const glassMat2 = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, transparent: true, opacity: 0.3, depthWrite: false });
+const spotMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.03, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+const buildings = [];
+let marbleTex, officeTex;
+function makeAgencyTextures() {
+  const mc = document.createElement('canvas'); mc.width = mc.height = 256; const m = mc.getContext('2d');
+  m.fillStyle = '#f4f1f6'; m.fillRect(0, 0, 256, 256);
+  for (let k = 0; k < 14; k++) { m.strokeStyle = `rgba(150,140,170,${rand(0.08, 0.2)})`; m.lineWidth = rand(0.6, 2); m.beginPath(); let x = rand(0, 256), y = rand(0, 256); m.moveTo(x, y); for (let q = 0; q < 6; q++) { x += rand(-50, 50); y += rand(-50, 50); m.lineTo(x, y); } m.stroke(); }
+  m.strokeStyle = 'rgba(120,110,140,.35)'; m.lineWidth = 2; m.strokeRect(1, 1, 127, 127); m.strokeRect(129, 1, 126, 127); m.strokeRect(1, 129, 127, 126); m.strokeRect(129, 129, 126, 126);
+  marbleTex = new THREE.CanvasTexture(mc); marbleTex.wrapS = marbleTex.wrapT = THREE.RepeatWrapping; marbleTex.repeat.set(5, 4); marbleTex.colorSpace = THREE.SRGBColorSpace; marbleTex.anisotropy = 4;
+  const oc = document.createElement('canvas'); oc.width = oc.height = 128; const o = oc.getContext('2d');
+  o.fillStyle = '#000'; o.fillRect(0, 0, 128, 128);
+  for (let y = 0; y < 2; y++) for (let x = 0; x < 4; x++) { const lit = Math.random() < 0.7; o.fillStyle = lit ? `rgb(${randi(200, 255)},${randi(210, 240)},${randi(150, 210)})` : '#2a3550'; o.fillRect(x * 32 + 4, y * 64 + 10, 24, 44); }
+  officeTex = new THREE.CanvasTexture(oc); officeTex.wrapS = officeTex.wrapT = THREE.RepeatWrapping; officeTex.repeat.set(6, 2); officeTex.colorSpace = THREE.SRGBColorSpace;
+}
+function buildAgencyInterior(b, col) {
+  if (!marbleTex) makeAgencyTextures();
+  const deco = new THREE.Group(), glass = new THREE.Group(), spots = new THREE.Group();
+  scene.add(deco, glass, spots);
+  const L = (geo, mat, lx, y, lz, grp = deco) => { const p = b.local(lx, lz); return M(geo, mat, p.x, y, p.z, grp); };
+  const box = (x0, x1, z0, z1) => { const a = b.local(x0, z0), c = b.local(x1, z1); return { minX: Math.min(a.x, c.x), maxX: Math.max(a.x, c.x), minZ: Math.min(a.z, c.z), maxZ: Math.max(a.z, c.z) }; };
+  const solid = toon(lighten(col, 0.6)), accent = toon(col), dark = toon(darken(col, 0.35)), chrome = toon(0xd8dde6), gold = toon(0xffcc33);
+  const white = toon(0xfafafa), glassC = toon(0xaee4ff), wood = toon(0x8a5a3b), green = toon(0x3c9a4a), black = toon(0x222222);
+  // marble floor
+  M(boxG(b.W, 0.12, b.D), new THREE.MeshToonMaterial({ map: marbleTex, color: lighten(col, 0.85), gradientMap: gradTex }), b.cx, 0.06, b.cz, scene);
+  L(boxG(3, 0.02, 4.6), toon(0xb3002d), 0, 0.13, 5.8);                // entrance runner
+  L(boxG(19.5, 0.02, 0.2), accent, 0, 0.13, -2.9); L(boxG(19.5, 0.02, 0.2), accent, 0, 0.13, -7.2); // stage lane inlays
+  // glass office walls: low solid base, glass panes, chrome rail and mullions
+  const glassWall = (x0, x1, z0, z1) => {
+    const bx = box(x0, x1, z0, z1); walls.push(bx);
+    const w = bx.maxX - bx.minX, d = bx.maxZ - bx.minZ, mx = (bx.minX + bx.maxX) / 2, mz = (bx.minZ + bx.maxZ) / 2;
+    M(boxG(+w.toFixed(2), 0.9, +d.toFixed(2)), solid, mx, 0.45, mz, deco);
+    M(boxG(+(w + 0.04).toFixed(2), 0.1, +(d + 0.04).toFixed(2)), chrome, mx, 2.5, mz, deco);
+    M(boxG(+(w * 0.995).toFixed(2), 1.5, +(d * 0.4).toFixed(2)), glassC, mx, 1.7, mz, glass);
+    const long = w > d ? w : d, n = Math.max(1, Math.round(long / 2.6));
+    for (let k = 0; k <= n; k++) { const t = -long / 2 + k * long / n; M(boxG(w > d ? 0.09 : +(d + 0.03).toFixed(2), 1.6, w > d ? +(d + 0.03).toFixed(2) : 0.09), chrome, w > d ? mx + t : mx, 1.7, w > d ? mz : mz + t, deco); }
+  };
+  glassWall(-11.3, -10.7, -8.3, 8.3); glassWall(10.7, 11.3, -8.3, 8.3); glassWall(-11, -3.4, 7.7, 8.3); glassWall(3.4, 11, 7.7, 8.3);
+  // office tower behind the stage wall (fades when it blocks the camera)
+  walls.push(box(-11.3, 11.3, -13.6, -7.7));
+  const tMat = new THREE.MeshLambertMaterial({ color: 0x9aa3ba, emissive: 0xffffff, emissiveMap: officeTex, emissiveIntensity: 0.55, transparent: true });
+  const bMat = new THREE.MeshLambertMaterial({ color: col, transparent: true });
+  const tp = b.local(0, -10.95), tower = new THREE.Group(); scene.add(tower);
+  M(boxG(22.6, 7, 5.3), tMat, tp.x, 3.5, tp.z, tower); M(boxG(23, 0.7, 5.7), bMat, tp.x, 7.2, tp.z, tower); M(boxG(23, 0.4, 5.7), bMat, tp.x, 0.2, tp.z, tower);
+  for (const ax of [-7, 6]) { const a = b.local(ax, -11.5); M(boxG(2, 1, 1.6), new THREE.MeshLambertMaterial({ color: 0xb8bcc6, transparent: true }), a.x, 8.05, a.z, tower); }
+  buildings.push({ g: tower, mats: [tMat, bMat, ...tower.children.slice(3).map((m) => m.material)], box: { ...box(-11.5, 11.5, -13.7, -8.2), maxY: 8.6 }, a: 1 });
+  // interior stage wall + framed posters
+  L(boxG(22, 2.7, 0.25), solid, 0, 1.35, -8.12);
+  L(boxG(22, 0.12, 0.3), accent, 0, 2.75, -8.1);
+  const posterCols = [0xff4fa3, 0xffcc00, 0x2ee6d6, 0x9b5de5, 0xff7a3d];
+  [-9.6, -5, 0, 5, 9.6].forEach((x, k) => { L(boxG(1.7, 2, 0.08), black, x, 1.55, -7.95); L(boxG(1.45, 1.75, 0.05), toon(posterCols[(k + b.i) % 5]), x, 1.55, -7.9); L(cylG(0.32, 0.32, 0.04, 5), gold, x, 1.7, -7.86).rotation.x = Math.PI / 2; });
+  // stage lighting truss with spotlights over every podium
+  for (const rz of [-5, -1]) {
+    const t = L(boxG(21.6, 0.16, 0.16), chrome, 0, 4.4, rz); t.updateMatrix();
+    for (const sx of [-7.5, -2.5, 2.5, 7.5]) { L(cylG(0.16, 0.24, 0.4, 8), black, sx, 4.15, rz); const c = L(G('spotCone', () => { const g = new THREE.CylinderGeometry(0.18, 0.85, 3.4, 14, 1, true); return g; }), toon(0xfff3c4), sx, 2.15, rz, spots); }
+  }
+  for (const sx of [-10.9, 10.9]) for (const rz of [-5, -1]) L(cylG(0.07, 0.07, 1.9, 6), chrome, sx, 3.45, rz);
+  // star plaques
+  for (const rz of [-5, -1]) for (const sx of [-7.5, -2.5, 2.5, 7.5]) L(cylG(0.34, 0.34, 0.02, 5), gold, sx, 0.14, rz + 1.55);
+  // reception desk + receptionist
+  walls.push(box(6.6, 9.9, 4.3, 5.3));
+  L(boxG(3.3, 1.05, 1), white, 8.25, 0.55, 4.8); L(boxG(3.32, 0.75, 0.04), accent, 8.25, 0.55, 5.31); L(boxG(3.5, 0.08, 1.15), dark, 8.25, 1.1, 4.8);
+  L(boxG(0.7, 0.45, 0.06), black, 7.6, 1.4, 4.55); L(boxG(0.6, 0.36, 0.02), toon(0x66ccff), 7.6, 1.4, 4.59);
+  const rc = b.local(8.4, 3.7); circles.push({ x: rc.x, z: rc.z, r: 0.4 });
+  const rec = buildPerson({ skin: pick([0xf1c27d, 0xc68642, 0xffdbac, 0x8d5524]), hair: 0x2b1d0e, hairStyle: pick(['bun', 'short', 'ponytail']), top: lighten(col, 0.2), bottom: 0x222233, shoes: 0x111111, acc: ['phone'] });
+  rec.root.position.set(rc.x, 0.12, rc.z); rec.root.rotation.y = b.f > 0 ? 0 : Math.PI; scene.add(rec.root); b.receptionist = rec;
+  // lounge: sofa + coffee table + rug
+  walls.push(box(-10.5, -9.2, 2.2, 4.6));
+  L(boxG(2.8, 0.02, 3.2), toon(lighten(col, 0.35)), -8.9, 0.13, 3.4);
+  L(boxG(1.2, 0.5, 2.4), accent, -9.85, 0.4, 3.4); L(boxG(0.35, 1, 2.4), accent, -10.35, 0.65, 3.4);
+  for (const z of [2.1, 4.7]) L(boxG(1.2, 0.75, 0.3), dark, -9.85, 0.5, z);
+  L(boxG(0.8, 0.08, 1.2), glassC, -8.2, 0.55, 3.4); for (const z of [2.95, 3.85]) L(boxG(0.06, 0.4, 0.06), chrome, -8.2, 0.33, z);
+  // potted plants
+  for (const [px, pz] of [[-10.1, -7.2], [10.1, -7.2], [10.1, 7.1]]) {
+    const pp = b.local(px, pz); circles.push({ x: pp.x, z: pp.z, r: 0.5 });
+    L(cylG(0.42, 0.32, 0.7, 10), wood, px, 0.45, pz); L(sphG(0.62, 10, 8), green, px, 1.35, pz); L(sphG(0.42, 8, 6), toon(0x4fb85c), px, 1.85, pz);
+  }
+  // entrance: chrome door frame, canopy, velvet ropes
+  for (const s of [-1, 1]) { const p = b.local(s * 3.4, 8); circles.push({ x: p.x, z: p.z, r: 0.4 }); L(boxG(0.5, 3, 0.6), chrome, s * 3.4, 1.5, 8); L(cylG(0.09, 0.09, 3.3, 8), chrome, s * 3.9, 1.65, 10.9); const q = b.local(s * 3.9, 10.9); circles.push({ x: q.x, z: q.z, r: 0.2 }); }
+  L(boxG(8.6, 0.12, 3.6), chrome, 0, 3.3, 9.5); L(boxG(8.4, 0.32, 3.4), accent, 0, 3.52, 9.5);
+  for (const lx of [-2.5, 0, 2.5]) L(boxG(0.8, 0.04, 0.3), toon(0xfff6d0), lx, 3.24, 9.8);
+  for (const s of [-1, 1]) { for (const zz of [8.8, 10.6]) { L(cylG(0.06, 0.09, 1, 8), gold, s * 4.8, 0.5, zz); L(sphG(0.11, 6, 4), gold, s * 4.8, 1.05, zz); } L(boxG(0.08, 0.08, 1.8), toon(0xb3002d), s * 4.8, 0.85, 9.7); }
+  mergeGroup(deco, null, personMat); mergeGroup(glass, null, glassMat2); mergeGroup(spots, null, spotMat);
+}
+const _ray = new THREE.Vector3();
+function segHitsBox(a, c, bx) {
+  let t0 = 0, t1 = 1;
+  for (const [o, d, mn, mx] of [[a.x, c.x - a.x, bx.minX, bx.maxX], [a.y, c.y - a.y, 0, bx.maxY], [a.z, c.z - a.z, bx.minZ, bx.maxZ]]) {
+    if (Math.abs(d) < 1e-6) { if (o < mn || o > mx) return false; continue; }
+    let u = (mn - o) / d, v = (mx - o) / d; if (u > v) [u, v] = [v, u];
+    t0 = Math.max(t0, u); t1 = Math.min(t1, v); if (t0 > t1) return false;
+  }
+  return true;
+}
+function updateBuildingFade(dt) {
+  for (const bd of buildings) {
+    const hit = game.playing && segHitsBox(camera.position, camTarget, bd.box);
+    bd.a += ((hit ? 0 : 1) - bd.a) * Math.min(1, dt * 10);
+    bd.g.visible = bd.a > 0.04;
+    for (const m of bd.mats) { m.opacity = bd.a; m.depthWrite = bd.a > 0.95; }
+  }
+}
 function makeBase(i, def, owner) {
   const W = 22, D = 16, H = 2.4;
   const { x: cx, z: cz, f } = def;
@@ -492,17 +595,11 @@ function makeBase(i, def, owner) {
   b.local = (lx, lz) => ({ x: cx + lx, z: cz + f * lz });
   owner.base = b;
   const col = owner.color;
-  M(boxG(W, 0.12, D), toon(darken(col, 0.45)), cx, 0.06, cz, scene);
-  M(boxG(W - 3, 0.02, D - 4), toon(lighten(col, 0.15)), cx, 0.13, cz - f * 0.5, scene);
-  const wm = toon(lighten(col, 0.25));
-  const wl = (x0, x1, z0, z1) => { const a = b.local(x0, z0), c = b.local(x1, z1); addWallBox(a.x, c.x, a.z, c.z, H, wm); };
-  wl(-11, 11, -8.3, -7.7); wl(-11.3, -10.7, -8.3, 8.3); wl(10.7, 11.3, -8.3, 8.3); wl(-11, -3.4, 7.7, 8.3); wl(3.4, 11, 7.7, 8.3);
-  // posts + header
+  buildAgencyInterior(b, col);
   const dz = b.local(0, 8).z;
-  for (const s of [-1, 1]) { M(cylG(0.45, 0.5, 3.8, 12), toon(0xffcc33), cx + s * 3.4, 1.9, dz, scene); M(sphG(0.5, 12, 8), toon(lighten(col, 0.4)), cx + s * 3.4, 4.1, dz, scene); circles.push({ x: cx + s * 3.4, z: dz, r: 0.5 }); }
-  M(boxG(7.4, 0.55, 0.6), toon(col), cx, 3.6, dz, scene);
-  // sign
-  b.sign = makeCanvasSprite(512, 160, 2.0); b.sign.sprite.position.set(cx, 5.3, dz); scene.add(b.sign.sprite);
+  // sign over the entrance canopy + a big one on the roof (same texture)
+  b.sign = makeCanvasSprite(512, 160, 2.0); const sp = b.local(0, 10.9); b.sign.sprite.position.set(sp.x, 4.6, sp.z); scene.add(b.sign.sprite);
+  const roof = new THREE.Sprite(b.sign.sprite.material); roof.scale.set(9.6, 3, 1); const rp = b.local(0, -10.9); roof.position.set(rp.x, 9.2, rp.z); scene.add(roof);
   // laser
   b.laser = new THREE.Group(); b.laser.position.set(cx, 0, dz); scene.add(b.laser); b.laser.visible = false;
   M(boxG(6.8, 2.5, 0.1), laserMat, 0, 1.3, 0, b.laser);
@@ -993,7 +1090,7 @@ function updateBot(b, dt) {
   if (ai.think <= 0) { ai.think = rand(0.35, 0.7); botThink(b); }
   switch (ai.state) {
     case 'home':
-      if (!b.path.length) { ai.wait -= dt; if (ai.wait <= 0) { const w = b.base.local(rand(-8, 8), rand(3, 6)); b.path = route(b.pos.x, b.pos.z, w.x, w.z); ai.wait = rand(1.5, 4); } }
+      if (!b.path.length) { ai.wait -= dt; if (ai.wait <= 0) { const w = b.base.local(rand(-5.5, 5.5), rand(2.5, 6)); b.path = route(b.pos.x, b.pos.z, w.x, w.z); ai.wait = rand(1.5, 4); } }
       break;
     case 'buy': {
       const c = ai.celeb;
@@ -1581,6 +1678,8 @@ function update(dt) {
     if (game.dirtySave > 0) { game.dirtySave -= dt; if (game.dirtySave <= 0) doSave(); }
   }
   updateCamera(dt);
+  updateBuildingFade(dt);
+  for (const bs of bases) if (bs.receptionist) animPerson(bs.receptionist, 'idle', bs.i, game.t);
   // keep the sun's light direction stable
 }
 let last = performance.now(), firstFrame = false;
