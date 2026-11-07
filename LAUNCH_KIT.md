@@ -16,6 +16,7 @@ Bots will steal from you too, so step on your laser LOCK pad to keep thieves out
 👑 WEEKLY ADMIN ABUSE every Saturday: for 15 minutes only superstars and icons hit the carpet!
 💎 Hunt GOLD, DIAMOND and RAINBOW versions.
 ♻️ REBIRTH for permanent income multipliers, extra podiums and a badge on your name.
+🛗 Unlock up to 4 extra floors for your agency (Floor 2 to 5) with rebirths. Ride the elevator up, and watch out: bots ride it too!
 🏆 Climb the Richest Agencies leaderboard!
 All celebrities are fictional characters.
 

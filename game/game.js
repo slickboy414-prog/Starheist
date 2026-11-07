@@ -531,7 +531,7 @@ function buildAgencyInterior(b, col) {
   const tp = b.local(0, -10.95), tower = new THREE.Group(); scene.add(tower);
   M(boxG(22.6, 7, 5.3), tMat, tp.x, 3.5, tp.z, tower); M(boxG(23, 0.7, 5.7), bMat, tp.x, 7.2, tp.z, tower); M(boxG(23, 0.4, 5.7), bMat, tp.x, 0.2, tp.z, tower);
   for (const ax of [-7, 6]) { const a = b.local(ax, -11.5); M(boxG(2, 1, 1.6), new THREE.MeshLambertMaterial({ color: 0xb8bcc6, transparent: true }), a.x, 8.05, a.z, tower); }
-  buildings.push({ g: tower, mats: [tMat, bMat, ...tower.children.slice(3).map((m) => m.material)], box: { ...box(-11.5, 11.5, -13.7, -8.2), maxY: 8.6 }, a: 1 });
+  b.towerEntry = { g: tower, mats: [tMat, bMat, ...tower.children.slice(3).map((m) => m.material)], box: { ...box(-11.5, 11.5, -13.7, -8.2), maxY: 8.6 }, a: 1 }; buildings.push(b.towerEntry);
   // interior stage wall + framed posters
   L(boxG(22, 2.7, 0.25), solid, 0, 1.35, -8.12);
   L(boxG(22, 0.12, 0.3), accent, 0, 2.75, -8.1);
@@ -553,7 +553,7 @@ function buildAgencyInterior(b, col) {
   for (const z of [2.1, 4.7]) L(boxG(1.2, 0.75, 0.3), dark, -9.85, 0.5, z);
   L(boxG(0.8, 0.08, 1.2), glassC, -8.2, 0.55, 3.4); for (const z of [2.95, 3.85]) L(boxG(0.06, 0.4, 0.06), chrome, -8.2, 0.33, z);
   // potted plants
-  for (const [px, pz] of [[-10.1, -7.2], [10.1, -7.2], [10.1, 7.1]]) {
+  for (const [px, pz] of [[-10.1, -7.2], [10.1, 7.1]]) {
     const pp = b.local(px, pz); circles.push({ x: pp.x, z: pp.z, r: 0.5 });
     L(cylG(0.42, 0.32, 0.7, 10), wood, px, 0.45, pz); L(sphG(0.62, 10, 8), green, px, 1.35, pz); L(sphG(0.42, 8, 6), toon(0x4fb85c), px, 1.85, pz);
   }
@@ -576,6 +576,7 @@ function segHitsBox(a, c, bx) {
 }
 function updateBuildingFade(dt) {
   for (const bd of buildings) {
+    if (bd.off) { bd.g.visible = false; continue; }
     const hit = game.playing && segHitsBox(camera.position, camTarget, bd.box);
     bd.a += ((hit ? 0 : 1) - bd.a) * Math.min(1, dt * 10);
     bd.g.visible = bd.a > 0.04;
@@ -593,7 +594,7 @@ function makeBase(i, def, owner) {
   const dz = b.local(0, 8).z;
   // sign over the entrance canopy + a big one on the roof (same texture)
   b.sign = makeCanvasSprite(512, 160, 2.0); const sp = b.local(0, 10.9); b.sign.sprite.position.set(sp.x, 4.6, sp.z); scene.add(b.sign.sprite);
-  const roof = new THREE.Sprite(b.sign.sprite.material); roof.scale.set(9.6, 3, 1); const rp = b.local(0, -10.9); roof.position.set(rp.x, 9.2, rp.z); scene.add(roof);
+  const roof = new THREE.Sprite(b.sign.sprite.material); roof.scale.set(9.6, 3, 1); const rp = b.local(0, -10.9); roof.position.set(rp.x, 9.2, rp.z); scene.add(roof); b.roofSign = roof;
   // laser
   b.laser = new THREE.Group(); b.laser.position.set(cx, 0, dz); scene.add(b.laser); b.laser.visible = false;
   M(boxG(6.8, 2.5, 0.1), laserMat, 0, 1.3, 0, b.laser);
@@ -611,7 +612,7 @@ function makeBase(i, def, owner) {
     let approach;
     if (rz === -1) approach = [b.local(sx, 0.75)];
     else { const gx = sx < 0 ? -5 : 5; approach = [b.local(gx, 1.4), b.local(gx, -3), b.local(sx, -3)]; }
-    const slot = { base: b, idx: idx++, pos: wp, celeb: null, podium, ring, approach, label: null, labelKey: '' };
+    const slot = { base: b, idx: idx++, floor: 0, pos: wp, celeb: null, podium, ring, approach, label: null, labelKey: '' };
     if (owner.isPlayer) {
       slot.label = makeCanvasSprite(256, 80, 0.75);
       const lp = b.local(sx, rz + 1.25); slot.label.sprite.position.set(lp.x, 1.35, lp.z); scene.add(slot.label.sprite); slot.label.sprite.visible = false;
@@ -627,10 +628,107 @@ function makeBase(i, def, owner) {
   if (owner.isPlayer) {
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0x2ee6d6, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     const bp = b.local(0, -7.2); beam.position.set(bp.x, 30, bp.z); scene.add(beam); game.beacon = beam;
+    buildUpperFloors(b, col);
   }
   drawSign(b);
   bases.push(b);
   return b;
+}
+// ---------- upper floors (player agency, unlocked by rebirth) ----------
+function padSprite(txt, color) {
+  const s = makeCanvasSprite(256, 80, 0.75); s.ctx.textAlign = 'center'; s.ctx.textBaseline = 'middle';
+  strokeText(s.ctx, txt, 128, 42, 40, color, 240); s.tex.needsUpdate = true; return s.sprite;
+}
+function elevPad(b, at, y, color, label, labelColor, parent) {
+  const g = new THREE.Group(); g.position.set(at.x, y, at.z); parent.add(g);
+  M(cylG(0.85, 0.9, 0.1, 18), toon(color), 0, 0.05, 0, g);
+  M(torG(0.85, 0.06, 6, 20), new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 0.12, 0, g).rotation.x = -Math.PI / 2;
+  const sp = padSprite(label, labelColor); sp.position.y = 1.15; g.add(sp);
+  return g;
+}
+function buildUpperFloors(b, col) {
+  const L = (lx, lz) => b.local(lx, lz);
+  b.elev = L(9.6, -6.6); b.elevDown = L(9.6, -2.3); b.lane = L(9.9, -3); b.laneFront = L(9.9, 0.75);
+  b.floors = [];
+  b.groundUp = elevPad(b, b.elev, 0.12, 0x22c55e, '⬆ FLOOR 2', '#9dffb8', scene);
+  const tubeMat = new THREE.MeshBasicMaterial({ color: 0xaee4ff, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+  b.tube = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 1, 16, 1, true), tubeMat); b.tube.position.set(b.elev.x, 0, b.elev.z); scene.add(b.tube);
+  const floorMat = new THREE.MeshToonMaterial({ map: marbleTex, color: lighten(col, 0.85), gradientMap: gradTex });
+  const rows = [-5, -1], xs = [-7.5, -2.5, 2.5, 7.5];
+  for (let n = 1; n <= 4; n++) {
+    const y0 = n * FH, g = new THREE.Group(); scene.add(g);
+    const deco = new THREE.Group(), glass = new THREE.Group(); g.add(deco, glass);
+    M(boxG(22.6, 0.3, 16.6), floorMat, b.cx, y0 - 0.03, b.cz, g);
+    M(boxG(22.8, 0.22, 16.8), toon(col), b.cx, y0 - 0.28, b.cz, deco);
+    const rail = (x0, x1, z0, z1) => {
+      const a = L(x0, z0), c = L(x1, z1);
+      const bx = { minX: Math.min(a.x, c.x), maxX: Math.max(a.x, c.x), minZ: Math.min(a.z, c.z), maxZ: Math.max(a.z, c.z), floor: n };
+      walls.push(bx);
+      const w = bx.maxX - bx.minX, d = bx.maxZ - bx.minZ, mx = (bx.minX + bx.maxX) / 2, mz = (bx.minZ + bx.maxZ) / 2;
+      M(boxG(+w.toFixed(2), 1.05, +(d * 0.4).toFixed(2)), toon(0xaee4ff), mx, y0 + 0.65, mz, glass);
+      M(boxG(+(w + 0.04).toFixed(2), 0.1, +(d + 0.04).toFixed(2)), toon(0xd8dde6), mx, y0 + 1.2, mz, deco);
+      M(boxG(+(w + 0.04).toFixed(2), 0.14, +(d + 0.04).toFixed(2)), toon(lighten(col, 0.5)), mx, y0 + 0.19, mz, deco);
+    };
+    rail(-11.3, 11.3, -8.3, -7.9); rail(-11.3, 11.3, 7.9, 8.3); rail(-11.3, -10.9, -8.3, 8.3); rail(10.9, 11.3, -8.3, 8.3);
+    for (const [px, pz] of [[-11.1, -8.1], [11.1, -8.1], [-11.1, 8.1], [11.1, 8.1], [0, -8.1]]) { const p = L(px, pz); M(cylG(0.22, 0.22, FH, 10), toon(0xd8dde6), p.x, y0 - FH / 2, p.z, deco); }
+    // podiums
+    let k = 0;
+    for (const rz of rows) for (const sx of xs) {
+      const wp = L(sx, rz);
+      const podium = M(cylG(1, 1.08, 0.7, 20), toon(0xf4f0ff), wp.x, y0 + 0.47, wp.z, g);
+      const ring = M(torG(0.92, 0.08, 6, 24), new THREE.MeshBasicMaterial({ color: 0x777777 }), wp.x, y0 + 0.84, wp.z, g); ring.rotation.x = -Math.PI / 2;
+      M(cylG(0.34, 0.34, 0.02, 5), toon(0xffcc33), L(sx, rz + 1.55).x, y0 + 0.14, L(sx, rz + 1.55).z, deco);
+      circles.push({ x: wp.x, z: wp.z, r: 1.02, floor: n });
+      const approach = rz === -1 ? [b.lane, b.laneFront, L(sx, 0.75)] : [b.lane, L(sx, -3)];
+      const label = makeCanvasSprite(256, 80, 0.75); const lp = L(sx, rz + 1.25); label.sprite.position.set(lp.x, y0 + 1.35, lp.z); label.sprite.visible = false; g.add(label.sprite);
+      b.slots.push({ base: b, idx: 8 * n + k++, floor: n, pos: wp, celeb: null, podium, ring, approach, label, labelKey: '' });
+    }
+    // elevator pads
+    const up = n < 4 ? elevPad(b, b.elev, y0 + 0.12, 0x22c55e, `⬆ FLOOR ${n + 2}`, '#9dffb8', g) : null;
+    elevPad(b, b.elevDown, y0 + 0.12, 0xff9d00, `⬇ FLOOR ${n}`, '#ffd59a', g);
+    // floor name
+    const fs = makeCanvasSprite(512, 128, 1.6); fs.ctx.textAlign = 'center'; fs.ctx.textBaseline = 'middle';
+    strokeText(fs.ctx, `⭐ FLOOR ${n + 1} ⭐`, 256, 66, 76, '#' + new THREE.Color(col).getHexString(), 500); fs.tex.needsUpdate = true;
+    const fp = L(0, 8.4); fs.sprite.position.set(fp.x, y0 + 2.1, fp.z); g.add(fs.sprite);
+    mergeGroup(deco, null, personMat); mergeGroup(glass, null, glassMat2);
+    b.floors.push({ n, g, up });
+  }
+  refreshFloors(b);
+}
+function refreshFloors(b = player && player.base) {
+  if (!b || !b.floors) return;
+  const u = floorsUnlocked();
+  for (const f of b.floors) { f.unlocked = f.n <= u; if (f.up) f.up.visible = f.n + 1 <= u; }
+  b.groundUp.visible = u > 0;
+  if (b.towerEntry) b.towerEntry.off = u > 0;
+  if (b.roofSign) { const rp = b.local(0, u > 0 ? -2 : -10.9); b.roofSign.position.set(rp.x, u > 0 ? u * FH + 4.2 : 9.2, rp.z); }
+  b.tube.visible = u > 0; b.tube.scale.y = u * FH + 1.2; b.tube.position.y = (u * FH + 1.2) / 2;
+}
+function floorOf(o) { return o.floor || 0; }
+function updateFloorVisibility() {
+  const b = player.base; if (!b.floors) return;
+  const home = game.playing && inside(b, player.pos.x, player.pos.z);
+  const shown = home ? player.floor : 4;
+  for (const f of b.floors) f.g.visible = f.unlocked && f.n <= shown;
+  for (const a of agents) a.p.root.visible = floorOf(a) <= shown || !inside(b, a.pos.x, a.pos.z);
+  for (const c of celebs) {
+    const fl = c.state === 'placed' ? c.slot.floor : c.state === 'carried' ? floorOf(c.carrier) : floorOf(c);
+    c.p.root.visible = fl <= shown;
+  }
+}
+function elevFx(a, fl) {
+  burst(a.pos.x, fl * FH + 1, a.pos.z, 18, [0x9dffb8, 0xffffff], 3, 4);
+  if (a.isPlayer) { Snd.play('pop'); floatText(fl ? `FLOOR ${fl + 1}` : 'FLOOR 1', a.pos.x, fl * FH + 3.4, a.pos.z, '#9dffb8'); }
+}
+function updatePlayerElevator() {
+  const P = player, b = P.base; if (!b.floors) return;
+  const u = floorsUnlocked(), fl = P.floor || 0;
+  const onUp = hdist(P.pos, b.elev) < 0.9, onDown = fl > 0 && hdist(P.pos, b.elevDown) < 0.9;
+  if (!onUp && !onDown) { P.padLock = false; return; }
+  if (P.padLock || !inside(b, P.pos.x, P.pos.z)) return;
+  if (onUp && fl < u) { P.floor = fl + 1; P.padLock = true; elevFx(P, P.floor); if (game.tut >= 4 && !game.floorTip) { game.floorTip = true; feed('🛗 Use the orange pad to go back down.'); } }
+  else if (onUp && fl >= u && u < 4) { if (!P.padTip) { P.padTip = true; floatText(`🔒 Rebirth ${FLOOR_REBIRTH[u]} unlocks FLOOR ${u + 2}`, P.pos.x, fl * FH + 3.4, P.pos.z, '#ff9ec4'); } P.padLock = true; }
+  else if (onDown) { P.floor = fl - 1; P.padLock = true; P.pos.x = b.elevDown.x; P.pos.z = b.elevDown.z; elevFx(P, P.floor); }
 }
 function drawSign(b) {
   const lockTxt = b.locked ? `🔒 LOCKED ${Math.ceil(b.lockT)}s` : '';
@@ -652,6 +750,10 @@ const REBIRTHS = [
   { cash: 25e3, tier: 2 }, { cash: 150e3, tier: 2 }, { cash: 750e3, tier: 3 }, { cash: 3e6, tier: 3 }, { cash: 12e6, tier: 4 },
   { cash: 50e6, tier: 4 }, { cash: 200e6, tier: 4 }, { cash: 800e6, tier: 5 }, { cash: 3e9, tier: 5 }, { cash: 12e9, tier: 5 },
 ];
+const FH = 4.6;                          // height of one agency floor
+const FLOOR_REBIRTH = [1, 3, 6, 9];      // rebirth needed for Floor 2, 3, 4, 5
+const floorsUnlocked = (r = game.rebirth) => FLOOR_REBIRTH.filter((x) => r >= x).length;
+const slotY = (slot) => slot.floor * FH + 0.82;
 const rebirthMult = (r = game.rebirth) => 1 + 0.5 * r;
 const rebirthSlots = (r = game.rebirth) => Math.min(4, Math.floor((r + 1) / 2));
 const rebirthStartCash = (r = game.rebirth) => r ? 250 * Math.pow(4, r) : 100;
@@ -676,6 +778,7 @@ function renderRebirth() {
     <div class="rb-rew">💰 Income <b>x${rebirthMult(r)} → x${rebirthMult(r + 1)}</b></div>
     <div class="rb-rew">💵 Start cash <b>$${fmt(rebirthStartCash(r + 1))}</b></div>
     <div class="rb-rew">👟 Run speed <b>+${Math.round((rebirthSpeed(r + 1) - 1) * 100)}%</b></div>
+    ${floorsUnlocked(r + 1) > floorsUnlocked(r) ? `<div class="rb-rew">🛗 <b>Unlocks FLOOR ${floorsUnlocked(r + 1) + 1}</b> (+8 podiums)</div>` : ''}
     ${rebirthSlots(r + 1) > rebirthSlots(r) ? '<div class="rb-rew">🏢 <b>+1 free podium</b></div>' : ''}
     <div class="rb-rew">🏷️ ♻️${r + 1} badge on your name</div>
     <h4 class="warn">YOU LOSE</h4>
@@ -697,7 +800,9 @@ function doRebirth() {
   player.cash = rebirthStartCash();
   refreshPlayerPodiums(); updateNameTag();
   toggleRebirth(false);
-  const p = player.base.doorIn; player.pos.set(p.x, 0.12, p.z);
+  const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z);
+  refreshFloors();
+  if (floorsUnlocked() > floorsUnlocked(game.rebirth - 1)) setTimeout(() => banner(`🏢 FLOOR ${floorsUnlocked() + 1} UNLOCKED! Take the green elevator pad`, '#9dffb8'), 2600);
   banner(`♻️ REBIRTH ${game.rebirth}! Income x${rebirthMult()} forever!`, '#7dffb0');
   feed(`♻️ You reached <b>Rebirth ${game.rebirth}</b>. Build your agency again, stronger!`);
   Snd.play('legend'); setTimeout(() => Snd.play('win'), 400); game.shake = 0.6;
@@ -719,26 +824,31 @@ function updateNameTag() {
   tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
   strokeText(tag.ctx, game.rebirth ? `★ YOU ♻️${game.rebirth} ★` : '★ YOU ★', 256, 50, 58, '#2ee6d6', 500); tag.tex.needsUpdate = true;
 }
-function freeSlot(a) { const n = unlockedSlots(a); for (let i = 0; i < n; i++) if (!a.base.slots[i].celeb) return a.base.slots[i]; return null; }
+function playerSlots() { const n = unlockedSlots(player), u = floorsUnlocked(); return player.base.slots.filter((s) => s.floor === 0 ? s.idx < n : s.floor <= u); }
+function freeSlot(a) { const list = a.isPlayer ? playerSlots() : a.base.slots; for (const s of list) if (!s.celeb) return s; return null; }
 const ownedCelebs = (a) => celebs.filter((c) => c.owner === a);
 function weakest(a) { let w = null; for (const c of celebs) if (c.owner === a && c.state === 'placed' && (!w || c.income < w.income)) w = c; return w; }
-function route(fx, fz, tx, tz) {
+function route(fx, fz, fl, tx, tz) {
   const out = []; const fb = baseAt(fx, fz), tb = baseAt(tx, tz);
+  if (fl > 0 && fb && fb.elev) out.push(fb.lane, fb.elev, { x: fb.elev.x, z: fb.elev.z, elev: 0 }, fb.lane, fb.laneFront);
   if (fb && fb !== tb) out.push(fb.doorIn, fb.doorOut);
   if (tb && tb !== fb) out.push(tb.doorOut, tb.doorIn);
   out.push({ x: tx, z: tz });
   return out;
 }
-function routeToSlot(fx, fz, slot) {
+function routeToSlot(fx, fz, slot, fl = 0) {
   const b = slot.base, out = [], fb = baseAt(fx, fz);
+  if (fl > 0 && fb === b && fl === slot.floor) { out.push(...slot.approach); return out; }
   if (fb && fb !== b) out.push(fb.doorIn, fb.doorOut);
   if (fb !== b) out.push(b.doorOut, b.doorIn);
+  if (slot.floor > 0) out.push(b.laneFront, b.lane, b.elev, { x: b.elev.x, z: b.elev.z, elev: slot.floor });
   out.push(...slot.approach);
   return out;
 }
 function refreshPlayerPodiums() {
   const n = unlockedSlots(player);
-  player.base.slots.forEach((s, i) => { s.podium.material = i < n ? toon(0xf4f0ff) : toon(0x555566); });
+  player.base.slots.forEach((s, i) => { if (s.floor) return; s.podium.material = i < n ? toon(0xf4f0ff) : toon(0x555566); });
+  refreshFloors();
 }
 
 // ---------------------------------------------------------------------
@@ -753,9 +863,11 @@ function pushBox(p, r, b) {
   if (m === l) p.x = b.minX - r; else if (m === rr) p.x = b.maxX + r; else if (m === t) p.z = b.minZ - r; else p.z = b.maxZ + r;
 }
 function collide(p, r, who) {
-  for (const w of walls) pushBox(p, r, w);
-  for (const b of bases) if (b.locked && b.owner !== who) pushBox(p, r, b.doorBox);
+  const fl = (who && who.floor) || 0;
+  for (const w of walls) if ((w.floor || 0) === fl) pushBox(p, r, w);
+  if (fl === 0) for (const b of bases) if (b.locked && b.owner !== who) pushBox(p, r, b.doorBox);
   for (const c of circles) {
+    if ((c.floor || 0) !== fl) continue;
     const dx = p.x - c.x, dz = p.z - c.z, d = Math.hypot(dx, dz), m = r + c.r;
     if (d < m && d > 1e-4) { p.x = c.x + dx / d * m; p.z = c.z + dz / d * m; }
   }
@@ -764,7 +876,7 @@ function moveCircle(p, r, dx, dz, who) {
   p.x += dx; collide(p, r, who); p.z += dz; collide(p, r, who);
   p.x = clamp(p.x, -90, 90); p.z = clamp(p.z, -72, 72);
 }
-function groundY(x, z) { if (baseAt(x, z)) return 0.12; if (Math.abs(z) < 3 && Math.abs(x) < 63) return 0.08; return 0; }
+function groundY(x, z, fl = 0) { if (fl > 0) return fl * FH + 0.12; if (baseAt(x, z)) return 0.12; if (Math.abs(z) < 3 && Math.abs(x) < 63) return 0.08; return 0; }
 
 // ---------------------------------------------------------------------
 //  Effects: particles, floating text, rings
@@ -975,7 +1087,7 @@ function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
 }
 function placeCeleb(c, slot, owner) {
   slot.celeb = c; c.slot = slot; c.owner = owner; c.state = 'placed'; c.path = [];
-  c.pos.set(slot.pos.x, 0.82, slot.pos.z);
+  c.pos.set(slot.pos.x, slotY(slot), slot.pos.z); c.floor = slot.floor;
   slot.ring.material.color.set(c.def.r === 5 ? 0xffffff : RARITIES[c.def.r].hex);
   drawCelebLabel(c);
 }
@@ -991,7 +1103,7 @@ function buy(a, c) {
   let s = freeSlot(a);
   if (!s && !a.isPlayer) { const w = weakest(a); if (w && w.income * 2 <= c.income) { a.cash += price(w) * 0.5; clearSlot(w.slot); removeCeleb(w); s = freeSlot(a); } }
   if (!s) { if (a.isPlayer) { Snd.play('error'); banner('🏢 Agency full! Sell or upgrade', '#ff9d00'); } return false; }
-  a.cash -= cost; s.celeb = c; c.slot = s; c.owner = a; c.state = 'walkToBase';
+  a.cash -= cost; s.celeb = c; c.slot = s; c.owner = a; c.state = 'walkToBase'; c.floor = 0;
   c.path = routeToSlot(c.pos.x, c.pos.z, s).concat([{ x: s.pos.x, z: s.pos.z }]);
   drawCelebLabel(c);
   burst(c.pos.x, 2, c.pos.z, 30);
@@ -1040,7 +1152,7 @@ function returnHome(c) {
   const a = c.carrier; if (a) a.carrying = null;
   c.carrier = null; c.state = 'placed'; c.slot = c.homeSlot; c.homeSlot = null; c.homeOwner = null;
   c.p.root.scale.setScalar(c.baseScale);
-  c.pos.set(c.slot.pos.x, 0.82, c.slot.pos.z);
+  c.pos.set(c.slot.pos.x, slotY(c.slot), c.slot.pos.z); c.floor = c.slot.floor;
   burst(c.pos.x, 2, c.pos.z, 20, [0xffffff, 0x9be7ff]);
   if (hdist(c.pos, player.pos) < 30) floatText('RETURNED!', c.pos.x, 3.6, c.pos.z, '#9be7ff');
 }
@@ -1058,7 +1170,7 @@ function lockBase(b) {
   for (const a of agents) {
     if (a === b.owner || !inside(b, a.pos.x, a.pos.z)) continue;
     if (a.carrying && a.carrying.homeOwner === b.owner) returnHome(a.carrying);
-    a.pos.x = b.doorOut.x + rand(-2.5, 2.5); a.pos.z = b.doorOut.z; a.stunT = Math.max(a.stunT, 0.7); a.path = [];
+    a.pos.x = b.doorOut.x + rand(-2.5, 2.5); a.pos.z = b.doorOut.z; a.floor = 0; a.stunT = Math.max(a.stunT, 0.7); a.path = [];
     burst(a.pos.x, 1.5, a.pos.z, 25, [0xff2a6d, 0xffffff]);
     if (a.isPlayer) { banner('⚡ ZAPPED! They locked their doors!', '#ff5c8d'); Snd.play('zap'); game.shake = 0.4; }
   }
@@ -1076,7 +1188,7 @@ function doFlash() {
   const fs = flashStats(); P.flashCd = fs.cd;
   let hit = 0;
   for (const b of bots) {
-    if (hdist(b.pos, P.pos) > fs.r) continue;
+    if (hdist(b.pos, P.pos) > fs.r || (b.floor || 0) !== (P.floor || 0)) continue;
     b.stunT = 2.6; b.path = []; b.ai.state = 'home'; hit++;
     if (b.carrying) { const c = b.carrying; const mine = c.homeOwner === player; returnHome(c); if (mine) { banner(`🛡️ SAVED ${c.def.name}!`, '#5dff7a'); Snd.play('win'); } }
   }
@@ -1147,7 +1259,7 @@ function updateBot(b, dt) {
   if (b.stunT > 0) {
     b.stunT -= dt; b.stars.visible = b.stunT > 0; b.moving = false;
     if (b.stunT <= 0) toHome(b);
-    applyKb(b, dt); b.pos.y = groundY(b.pos.x, b.pos.z);
+    applyKb(b, dt); b.pos.y = groundY(b.pos.x, b.pos.z, b.floor || 0);
     animPerson(b.p, 'stun', 0, game.t); b.p.root.rotation.y = b.yaw; return;
   }
   b.cash += dt * (0.6 + game.time * 0.002);
@@ -1156,34 +1268,34 @@ function updateBot(b, dt) {
   if (ai.think <= 0) { ai.think = rand(0.35, 0.7); botThink(b); }
   switch (ai.state) {
     case 'home':
-      if (!b.path.length) { ai.wait -= dt; if (ai.wait <= 0) { const w = b.base.local(rand(-5.5, 5.5), rand(2.5, 6)); b.path = route(b.pos.x, b.pos.z, w.x, w.z); ai.wait = rand(1.5, 4); } }
+      if (!b.path.length) { ai.wait -= dt; if (ai.wait <= 0) { const w = b.base.local(rand(-5.5, 5.5), rand(2.5, 6)); b.path = route(b.pos.x, b.pos.z, b.floor || 0, w.x, w.z); ai.wait = rand(1.5, 4); } }
       break;
     case 'buy': {
       const c = ai.celeb;
       if (!c || c.state !== 'carpet' || price(c) > b.cash || c.pos.x > 58) { toHome(b); break; }
-      if (ai.repath <= 0) { ai.repath = 0.35; b.path = route(b.pos.x, b.pos.z, c.pos.x + 1.5, c.pos.z); }
+      if (ai.repath <= 0) { ai.repath = 0.35; b.path = route(b.pos.x, b.pos.z, b.floor || 0, c.pos.x + 1.5, c.pos.z); }
       if (hdist(b.pos, c.pos) < 2.3) { buy(b, c); toHome(b); }
       break;
     }
     case 'steal': {
       const s = ai.slot, c = s && s.celeb;
       if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
-      if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s);
+      if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s, b.floor || 0);
       if (c.owner === player && !ai.warned && hdist(b.pos, player.base.doorOut) < 15) {
         ai.warned = true; banner(`⚠️ ${b.name} is sneaking into your agency!`, '#ff9d00'); Snd.play('warn');
         if (game.tut === 3) setHint('🔒 Thief incoming! Get home and step on the LOCK pad (or press LOCK)!');
       }
-      if (hdist(b.pos, s.pos) < 2.5) { grab(b, c); ai.state = 'return'; ai.repath = 0; }
+      if ((b.floor || 0) === s.floor && hdist(b.pos, s.pos) < 2.5) { grab(b, c); ai.state = 'return'; ai.repath = 0; }
       break;
     }
     case 'return':
       if (!b.carrying) { toHome(b); break; }
-      if (ai.repath <= 0) { ai.repath = 0.8; b.path = route(b.pos.x, b.pos.z, b.base.doorIn.x, b.base.doorIn.z); }
+      if (ai.repath <= 0) { ai.repath = 0.8; b.path = route(b.pos.x, b.pos.z, b.floor || 0, b.base.doorIn.x, b.base.doorIn.z); }
       break;
     case 'chase': {
       const t = ai.target; ai.chaseT -= dt;
       if (!t || !t.carrying || t.carrying.homeOwner !== b || ai.chaseT <= 0) { toHome(b); break; }
-      if (ai.repath <= 0) { ai.repath = 0.25; b.path = route(b.pos.x, b.pos.z, t.pos.x, t.pos.z); }
+      if (ai.repath <= 0) { ai.repath = 0.25; b.path = route(b.pos.x, b.pos.z, b.floor || 0, t.pos.x, t.pos.z); }
       break;
     }
   }
@@ -1195,7 +1307,7 @@ function updateBot(b, dt) {
     b.stuck += dt;
     if (b.stuck > 1.5) { if (hdist(b.pos, b.last) < 0.6) { const a = rand(0, 6.28); b.path.unshift({ x: b.pos.x + Math.cos(a) * 3, z: b.pos.z + Math.sin(a) * 3 }); } b.stuck = 0; b.last.x = b.pos.x; b.last.z = b.pos.z; }
   }
-  b.pos.y = groundY(b.pos.x, b.pos.z);
+  b.pos.y = groundY(b.pos.x, b.pos.z, b.floor || 0);
   if (b.carrying && inside(b.base, b.pos.x, b.pos.z)) { deliver(b); toHome(b); }
   b.ph += dt * (b.moving ? speed * 1.7 : 0);
   animPerson(b.p, b.carrying ? 'carry' : (b.moving ? (speed > 5 ? 'run' : 'walk') : 'idle'), b.ph, game.t);
@@ -1205,7 +1317,7 @@ function followPath(a, speed, dt) {
   a.moving = false;
   while (a.path.length) {
     const wp = a.path[0]; const dx = wp.x - a.pos.x, dz = wp.z - a.pos.z, d = Math.hypot(dx, dz);
-    if (d < 0.4) { a.path.shift(); continue; }
+    if (d < 0.4) { a.path.shift(); if (wp.elev != null) { a.floor = wp.elev; elevFx(a, a.floor); } continue; }
     const st = Math.min(speed * dt, d);
     moveCircle(a.pos, 0.45, dx / d * st, dz / d * st, a);
     a.yaw = angLerp(a.yaw, Math.atan2(dx, dz), dt * 10); a.moving = true;
@@ -1220,7 +1332,7 @@ function checkCatches() {
   for (const a of agents) {
     const c = a.carrying; if (!c) continue;
     const d = c.homeOwner; if (!d || d.stunT > 0) continue;
-    if (hdist(a.pos, d.pos) < 1.4) {
+    if ((a.floor || 0) === (d.floor || 0) && hdist(a.pos, d.pos) < 1.4) {
       returnHome(c);
       a.stunT = 1.1; const dx = a.pos.x - d.pos.x, dz = a.pos.z - d.pos.z, l = Math.hypot(dx, dz) || 1; a.kb.x = dx / l * 14; a.kb.z = dz / l * 14;
       burst(a.pos.x, 1.6, a.pos.z, 25, [0xffffff, 0xffcc00]);
@@ -1260,16 +1372,17 @@ function updatePlayer(dt) {
     P.ph += dt * sp * 1.6 * Math.min(1, len);
   }
   applyKb(P, dt);
-  P.pos.y = groundY(P.pos.x, P.pos.z);
+  P.pos.y = groundY(P.pos.x, P.pos.z, P.floor || 0);
   animPerson(P.p, P.stunT > 0 ? 'stun' : P.carrying ? 'carry' : P.moving ? (len > 0.6 ? 'run' : 'walk') : 'idle', P.ph, game.t);
   P.p.root.rotation.y = P.yaw;
   if (P.carrying && inside(P.base, P.pos.x, P.pos.z)) deliver(P);
-  if (hdist(P.pos, P.base.pad) < 1.2 && !P.base.locked && P.base.lockCd <= 0) lockBase(P.base);
+  updatePlayerElevator();
+  if (!P.floor && hdist(P.pos, P.base.pad) < 1.2 && !P.base.locked && P.base.lockCd <= 0) lockBase(P.base);
   // collect
   collectT -= dt;
   for (const c of celebs) {
     if (c.owner !== P || c.state !== 'placed' || c.stored < 1) continue;
-    if (hdist(P.pos, c.slot.pos) < 2.8) {
+    if (c.slot.floor === (P.floor || 0) && hdist(P.pos, c.slot.pos) < 2.8) {
       const v = Math.floor(c.stored); P.cash += v; game.stats.earned += v; c.stored -= v;
       if (collectT <= 0 || v > 5) floatText(`+$${fmt(v)}`, c.pos.x, 3.2, c.pos.z, '#5dff7a', 0.9);
       Snd.play('coin'); burst(c.pos.x, 1.2, c.pos.z, 6, [0x5dff7a, 0xffcc00], 2, 5);
@@ -1282,9 +1395,9 @@ function updatePlayer(dt) {
   let bd = 1e9;
   if (!P.carrying) {
     for (const c of celebs) {
-      if (c.state === 'carpet') { const d = hdist(P.pos, c.pos); if (d < 3.3 && d < bd) { bd = d; target = { kind: 'buy', c }; } }
-      else if (c.state === 'placed' && c.owner !== P) { const d = hdist(P.pos, c.slot.pos); if (d < 2.7 && d < bd) { bd = d; target = { kind: 'steal', c }; } }
-      else if (c.state === 'placed' && c.owner === P) { const d = hdist(P.pos, c.slot.pos); if (d < 2.4 && (!sellTarget || d < hdist(P.pos, sellTarget.slot.pos))) sellTarget = c; }
+      if (c.state === 'carpet') { const d = P.floor ? 99 : hdist(P.pos, c.pos); if (d < 3.3 && d < bd) { bd = d; target = { kind: 'buy', c }; } }
+      else if (c.state === 'placed' && c.owner !== P) { const d = c.slot.floor !== (P.floor || 0) ? 99 : hdist(P.pos, c.slot.pos); if (d < 2.7 && d < bd) { bd = d; target = { kind: 'steal', c }; } }
+      else if (c.state === 'placed' && c.owner === P) { const d = c.slot.floor !== (P.floor || 0) ? 99 : hdist(P.pos, c.slot.pos); if (d < 2.4 && (!sellTarget || d < hdist(P.pos, sellTarget.slot.pos))) sellTarget = c; }
     }
   }
 }
@@ -1324,10 +1437,10 @@ function updateCelebs(dt) {
         c.moving = false;
         while (c.path.length) {
           const wp = c.path[0]; const dx = wp.x - c.pos.x, dz = wp.z - c.pos.z, d = Math.hypot(dx, dz);
-          if (d < 0.3) { c.path.shift(); continue; }
+          if (d < 0.3) { c.path.shift(); if (wp.elev != null) c.floor = wp.elev; continue; }
           const st = Math.min(5.5 * dt, d); c.pos.x += dx / d * st; c.pos.z += dz / d * st; c.yaw = angLerp(c.yaw, Math.atan2(dx, dz), dt * 10); c.moving = true; break;
         }
-        c.pos.y = groundY(c.pos.x, c.pos.z);
+        c.pos.y = groundY(c.pos.x, c.pos.z, c.floor || 0);
         c.ph += dt * 9; animPerson(c.p, 'walk', c.ph, game.t);
         if (!c.path.length) { placeCeleb(c, c.slot, c.owner); burst(c.pos.x, 2, c.pos.z, 20); if (c.owner === player) Snd.play('pop'); }
         break;
@@ -1631,7 +1744,7 @@ function applySave(str) {
   for (const s of d.celebs || []) {
     const def = CELEBS[s.d], mut = MUTS[s.m] || MUTS[0]; if (!def) continue;
     let slot = player.base.slots[s.s];
-    if (!slot || slot.celeb || s.s >= unlockedSlots(player)) slot = freeSlot(player);
+    if (!slot || slot.celeb || !playerSlots().includes(slot)) slot = freeSlot(player);
     if (!slot) continue;
     const c = createCeleb(def, mut); placeCeleb(c, slot, player); c.stored = Math.max(0, s.st || 0);
     incSum += c.income;
@@ -1749,6 +1862,7 @@ function update(dt) {
   }
   updateCamera(dt);
   updateBuildingFade(dt);
+  if (player) updateFloorVisibility();
   for (const bs of bases) if (bs.receptionist) animPerson(bs.receptionist, 'idle', bs.i, game.t);
   // keep the sun's light direction stable
 }
@@ -1778,7 +1892,7 @@ function startGame() {
   if (game.playing || !game.loaded) return;
   game.playing = true;
   el.title.classList.add('hidden'); el.hud.classList.remove('hidden');
-  const p = player.base.doorIn; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
+  const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
   camTarget.set(player.pos.x, 1.6, player.pos.z);
   if (offlineEarned > 0) {
     el.popup.innerHTML = `<h3 class="stroke">WELCOME BACK!</h3><div>Your celebs earned while you were away:</div><p class="stroke">+$${fmt(offlineEarned)}</p><button class="stroke" id="claimBtn">COLLECT</button>`;
@@ -1813,4 +1927,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
