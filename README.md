@@ -3,7 +3,7 @@
 A 3D "buy and steal" tycoon game built for **YouTube Playables** (three.js, no build step).
 Sign fictional celebs off the red carpet, steal from rival bot agencies, and lock up your own.
 
-- `game/`: the Playables build (`index.html`, `game.js`, bundled `three.module.min.js`)
+- `game/`: the Playables build (`index.html`, `game.js`, `content.js` (celebs, fusions, limited), `i18n.js` (translations), bundled `three.module.min.js`)
 - `preview/`: the same game without the YouTube SDK tag, for playing in a normal browser
 - `star-heist-playables.zip`: the upload bundle
 - `LAUNCH_KIT.md`: store listing, compliance checklist, submission steps

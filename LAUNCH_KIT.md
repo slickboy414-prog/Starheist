@@ -18,6 +18,12 @@ Bots will steal from you too, so step on your laser LOCK pad to keep thieves out
 ♻️ REBIRTH for permanent income multipliers, extra podiums and a badge on your name.
 🛗 Unlock up to 4 extra floors for your agency (Floor 2 to 5) with rebirths. Ride the elevator up, and watch out: bots ride it too!
 🏆 Climb the Richest Agencies leaderboard!
+🔥 Daily login streak and 3 daily missions
+📖 Collect all 166 celebs in your Celeb Album (+1% income each)
+🧪 Fuse 3 specific stars into one-of-a-kind EXCLUSIVE celebs at the Fuse Lab
+🔀 Rearrange your podiums, take the stairs or the elevator between floors
+👑 Prestige after Rebirth 10 for legendary titles and a golden agency
+🌐 Plays in English, Español, Português, हिन्दी and Bahasa Indonesia
 All celebrities are fictional characters.
 
 **Genre / tags:** Idle · Tycoon · Steal · Simulation · Casual · 3D
@@ -56,6 +62,21 @@ All celebrities are fictional characters.
 | Kid-safe content | ✅ cartoon style, no violence (the camera flash "stuns"), no strobe effects |
 | No real people's names or likenesses | ✅ all 21 celebs and 5 bots are original fictional archetypes (no real names) |
 | Not a copy of another game's name, art or characters | ✅ original name, art and characters; only the "buy/steal" genre is shared |
+
+
+## Content calendar (runs automatically, no update needed)
+- **Every day:** a theme day makes one kind of celeb 4x more common (Sun movies, Mon sports, Tue music, Wed viral creators, Thu chefs & hosts, Fri DJs & dancers, Sat royals, magicians & astronauts). Daily missions rotate at midnight local time.
+- **Every week:** a FEATURED celeb (8x spawn chance, x2 income) and a LIMITED celeb that only appears during the Saturday Admin Abuse. 8 Limited celebs rotate.
+
+## v3 compliance notes
+| Requirement | Status |
+|---|---|
+| Language from `ytgame.system.getLanguage()` with in-game override | ✅ 5 languages; celeb names and fame titles stay in English |
+| In-game pause button, plus YouTube `onPause`/`onResume` | ✅ every panel pauses the simulation |
+| No purchases, ads, loot boxes or real-money rewards | ✅ streak, missions and fusion only give in-game cash/celebs; fusion recipes are fixed (no random paid rolls) |
+| Save data size | ✅ about 1 KB (limit 3 MiB) |
+| Total bundle | ✅ about 916 KB unzipped |
+| Only fictional characters | ✅ 166 original celebs; recipe/limited celebs are original too |
 
 ## How to submit
 1. YouTube Playables publishing is invite/partner based. Apply through the **YouTube Playables developer program** (search "YouTube Playables developer" on developers.google.com/youtube). Requirements change, so read their current Playables policies and certification checklist.

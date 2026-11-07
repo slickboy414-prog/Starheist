@@ -27,9 +27,6 @@
     box-shadow:0 5px 0 #0d3d1d;min-width:150px}
   #cash{font-size:30px;line-height:1.05}
   #cps{font-size:14px;color:#eaffd8}
-  #btnShop{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 78px);
-    background:linear-gradient(180deg,#ffd84d,#ff9d00);border:4px solid #5c3300;border-radius:14px;padding:7px 12px;font-size:15px;box-shadow:0 4px 0 #5c3300}
-  #btnShop:active{transform:translateY(3px);box-shadow:0 1px 0 #5c3300}
   #eventChip{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 128px);
     background:rgba(40,10,70,.85);border:3px solid var(--gold);border-radius:12px;padding:6px 10px;font-size:13px;animation:pulse 1s infinite alternate}
   @keyframes pulse{from{transform:scale(1)}to{transform:scale(1.06)}}
@@ -125,10 +122,6 @@
     #minimap{display:none}
     #feed{top:34%}
   }
-  #btnRebirth{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 128px);
-    background:linear-gradient(180deg,#9dffc8,#22b26b);border:4px solid #0b4a2b;border-radius:14px;padding:7px 12px;font-size:15px;box-shadow:0 4px 0 #0b4a2b}
-  #btnRebirth.ready{animation:pulse .5s infinite alternate;box-shadow:0 4px 0 #0b4a2b,0 0 18px #7dffb0}
-  #btnRebirth:active{transform:translateY(3px);box-shadow:0 1px 0 #0b4a2b}
   #rebirth{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
   #rebirth .panel{width:min(460px,92vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#0f4a3a,#0a2a26);border:5px solid #7dffb0;
     border-radius:24px;padding:14px 18px;box-shadow:0 10px 0 #04140f}
@@ -150,6 +143,68 @@
   #rbGo.no{background:linear-gradient(180deg,#888,#555)}
   #rebirthClose{display:block;margin:8px auto 2px;padding:9px 26px;border-radius:14px;border:3px solid #000;background:var(--red);font-size:16px;box-shadow:0 4px 0 #000}
   #eventChip{top:calc(max(10px,env(safe-area-inset-top)) + 178px)!important}
+  /* ---------- v3: menu bar, panels ---------- */
+  #leftCol{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 76px);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  #menuBar{display:grid;grid-template-columns:repeat(3,58px);gap:7px}
+  .mbtn{position:relative;width:58px;height:58px;border-radius:16px;border:3px solid #000;box-shadow:0 4px 0 #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;background:linear-gradient(180deg,#ffd84d,#ff9d00)}
+  .mbtn .ic{font-size:22px;line-height:1}
+  .mbtn small{font-size:8.5px;margin-top:3px;white-space:nowrap;max-width:54px;overflow:hidden;text-overflow:ellipsis}
+  .mbtn b{position:absolute;top:-7px;right:-7px;background:#1a0b2e;border:2px solid #fff;border-radius:10px;font-size:10px;padding:0 4px;min-width:18px;line-height:15px}
+  .mbtn b:empty{display:none}
+  .mbtn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+  .mbtn.ready{animation:pulse .5s infinite alternate;box-shadow:0 4px 0 #000,0 0 16px #7dffb0}
+  #btnRebirth{background:linear-gradient(180deg,#9dffc8,#22b26b)} #btnMissions{background:linear-gradient(180deg,#8fd3ff,#2a7fd6)}
+  #btnAlbum{background:linear-gradient(180deg,#ffb3d1,#ff4fa3)} #btnFuse{background:linear-gradient(180deg,#8ffff0,#00b39a)} #btnPause{background:linear-gradient(180deg,#e4e4f2,#8a8aa8)}
+  #eventChip{position:static!important;max-width:200px}
+  #btnMove{grid-area:move;height:56px;border-radius:16px;font-size:14px;padding:0 12px;border:4px solid #000;box-shadow:0 4px 0 #000;background:linear-gradient(180deg,#8fd3ff,#2a7fd6)}
+  #controls{grid-template-areas:"move sell action" ". flash lock";grid-template-columns:auto auto auto}
+  #btnAction.fuse{background:linear-gradient(180deg,#8ffff0,#00b39a)}
+  .modal{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
+  .modal .panel{width:min(560px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#3a1c71,#24104a);border:5px solid var(--gold);border-radius:24px;padding:14px 16px;box-shadow:0 10px 0 #120624}
+  .modal h2{margin:2px 0 10px;text-align:center;font-size:26px;color:var(--gold)}
+  .modal h4{margin:12px 0 6px;font-size:13px;letter-spacing:1px;color:#ffd84d}
+  .modal h4 small{font-family:system-ui,sans-serif;color:#d9c9ff;letter-spacing:0;margin-left:6px}
+  .mclose{display:block;margin:10px auto 2px;padding:9px 26px;border-radius:14px;border:3px solid #000;background:var(--red);font-size:16px;box-shadow:0 4px 0 #000}
+  .mi-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;margin-bottom:7px}
+  .mi-row.done{opacity:.55} .mi-row.bonus{background:rgba(255,204,0,.14)}
+  .mi-tx{flex:1;font-size:14px;min-width:0} .mi-tx small{display:block;font-family:system-ui,sans-serif;font-weight:700;font-size:11px;color:#d9c9ff;margin-top:3px}
+  .mi-bar{height:8px;border-radius:6px;background:rgba(0,0,0,.4);margin-top:5px;overflow:hidden} .mi-bar i{display:block;height:100%;background:linear-gradient(90deg,#5dff7a,#2ee6d6)}
+  .mi-row button,.fu-row button{min-width:92px;padding:9px;border-radius:12px;border:3px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);font-size:13px;box-shadow:0 3px 0 #000}
+  .mi-row button.no,.fu-row button.no{background:linear-gradient(180deg,#888,#555)}
+  .st-wrap{background:rgba(255,140,0,.12);border:2px solid rgba(255,179,71,.6);border-radius:14px;padding:6px 10px 10px;margin-bottom:6px}
+  .st-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .st-day{background:rgba(0,0,0,.3);border-radius:10px;padding:5px 2px;text-align:center;font-size:10px;display:flex;flex-direction:column;gap:2px}
+  .st-day span{font-size:18px} .st-day small{font-family:system-ui,sans-serif;font-weight:800;font-size:9px;color:#ffe14d}
+  .st-day.cur{outline:3px solid #ffb347;background:rgba(255,179,71,.25)} .st-day.got{opacity:.5}
+  .st-claim{display:block;width:100%;margin-top:8px;padding:11px;border-radius:14px;border:3px solid #000;background:linear-gradient(180deg,#ffd84d,#ff7a00);font-size:16px;box-shadow:0 4px 0 #000}
+  .st-back{text-align:center;font-family:system-ui,sans-serif;font-weight:800;font-size:13px;margin:8px 0 0}
+  .st-later{display:block;margin:10px auto 0;padding:8px 22px;border-radius:12px;border:3px solid #000;background:#555;font-size:14px}
+  .al-top{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:8px} .al-top small{font-family:system-ui,sans-serif;font-weight:700;color:#d9c9ff}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+  .tabs button{flex:0 0 auto;padding:6px 10px;border-radius:12px;border:3px solid var(--c);background:rgba(0,0,0,.35);font-size:11px;color:var(--c)}
+  .tabs button.on{background:var(--c);color:#000} .tabs small{display:block;font-size:10px}
+  .al-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+  .al-card{background:rgba(255,255,255,.08);border:2px solid var(--c);border-radius:12px;padding:6px;text-align:center;min-width:0}
+  .al-card.lock{border-color:rgba(255,255,255,.15);opacity:.6} .al-q{font-size:26px;color:#777}
+  .al-n{font-size:11px;line-height:1.15;overflow-wrap:anywhere} .al-t{font-family:system-ui,sans-serif;font-size:9px;font-weight:700;color:#d9c9ff;margin-top:2px}
+  .al-i{font-size:10px;color:#5dff7a;margin-top:2px}
+  .al-m{display:flex;justify-content:center;gap:3px;margin-top:4px} .al-m i{width:10px;height:10px;border-radius:50%;background:#333;border:1px solid #000}
+  .al-m i.y.mu0{background:#fff} .al-m i.y.mu1{background:#ffd34d} .al-m i.y.mu2{background:#8ff6ff} .al-m i.y.mu3{background:linear-gradient(90deg,#f44,#ff4,#4f4,#4cf,#c4f)}
+  .fu-desc{font-family:system-ui,sans-serif;font-weight:700;font-size:13px;margin:0 0 8px} .fu-warn{font-family:system-ui,sans-serif;font-weight:800;color:#ffd84d;font-size:13px}
+  .fu-card{background:rgba(255,255,255,.07);border:2px solid rgba(0,255,213,.35);border-radius:14px;padding:8px 10px;margin-bottom:8px} .fu-card.ready{border-color:#00ffd5;box-shadow:0 0 14px rgba(0,255,213,.4)}
+  .fu-res b{color:#00ffd5;font-size:16px} .fu-res small{display:block;font-family:system-ui,sans-serif;font-weight:700;font-size:11px;color:#d9c9ff} .fu-res span{font-size:12px;color:#5dff7a}
+  .fu-need{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:6px 0} .fu-need em{font-style:normal;color:#ffd84d}
+  .fu-need span{font-size:11px;background:rgba(0,0,0,.35);border:2px solid var(--c);border-radius:10px;padding:3px 6px} .fu-need span.ok{background:rgba(93,255,122,.18)}
+  .fu-need small{display:block;font-size:9px;color:var(--c)}
+  .fu-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .pa-big{display:block;width:100%;padding:14px;border-radius:16px;border:4px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);font-size:22px;box-shadow:0 5px 0 #000;margin-bottom:10px}
+  .pa-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;margin-bottom:7px}
+  .pa-row.col{flex-direction:column;align-items:flex-start} .pa-row small{font-family:system-ui,sans-serif;font-weight:700;font-size:12px;color:#d9c9ff}
+  .pa-row button{padding:7px 14px;border-radius:10px;border:3px solid #000;background:#555;font-size:13px} .pa-row button.on{background:linear-gradient(180deg,#5dff7a,#1fae44)}
+  .pa-langs{display:flex;flex-wrap:wrap;gap:6px} .pa-fine{text-align:center;font-family:system-ui,sans-serif;font-weight:700;font-size:11px;opacity:.75}
+  #scheduleLine{margin-top:8px;font-size:clamp(11px,2.2vw,14px);color:#ffe14d;max-width:92vw}
+  @media (max-width:640px){ #menuBar{grid-template-columns:repeat(3,50px);gap:6px} .mbtn{width:50px;height:50px} .mbtn .ic{font-size:19px} .mbtn small{font-size:7.5px;max-width:46px} #leftCol{top:calc(max(10px,env(safe-area-inset-top)) + 64px)} #feed{top:46%} }
+  @media (max-height:460px){ #feed{top:auto;bottom:10px;left:50%;transform:translateX(-50%);width:42vw} #menuBar{grid-template-columns:repeat(6,46px)} .mbtn{width:46px;height:46px} }
 </style>
 </head>
 <body>
@@ -157,9 +212,17 @@
 
 <div id="hud" class="hidden">
   <div id="cashBox" class="stroke"><div id="cash">$0</div><div id="cps">+$0/s</div></div>
-  <button id="btnShop" class="stroke">🛒 UPGRADES<span class="key">B</span></button>
-  <button id="btnRebirth" class="stroke">♻️ REBIRTH 0<span class="key">R</span></button>
-  <div id="eventChip" class="hidden stroke"></div>
+  <div id="leftCol">
+    <div id="menuBar">
+      <button id="btnShop" class="mbtn stroke"><span class="ic">🛒</span><b></b><small data-i18n="mUpgrades">UPGRADES</small></button>
+      <button id="btnRebirth" class="mbtn stroke"><span class="ic">♻️</span><b>0</b><small data-i18n="mRebirth">REBIRTH</small></button>
+      <button id="btnMissions" class="mbtn stroke"><span class="ic">📋</span><b></b><small data-i18n="mMissions">MISSIONS</small></button>
+      <button id="btnAlbum" class="mbtn stroke"><span class="ic">📖</span><b>0</b><small data-i18n="mAlbum">ALBUM</small></button>
+      <button id="btnFuse" class="mbtn stroke"><span class="ic">🧪</span><b></b><small data-i18n="mFuse">FUSE</small></button>
+      <button id="btnPause" class="mbtn stroke"><span class="ic">⏸</span><b></b><small data-i18n="mPause">PAUSE</small></button>
+    </div>
+    <div id="eventChip" class="hidden stroke"></div>
+  </div>
   <div id="board" class="stroke"></div>
   <canvas id="minimap" width="160" height="110"></canvas>
   <div id="hint" class="stroke hidden"></div>
@@ -167,6 +230,7 @@
   <div id="feed" class="stroke"></div>
   <div id="thiefArrow" class="hidden stroke">🚨 THIEF!</div>
   <div id="controls">
+    <button id="btnMove" class="hidden stroke">🔀 MOVE</button>
     <button id="btnSell" class="hidden stroke">💸 SELL</button>
     <button id="btnAction" class="hidden stroke">BUY</button>
     <button id="btnFlash" class="cbtn stroke">📸<span>FLASH <i class="key">F</i></span></button>
@@ -177,30 +241,36 @@
 </div>
 
 <div id="shop" class="hidden"><div class="panel">
-  <h2 class="stroke">⭐ UPGRADES ⭐</h2>
+  <h2 class="stroke" data-i18n="upTitle">⭐ UPGRADES ⭐</h2>
   <div id="shopList"></div>
-  <button id="shopClose" class="stroke">CLOSE</button>
+  <button id="shopClose" class="stroke" data-close="1" data-i18n="close">CLOSE</button>
 </div></div>
 
 <div id="rebirth" class="hidden"><div class="panel">
-  <h2 class="stroke">♻️ REBIRTH ♻️</h2>
+  <h2 class="stroke" data-i18n="rbTitle">♻️ REBIRTH ♻️</h2>
   <div id="rebirthBody"></div>
-  <button id="rebirthClose" class="stroke">CLOSE</button>
+  <button id="rebirthClose" class="stroke" data-close="1" data-i18n="close">CLOSE</button>
 </div></div>
+
+<div id="missions" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="misTitle">📋 DAILY MISSIONS</h2><div id="missionsBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
+<div id="album" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="alTitle">📖 CELEB ALBUM</h2><div id="albumBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
+<div id="fuse" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="fuTitle">🧪 FUSE LAB</h2><div id="fuseBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
+<div id="pause" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="paTitle">⏸ PAUSED</h2><div id="pauseBody"></div></div></div>
 
 <div id="popup" class="hidden"></div>
 
 <div id="title">
   <div id="logo">STAR<br>HEIST</div>
-  <div id="sub" class="stroke">SIGN THE STARS. <b>STEAL</b> THE STARS.</div>
+  <div id="sub" class="stroke" data-i18n="title_sub">SIGN THE STARS. <b>STEAL</b> THE STARS.</div>
   <div id="feat" class="stroke">
-    <div>🌟 Sign celebs on the red carpet</div>
-    <div>😈 Steal from rival bot agencies</div>
-    <div>🔒 Lock up before they steal back</div>
+    <div data-i18n="feat1">🌟 Sign celebs on the red carpet</div>
+    <div data-i18n="feat2">😈 Steal from rival bot agencies</div>
+    <div data-i18n="feat3">🔒 Lock up before they steal back</div>
   </div>
   <button id="playBtn" class="stroke" disabled>LOADING…</button>
+  <div id="scheduleLine" class="stroke"></div>
   <div id="adminNext" class="stroke" style="margin-top:16px;font-size:clamp(13px,2.6vw,17px);color:#ff9cf6"></div>
-  <div id="fine">All celebrities in this game are fictional characters.</div>
+  <div id="fine" data-i18n="fine">All celebrities in this game are fictional characters.</div>
 </div>
 
 <script type="module" src="game.js"></script>

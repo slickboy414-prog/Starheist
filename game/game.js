@@ -3,6 +3,8 @@
 //  All celebrities are fictional, original characters.
 // =====================================================================
 import * as THREE from './three.module.min.js';
+import { extendCelebs, THEME_DAYS } from './content.js';
+import { t as tr, setLang, getLang, LANGS } from './i18n.js';
 
 // ---------------------------------------------------------------------
 //  YouTube Playables SDK wrapper (graceful fallback outside YouTube)
@@ -25,6 +27,7 @@ const SDK = {
   onAudioChange(cb) { try { IN_YT && YT.system.onAudioEnabledChange(cb); } catch (e) {} },
   onPause(cb) { try { IN_YT && YT.system.onPause(cb); } catch (e) {} },
   onResume(cb) { try { IN_YT && YT.system.onResume(cb); } catch (e) {} },
+  async lang() { try { if (IN_YT) return await YT.system.getLanguage(); } catch (e) {} return navigator.language || 'en'; },
   score(v) { try { IN_YT && YT.engagement.sendScore({ value: Math.max(0, Math.floor(v)) }); } catch (e) {} },
   error() { try { IN_YT && YT.health.logError(); } catch (e) {} },
   warn() { try { IN_YT && YT.health.logWarning(); } catch (e) {} },
@@ -69,6 +72,8 @@ const RARITIES = [
   { name: 'SUPERSTAR', color: '#ffcc00', hex: 0xffcc00, w: 4.5 },
   { name: 'ICON', color: '#ff3b6b', hex: 0xff3b6b, w: 1.3 },
   { name: 'ALL-TIME GOAT', color: 'rainbow', hex: 0xffffff, w: 0.22 },
+  { name: 'EXCLUSIVE', color: '#00ffd5', hex: 0x00ffd5, w: 0 },
+  { name: 'LIMITED', color: '#ff7af0', hex: 0xff7af0, w: 0 },
 ];
 const MUTS = [
   { id: 0, name: '', mult: 1, w: 86 },
@@ -100,7 +105,7 @@ const CELEBS = [
   { name: 'Goalden Boy', title: 'World Cup Soccer Superstar', r: 3, cost: 40000, inc: 780, look: { skin: 0xe0ac69, hair: 0x2b1d0e, hairStyle: 'spiky', top: 0x1e88e5, bottom: 0xffffff, shoes: 0xffd700, acc: ['trophy'] } },
   { name: 'Velvet Vortex', title: 'Billion-Stream Music Icon', r: 4, cost: 220000, inc: 3500, look: { skin: 0xc68642, hair: 0xe8e8e8, hairStyle: 'long', top: 0x8e24aa, bottom: 0x8e24aa, shoes: 0xc0c0c0, dress: true, acc: ['mic', 'shades', 'crown'] } },
 ];
-CELEBS.forEach((c, i) => (c.id = i));
+const { RECIPES, LIMITED_IDS, EXCLUSIVE_IDS } = extendCelebs(CELEBS);
 const price = (c) => c.def.cost * c.mut.mult;
 
 const BOT_INFO = [
@@ -176,6 +181,7 @@ const darken = (hex, t) => new THREE.Color(hex).lerp(new THREE.Color(0x000000), 
 // Merged "person" materials (vertex colours keep draw calls low on phones)
 const personMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex });
 const goldMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, emissive: 0x4a3000 });
+const playerDecoMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex });
 const diamondMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, emissive: 0x124a58 });
 const rainbowMat = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: gradTex, emissive: 0x222222 });
 const rainbowBasics = [];
@@ -562,7 +568,7 @@ function buildAgencyInterior(b, col) {
   L(boxG(8.6, 0.12, 3.6), chrome, 0, 3.3, 9.5); L(boxG(8.4, 0.32, 3.4), accent, 0, 3.52, 9.5);
   for (const lx of [-2.5, 0, 2.5]) L(boxG(0.8, 0.04, 0.3), toon(0xfff6d0), lx, 3.24, 9.8);
   for (const s of [-1, 1]) { for (const zz of [8.8, 10.6]) { L(cylG(0.06, 0.09, 1, 8), gold, s * 4.8, 0.5, zz); L(sphG(0.11, 6, 4), gold, s * 4.8, 1.05, zz); } L(boxG(0.08, 0.08, 1.8), toon(0xb3002d), s * 4.8, 0.85, 9.7); }
-  mergeGroup(deco, null, personMat); mergeGroup(glass, null, glassMat2); mergeGroup(spots, null, spotMat);
+  mergeGroup(deco, null, b.owner.isPlayer ? playerDecoMat : personMat); mergeGroup(glass, null, glassMat2); mergeGroup(spots, null, spotMat);
 }
 const _ray = new THREE.Vector3();
 function segHitsBox(a, c, bx) {
@@ -623,8 +629,7 @@ function makeBase(i, def, owner) {
   b.pad = b.local(-9.1, 6.2);
   M(cylG(0.85, 0.9, 0.1, 18), toon(0xff2a6d), b.pad.x, 0.17, b.pad.z, scene);
   M(torG(0.85, 0.06, 6, 20), new THREE.MeshBasicMaterial({ color: 0xffffff }), b.pad.x, 0.24, b.pad.z, scene).rotation.x = -Math.PI / 2;
-  const pl = makeCanvasSprite(256, 80, 0.7); pl.ctx.textAlign = 'center'; pl.ctx.textBaseline = 'middle'; strokeText(pl.ctx, '🔒 LOCK', 128, 42, 44, '#ff9ec4', 240); pl.tex.needsUpdate = true;
-  pl.sprite.position.set(b.pad.x, 1.2, b.pad.z); scene.add(pl.sprite);
+  const pl = labelSprite('lockPad', null, '#ff9ec4', 256, 80, 0.7, 44); pl.position.set(b.pad.x, 1.2, b.pad.z); scene.add(pl);
   if (owner.isPlayer) {
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0x2ee6d6, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     const bp = b.local(0, -7.2); beam.position.set(bp.x, 30, bp.z); scene.add(beam); game.beacon = beam;
@@ -635,23 +640,28 @@ function makeBase(i, def, owner) {
   return b;
 }
 // ---------- upper floors (player agency, unlocked by rebirth) ----------
-function padSprite(txt, color) {
-  const s = makeCanvasSprite(256, 80, 0.75); s.ctx.textAlign = 'center'; s.ctx.textBaseline = 'middle';
-  strokeText(s.ctx, txt, 128, 42, 40, color, 240); s.tex.needsUpdate = true; return s.sprite;
+const i18nSprites = [];
+function labelSprite(key, vars, color, w = 256, h = 80, worldH = 0.75, size = 40) {
+  const s = makeCanvasSprite(w, h, worldH);
+  const draw = () => { s.ctx.clearRect(0, 0, w, h); s.ctx.textAlign = 'center'; s.ctx.textBaseline = 'middle'; strokeText(s.ctx, tr(key, vars), w / 2, h / 2 + 2, size, color, w - 16); s.tex.needsUpdate = true; };
+  draw(); i18nSprites.push(draw); return s.sprite;
 }
+function padSprite(key, vars, color) { return labelSprite(key, vars, color); }
 function elevPad(b, at, y, color, label, labelColor, parent) {
   const g = new THREE.Group(); g.position.set(at.x, y, at.z); parent.add(g);
   M(cylG(0.85, 0.9, 0.1, 18), toon(color), 0, 0.05, 0, g);
   M(torG(0.85, 0.06, 6, 20), new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 0.12, 0, g).rotation.x = -Math.PI / 2;
-  const sp = padSprite(label, labelColor); sp.position.y = 1.15; g.add(sp);
+  const sp = padSprite(label[0], label[1], labelColor); sp.position.y = 1.15; g.add(sp);
   return g;
 }
 function buildUpperFloors(b, col) {
   const L = (lx, lz) => b.local(lx, lz);
   b.elev = L(9.6, -6.6); b.elevDown = L(9.6, -2.3); b.lane = L(9.9, -3); b.laneFront = L(9.9, 0.75);
   b.floors = [];
-  b.groundUp = elevPad(b, b.elev, 0.12, 0x22c55e, '⬆ FLOOR 2', '#9dffb8', scene);
+  b.groundUp = elevPad(b, b.elev, 0.12, 0x22c55e, ['upTo', { n: 2 }], '#9dffb8', scene);
   const tubeMat = new THREE.MeshBasicMaterial({ color: 0xaee4ff, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+  b.stair0 = buildStairs(b, 0); scene.add(b.stair0);
+  addStairColliders(b);
   b.tube = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 1, 16, 1, true), tubeMat); b.tube.position.set(b.elev.x, 0, b.elev.z); scene.add(b.tube);
   const floorMat = new THREE.MeshToonMaterial({ map: marbleTex, color: lighten(col, 0.85), gradientMap: gradTex });
   const rows = [-5, -1], xs = [-7.5, -2.5, 2.5, 7.5];
@@ -684,21 +694,23 @@ function buildUpperFloors(b, col) {
       b.slots.push({ base: b, idx: 8 * n + k++, floor: n, pos: wp, celeb: null, podium, ring, approach, label, labelKey: '' });
     }
     // elevator pads
-    const up = n < 4 ? elevPad(b, b.elev, y0 + 0.12, 0x22c55e, `⬆ FLOOR ${n + 2}`, '#9dffb8', g) : null;
-    elevPad(b, b.elevDown, y0 + 0.12, 0xff9d00, `⬇ FLOOR ${n}`, '#ffd59a', g);
+    const up = n < 4 ? elevPad(b, b.elev, y0 + 0.12, 0x22c55e, ['upTo', { n: n + 2 }], '#9dffb8', g) : null;
+    elevPad(b, b.elevDown, y0 + 0.12, 0xff9d00, ['downTo', { n }], '#ffd59a', g);
     // floor name
-    const fs = makeCanvasSprite(512, 128, 1.6); fs.ctx.textAlign = 'center'; fs.ctx.textBaseline = 'middle';
-    strokeText(fs.ctx, `⭐ FLOOR ${n + 1} ⭐`, 256, 66, 76, '#' + new THREE.Color(col).getHexString(), 500); fs.tex.needsUpdate = true;
-    const fp = L(0, 8.4); fs.sprite.position.set(fp.x, y0 + 2.1, fp.z); g.add(fs.sprite);
-    mergeGroup(deco, null, personMat); mergeGroup(glass, null, glassMat2);
-    b.floors.push({ n, g, up });
+    const fsp = labelSprite('floorN', { n: n + 1 }, '#' + new THREE.Color(col).getHexString(), 512, 128, 1.6, 76);
+    const fp = L(0, 8.4); fsp.position.set(fp.x, y0 + 2.1, fp.z); g.add(fsp);
+    mergeGroup(deco, null, playerDecoMat); mergeGroup(glass, null, glassMat2);
+    const sg = buildStairs(b, n); g.add(sg);
+    b.floors.push({ n, g, up, sg });
   }
   refreshFloors(b);
 }
 function refreshFloors(b = player && player.base) {
   if (!b || !b.floors) return;
   const u = floorsUnlocked();
-  for (const f of b.floors) { f.unlocked = f.n <= u; if (f.up) f.up.visible = f.n + 1 <= u; }
+  game.fu = u;
+  for (const f of b.floors) { f.unlocked = f.n <= u; if (f.up) f.up.visible = f.n + 1 <= u; f.sg.visible = f.n + 1 <= u; }
+  b.stair0.visible = u >= 1;
   b.groundUp.visible = u > 0;
   if (b.towerEntry) b.towerEntry.off = u > 0;
   if (b.roofSign) { const rp = b.local(0, u > 0 ? -2 : -10.9); b.roofSign.position.set(rp.x, u > 0 ? u * FH + 4.2 : 9.2, rp.z); }
@@ -712,13 +724,13 @@ function updateFloorVisibility() {
   for (const f of b.floors) f.g.visible = f.unlocked && f.n <= shown;
   for (const a of agents) a.p.root.visible = floorOf(a) <= shown || !inside(b, a.pos.x, a.pos.z);
   for (const c of celebs) {
-    const fl = c.state === 'placed' ? c.slot.floor : c.state === 'carried' ? floorOf(c.carrier) : floorOf(c);
+    const fl = c.state === 'placed' ? c.slot.floor : c.state === 'carried' ? floorOf(c.carrier) : c.state === 'moving' ? floorOf(player) : floorOf(c);
     c.p.root.visible = fl <= shown;
   }
 }
 function elevFx(a, fl) {
   burst(a.pos.x, fl * FH + 1, a.pos.z, 18, [0x9dffb8, 0xffffff], 3, 4);
-  if (a.isPlayer) { Snd.play('pop'); floatText(fl ? `FLOOR ${fl + 1}` : 'FLOOR 1', a.pos.x, fl * FH + 3.4, a.pos.z, '#9dffb8'); }
+  if (a.isPlayer) { Snd.play('pop'); floatText(tr('floorN', { n: fl + 1 }), a.pos.x, fl * FH + 3.4, a.pos.z, '#9dffb8'); }
 }
 function updatePlayerElevator() {
   const P = player, b = P.base; if (!b.floors) return;
@@ -726,20 +738,20 @@ function updatePlayerElevator() {
   const onUp = hdist(P.pos, b.elev) < 0.9, onDown = fl > 0 && hdist(P.pos, b.elevDown) < 0.9;
   if (!onUp && !onDown) { P.padLock = false; return; }
   if (P.padLock || !inside(b, P.pos.x, P.pos.z)) return;
-  if (onUp && fl < u) { P.floor = fl + 1; P.padLock = true; elevFx(P, P.floor); if (game.tut >= 4 && !game.floorTip) { game.floorTip = true; feed('🛗 Use the orange pad to go back down.'); } }
-  else if (onUp && fl >= u && u < 4) { if (!P.padTip) { P.padTip = true; floatText(`🔒 Rebirth ${FLOOR_REBIRTH[u]} unlocks FLOOR ${u + 2}`, P.pos.x, fl * FH + 3.4, P.pos.z, '#ff9ec4'); } P.padLock = true; }
+  if (onUp && fl < u) { P.floor = fl + 1; P.padLock = true; elevFx(P, P.floor); mission('floor'); if (game.tut >= 4 && !game.floorTip) { game.floorTip = true; feed(tr('floorTip')); } }
+  else if (onUp && fl >= u && u < 4) { if (!P.padTip) { P.padTip = true; floatText(tr('floorLocked', { r: FLOOR_REBIRTH[u], n: u + 2 }), P.pos.x, fl * FH + 3.4, P.pos.z, '#ff9ec4'); } P.padLock = true; }
   else if (onDown) { P.floor = fl - 1; P.padLock = true; P.pos.x = b.elevDown.x; P.pos.z = b.elevDown.z; elevFx(P, P.floor); }
 }
 function drawSign(b) {
-  const lockTxt = b.locked ? `🔒 LOCKED ${Math.ceil(b.lockT)}s` : '';
-  const key = lockTxt;
+  const lockTxt = b.locked ? tr('lockedSign', { s: Math.ceil(b.lockT) }) : '';
+  const key = lockTxt + getLang();
   if (key === b.signKey) return; b.signKey = key;
   const { ctx, tex } = b.sign; ctx.clearRect(0, 0, 512, 160); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const name = b.owner.isPlayer ? 'YOUR AGENCY' : b.owner.name.toUpperCase();
+  const name = b.owner.isPlayer ? tr('yourAgency') : b.owner.name.toUpperCase();
   strokeText(ctx, name, 256, 52, 64, '#' + new THREE.Color(b.owner.color).getHexString(), 490);
   if (lockTxt) strokeText(ctx, lockTxt, 256, 118, 44, '#ff5c8d', 490);
-  else if (!b.owner.isPlayer) strokeText(ctx, 'TALENT AGENCY', 256, 118, 32, '#ffffff', 490);
-  else strokeText(ctx, '🏠 HOME', 256, 118, 36, '#ffffff', 490);
+  else if (!b.owner.isPlayer) strokeText(ctx, tr('talentAgency'), 256, 118, 32, '#ffffff', 490);
+  else strokeText(ctx, tr('home'), 256, 118, 36, '#ffffff', 490);
   tex.needsUpdate = true;
 }
 const inside = (b, x, z) => Math.abs(x - b.cx) < b.W / 2 && Math.abs(z - b.cz) < b.D / 2;
@@ -756,7 +768,7 @@ const floorsUnlocked = (r = game.rebirth) => FLOOR_REBIRTH.filter((x) => r >= x)
 const slotY = (slot) => slot.floor * FH + 0.82;
 const rebirthMult = (r = game.rebirth) => 1 + 0.5 * r;
 const rebirthSlots = (r = game.rebirth) => Math.min(4, Math.floor((r + 1) / 2));
-const rebirthStartCash = (r = game.rebirth) => r ? 250 * Math.pow(4, r) : 100;
+const rebirthStartCash = (r = game.rebirth) => r ? Math.min(50000, 250 * Math.pow(4, r)) : 100;
 const rebirthSpeed = (r = game.rebirth) => 1 + 0.03 * r;
 function rebirthStatus() {
   const r = game.rebirth, req = REBIRTHS[r]; if (!req) return { max: true };
@@ -765,64 +777,73 @@ function rebirthStatus() {
   return { req, hasCash, hasTier, ok: hasCash && hasTier };
 }
 function renderRebirth() {
-  const r = game.rebirth, st = rebirthStatus(), box = document.getElementById('rebirthBody');
-  if (st.max) { box.innerHTML = `<p class="rb-big stroke">♻️ MAX REBIRTH (${r})</p><p>You are a Starville legend. Income is x${rebirthMult()} forever.</p>`; return; }
-  const t = RARITIES[st.req.tier], tc = t.color === 'rainbow' ? '#ff8cf0' : t.color;
-  const sure = game.rebirthConfirm;
+  const r = game.rebirth, st = rebirthStatus(), box = document.getElementById('rebirthBody'), sure = game.rebirthConfirm;
+  if (st.max) {
+    const ps = prestigeStatus(), p = game.prestige;
+    box.innerHTML = `<p class="rb-big stroke">${tr('rbMax')}</p>
+      <h4>${tr('pTitle')} ${p ? '• ' + tr('pLevel', { n: p }) + ' (' + prestigeTitle(p) + ')' : ''}</h4>
+      <div class="rb-warn" style="background:rgba(255,204,0,.12)">${tr('pDesc')}</div>
+      <h4>${tr('rbNeed')}</h4>
+      <div class="rb-req ${ps.hasCash ? 'ok' : ''}">${ps.hasCash ? '✅' : '❌'} ${tr('rbCash', { x: fmt(prestigeCash()) })} <small>${tr('rbHave', { x: fmt(player.cash) })}</small></div>
+      <div class="rb-req ${ps.hasEx ? 'ok' : ''}">${ps.hasEx ? '✅' : '❌'} ${tr('pOwnEx')}</div>
+      <h4>${tr('rbGet')}</h4>
+      <div class="rb-rew">💰 ${tr('rbIncome')} <b>x${prestigeMult()} → x${prestigeMult(p + 1)}</b></div>
+      <div class="rb-rew">🏆 <b>${tr('pNext', { title: prestigeTitle(p + 1) })}</b></div>
+      ${p === 0 ? '<div class="rb-rew">✨ <b>Golden agency</b></div>' : ''}
+      <h4 class="warn">${tr('rbLose')}</h4><div class="rb-warn">${tr('rbLoseTxt')}</div>
+      <button id="rbGo" data-prestige="1" class="stroke ${ps.ok ? (sure ? 'sure' : '') : 'no'}">${!ps.ok ? tr('rbNotReady') : sure ? tr('rbSure') : tr('pGo')}</button>`;
+    return;
+  }
+  const tt = RARITIES[st.req.tier];
   box.innerHTML = `
     <div class="rb-row"><div class="rb-lvl stroke">♻️ ${r}</div><div class="rb-arrow">→</div><div class="rb-lvl next stroke">♻️ ${r + 1}</div></div>
-    <h4>NEED</h4>
-    <div class="rb-req ${st.hasCash ? 'ok' : ''}">${st.hasCash ? '✅' : '❌'} $${fmt(st.req.cash)} cash <small>(you have $${fmt(player.cash)})</small></div>
-    <div class="rb-req ${st.hasTier ? 'ok' : ''}">${st.hasTier ? '✅' : '❌'} Own a <b style="color:${tc}">${t.name}</b> celeb (or better)</div>
-    <h4>YOU GET (FOREVER)</h4>
-    <div class="rb-rew">💰 Income <b>x${rebirthMult(r)} → x${rebirthMult(r + 1)}</b></div>
-    <div class="rb-rew">💵 Start cash <b>$${fmt(rebirthStartCash(r + 1))}</b></div>
-    <div class="rb-rew">👟 Run speed <b>+${Math.round((rebirthSpeed(r + 1) - 1) * 100)}%</b></div>
-    ${floorsUnlocked(r + 1) > floorsUnlocked(r) ? `<div class="rb-rew">🛗 <b>Unlocks FLOOR ${floorsUnlocked(r + 1) + 1}</b> (+8 podiums)</div>` : ''}
-    ${rebirthSlots(r + 1) > rebirthSlots(r) ? '<div class="rb-rew">🏢 <b>+1 free podium</b></div>' : ''}
-    <div class="rb-rew">🏷️ ♻️${r + 1} badge on your name</div>
-    <h4 class="warn">YOU LOSE</h4>
-    <div class="rb-warn">Your cash, all your celebs and your upgrades reset.</div>
-    <button id="rbGo" class="stroke ${st.ok ? (sure ? 'sure' : '') : 'no'}">${!st.ok ? 'NOT READY' : sure ? 'TAP AGAIN TO REBIRTH!' : '♻️ REBIRTH'}</button>`;
+    <h4>${tr('rbNeed')}</h4>
+    <div class="rb-req ${st.hasCash ? 'ok' : ''}">${st.hasCash ? '✅' : '❌'} ${tr('rbCash', { x: fmt(st.req.cash) })} <small>${tr('rbHave', { x: fmt(player.cash) })}</small></div>
+    <div class="rb-req ${st.hasTier ? 'ok' : ''}">${st.hasTier ? '✅' : '❌'} ${tr('rbOwn', { r: `<b style="color:${rColor(st.req.tier)}">${tr('r' + st.req.tier)}</b>` })}</div>
+    <h4>${tr('rbGet')}</h4>
+    <div class="rb-rew">💰 ${tr('rbIncome')} <b>x${rebirthMult(r)} → x${rebirthMult(r + 1)}</b></div>
+    <div class="rb-rew">💵 ${tr('rbStart')} <b>$${fmt(rebirthStartCash(r + 1))}</b></div>
+    <div class="rb-rew">👟 ${tr('rbSpeed')} <b>+${Math.round((rebirthSpeed(r + 1) - 1) * 100)}%</b></div>
+    ${floorsUnlocked(r + 1) > floorsUnlocked(r) ? `<div class="rb-rew">🛗 <b>${tr('rbFloor', { n: floorsUnlocked(r + 1) + 1 })}</b></div>` : ''}
+    ${rebirthSlots(r + 1) > rebirthSlots(r) ? `<div class="rb-rew">🏢 <b>${tr('rbPodium')}</b></div>` : ''}
+    <div class="rb-rew">🏷️ ${tr('rbBadge', { n: r + 1 })}</div>
+    <h4 class="warn">${tr('rbLose')}</h4>
+    <div class="rb-warn">${tr('rbLoseTxt')}</div>
+    <button id="rbGo" class="stroke ${st.ok ? (sure ? 'sure' : '') : 'no'}">${!st.ok ? tr('rbNotReady') : sure ? tr('rbSure') : tr('rbGo')}</button>`;
 }
-function doRebirth() {
-  const st = rebirthStatus(); if (!st.ok) { Snd.play('error'); return; }
-  if (!game.rebirthConfirm) { game.rebirthConfirm = true; renderRebirth(); return; }
-  game.rebirthConfirm = false;
+function resetAgency() {
   if (player.carrying) returnHome(player.carrying);
+  player.moveCeleb = null;
   for (const c of [...celebs]) {
     if (c.owner !== player) continue;
     if (c.state === 'carried') returnHome(c);
     clearSlot(c.slot); removeCeleb(c);
   }
-  game.rebirth++;
   for (const k of Object.keys(game.up)) game.up[k] = 0;
   player.cash = rebirthStartCash();
   refreshPlayerPodiums(); updateNameTag();
-  toggleRebirth(false);
-  const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z);
+  const p = player.base.doorIn; player.floor = 0; player.stair = null; player.pos.set(p.x, 0.12, p.z);
   refreshFloors();
-  if (floorsUnlocked() > floorsUnlocked(game.rebirth - 1)) setTimeout(() => banner(`🏢 FLOOR ${floorsUnlocked() + 1} UNLOCKED! Take the green elevator pad`, '#9dffb8'), 2600);
-  banner(`♻️ REBIRTH ${game.rebirth}! Income x${rebirthMult()} forever!`, '#7dffb0');
-  feed(`♻️ You reached <b>Rebirth ${game.rebirth}</b>. Build your agency again, stronger!`);
+}
+function doRebirth() {
+  const st = rebirthStatus(); if (!st.ok) { Snd.play('error'); return; }
+  if (!game.rebirthConfirm) { game.rebirthConfirm = true; renderRebirth(); return; }
+  game.rebirthConfirm = false;
+  game.rebirth++;
+  resetAgency();
+  closeModal();
+  if (floorsUnlocked() > floorsUnlocked(game.rebirth - 1)) setTimeout(() => banner(tr('floorUnlocked', { n: floorsUnlocked() + 1 }), '#9dffb8'), 2600);
+  banner(tr('rebirthDone', { n: game.rebirth, m: rebirthMult() }), '#7dffb0');
+  feed(tr('rebirthFeed', { n: game.rebirth }));
   Snd.play('legend'); setTimeout(() => Snd.play('win'), 400); game.shake = 0.6;
   for (let i = 0; i < 6; i++) burst(player.pos.x + rand(-4, 4), 3, player.pos.z + rand(-4, 4), 50);
   doSave();
 }
-function toggleRebirth(force) {
-  if (!game.playing) return;
-  const panel = document.getElementById('rebirth');
-  const open = force ?? panel.classList.contains('hidden');
-  if (open && !el.shop.classList.contains('hidden')) toggleShop(false);
-  if (!open && panel.classList.contains('hidden')) return;
-  game.shopOpen = open; game.rebirthConfirm = false;
-  panel.classList.toggle('hidden', !open);
-  if (open) renderRebirth();
-}
+function toggleRebirth(force) { if (force === false) { if (activeModal === 'rebirth') closeModal(); } else if (force === true) openModal('rebirth'); else toggleModal('rebirth'); }
 function updateNameTag() {
   const tag = player && player.tagSprite; if (!tag) return;
   tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
-  strokeText(tag.ctx, game.rebirth ? `★ YOU ♻️${game.rebirth} ★` : '★ YOU ★', 256, 50, 58, '#2ee6d6', 500); tag.tex.needsUpdate = true;
+  strokeText(tag.ctx, `★ ${tr('you')}${game.rebirth ? ' ♻️' + game.rebirth : ''}${game.prestige ? ' 👑' + game.prestige : ''} ★`, 256, 50, 58, game.prestige ? '#ffd84d' : '#2ee6d6', 500); tag.tex.needsUpdate = true;
 }
 function playerSlots() { const n = unlockedSlots(player), u = floorsUnlocked(); return player.base.slots.filter((s) => s.floor === 0 ? s.idx < n : s.floor <= u); }
 function freeSlot(a) { const list = a.isPlayer ? playerSlots() : a.base.slots; for (const s of list) if (!s.celeb) return s; return null; }
@@ -864,7 +885,7 @@ function pushBox(p, r, b) {
 }
 function collide(p, r, who) {
   const fl = (who && who.floor) || 0;
-  for (const w of walls) if ((w.floor || 0) === fl) pushBox(p, r, w);
+  for (const w of walls) if ((w.floor || 0) === fl && !(w.needFloors && (game.fu || 0) < w.needFloors)) pushBox(p, r, w);
   if (fl === 0) for (const b of bases) if (b.locked && b.owner !== who) pushBox(p, r, b.doorBox);
   for (const c of circles) {
     if ((c.floor || 0) !== fl) continue;
@@ -873,6 +894,7 @@ function collide(p, r, who) {
   }
 }
 function moveCircle(p, r, dx, dz, who) {
+  if (who && who.stair != null) { p.x += dx; p.z += dz; return; }
   p.x += dx; collide(p, r, who); p.z += dz; collide(p, r, who);
   p.x = clamp(p.x, -90, 90); p.z = clamp(p.z, -72, 72);
 }
@@ -948,7 +970,7 @@ const Snd = {
     this.music = this.ctx.createGain(); this.music.gain.value = 0.17; this.music.connect(this.master);
     this.apply(); this.startMusic();
   },
-  apply() { if (this.master) this.master.gain.setTargetAtTime(this.ytOn ? 1 : 0, this.ctx.currentTime, 0.05); },
+  apply() { if (this.master) this.master.gain.setTargetAtTime(this.ytOn && game.soundOn !== false ? 1 : 0, this.ctx.currentTime, 0.05); },
   tone(f, d, type = 'square', v = 0.3, f2 = null, delay = 0, dest = null, at = null) {
     const c = this.ctx; if (!c) return; const t = (at ?? c.currentTime) + delay;
     const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
@@ -1011,7 +1033,7 @@ const game = {
   spawnT: 0, stealCd: 25, playerStealCd: 85, eventT: 100, event: null, incomeMult: 1, luck: 1,
   up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 }, rebirth: 0, rebirthConfirm: false,
   stats: { earned: 0, steals: 0, bestNet: 0, lastScore: 0 },
-  tut: 0, adminForceUntil: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
+  tut: 0, adminForceUntil: 0, prestige: 0, album: {}, albumDone: {}, streak: { last: '', count: 0, claimed: '' }, missions: null, soundOn: true, lang: '', fu: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
 };
 let player;
 
@@ -1040,22 +1062,24 @@ function createCeleb(def, mut) {
   if (def.r >= 3 || mut.id >= 2) {
     const ringMat = new THREE.MeshBasicMaterial({ color: def.r >= 3 ? RARITIES[def.r].hex : 0x9ff8ff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
     const ring = new THREE.Mesh(torG(0.8, 0.07, 6, 28), ringMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08; p.root.add(ring); p.aura = ring;
-    if (def.r === 5 || mut.id === 3) rainbowBasics.push(ringMat);
+    if (def.r === 5 || def.r === 6 || mut.id === 3) rainbowBasics.push(ringMat);
   }
   scene.add(p.root);
-  const c = { id: celebUid++, def, mut, income: def.inc * mut.mult, p, label, state: 'carpet', owner: null, slot: null, stored: 0, pos: p.root.position, yaw: Math.PI / 2, ph: Math.random() * 10, path: [], carrier: null, homeOwner: null, homeSlot: null, poseT: 0, baseScale: sc, dance: 'dance' + (Math.floor(Math.random() * 3)) };
+  const feat = def.id === featuredId();
+  const c = { id: celebUid++, def, mut, featured: feat, income: def.inc * mut.mult * (feat ? 2 : 1), p, label, state: 'carpet', owner: null, slot: null, stored: 0, pos: p.root.position, yaw: Math.PI / 2, ph: Math.random() * 10, path: [], carrier: null, homeOwner: null, homeSlot: null, poseT: 0, baseScale: sc, dance: 'dance' + (Math.floor(Math.random() * 3)) };
   celebs.push(c); drawCelebLabel(c);
   return c;
 }
 function drawCelebLabel(c) {
   const { ctx, tex } = c.label; ctx.clearRect(0, 0, 512, 260); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const r = RARITIES[c.def.r]; const lines = [];
-  if (c.mut.id) lines.push([c.mut.name, 34, c.mut.color]);
+  if (c.featured) lines.push([tr('featured'), 30, '#ffe14d']);
+  if (c.mut.id) lines.push([tr('mu' + c.mut.id), 34, c.mut.color]);
   lines.push([c.def.name, 48, '#ffffff']);
   if (c.def.title) lines.push([c.def.title, 28, '#ffd9f5']);
   lines.push([c.state === 'carpet' ? `$${fmt(price(c))}  •  +$${fmt(c.income)}/s` : `+$${fmt(c.income)}/s`, 36, c.state === 'carpet' ? '#ffe14d' : '#5dff7a']);
-  lines.push([`${r.name} • ${rarityChance(c.def.r)}`, 32, r.color]);
-  let total = lines.reduce((s, l) => s + l[1] * 1.18, 0); let y = 260 - total - 4;
+  lines.push([`${tr('r' + c.def.r)} • ${rarityChance(c.def.r)}`, 32, r.color]);
+  let total = lines.reduce((s, l) => s + l[1] * 1.18, 0); let y = Math.max(0, 260 - total - 4);
   for (const [t, s, col] of lines) { y += s * 0.59; strokeText(ctx, t, 256, y, s, col, 500); y += s * 0.59; }
   tex.needsUpdate = true;
 }
@@ -1066,6 +1090,7 @@ function removeCeleb(c) {
   if (c.p.aura) { const k = rainbowBasics.indexOf(c.p.aura.material); if (k >= 0) rainbowBasics.splice(k, 1); c.p.aura.material.dispose(); }
 }
 function rarityChance(i) {
+  if (i === 6) return tr('fusionOnly'); if (i === 7) return tr('limitedOnly');
   const tot = RARITIES.reduce((s, r) => s + r.w, 0), p = RARITIES[i].w / tot * 100;
   return (p >= 1 ? +p.toFixed(1) : +p.toFixed(2)) + '%';
 }
@@ -1074,13 +1099,14 @@ function rollRarity() {
  return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 2 ? game.luck : 1)); }
 function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? game.luck : 1)); }
 function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
-  const r = forceR ?? rollRarity();
-  const def = pick(CELEBS.filter((c) => c.r === r));
+  let r = forceR ?? rollRarity();
+  let def = pickSpawnDef(r);
+  if (forceR == null && game.event && game.event.id === 'admin' && Math.random() < 0.12) { def = CELEBS[limitedId()]; r = 7; }
   const c = createCeleb(def, rollMut());
   c.pos.set(x, 0.08, rand(-1.5, 1.5)); c.state = 'carpet';
   if (game.playing && (r >= (game.event && game.event.id === 'admin' ? 4 : 3) || c.mut.id >= 2)) {
     const col = r >= 3 ? RARITIES[r].color : c.mut.color;
-    banner(`✨ ${r >= 3 ? RARITIES[r].name : c.mut.name} ${def.name} hit the red carpet!`, col === 'rainbow' ? '#ff8cf0' : col);
+    banner(tr('carpetSpawn', { r: r >= 3 ? tr('r' + r) : tr('mu' + c.mut.id), c: def.name }), col === 'rainbow' ? '#ff8cf0' : col);
     Snd.play('legend');
   }
   return c;
@@ -1099,19 +1125,20 @@ function clearSlot(slot) { slot.celeb = null; slot.ring.material.color.set(0x777
 function buy(a, c) {
   if (c.state !== 'carpet') return false;
   const cost = price(c);
-  if (a.cash < cost) { if (a.isPlayer) { Snd.play('error'); floatText(`Need $${fmt(cost)}`, c.pos.x, 3.6, c.pos.z, '#ff6b6b'); } return false; }
+  if (a.cash < cost) { if (a.isPlayer) { Snd.play('error'); floatText(tr('needCash', { x: fmt(cost) }), c.pos.x, 3.6, c.pos.z, '#ff6b6b'); } return false; }
   let s = freeSlot(a);
   if (!s && !a.isPlayer) { const w = weakest(a); if (w && w.income * 2 <= c.income) { a.cash += price(w) * 0.5; clearSlot(w.slot); removeCeleb(w); s = freeSlot(a); } }
-  if (!s) { if (a.isPlayer) { Snd.play('error'); banner('🏢 Agency full! Sell or upgrade', '#ff9d00'); } return false; }
+  if (!s) { if (a.isPlayer) { Snd.play('error'); banner(tr('agencyFull'), '#ff9d00'); } return false; }
   a.cash -= cost; s.celeb = c; c.slot = s; c.owner = a; c.state = 'walkToBase'; c.floor = 0;
   c.path = routeToSlot(c.pos.x, c.pos.z, s).concat([{ x: s.pos.x, z: s.pos.z }]);
   drawCelebLabel(c);
   burst(c.pos.x, 2, c.pos.z, 30);
   if (a.isPlayer) {
-    Snd.play('buy'); floatText(`SIGNED! ${c.def.name}`, c.pos.x, 3.8, c.pos.z, '#ffe14d', 1.1);
+    Snd.play('buy'); floatText(tr('signed', { c: c.def.name }), c.pos.x, 3.8, c.pos.z, '#ffe14d', 1.1);
     if (game.tut === 0) setTut(1);
+    mission('buy'); if (c.def.r >= 2) mission('rare'); recordAlbum(c);
     queueSave();
-  } else if (c.def.r >= 3 && hdist(a.pos, player.pos) < 60) feed(`🤖 ${a.name} signed <b style="color:${RARITIES[c.def.r].color === 'rainbow' ? '#ff8cf0' : RARITIES[c.def.r].color}">${c.def.name}</b>`);
+  } else if (c.def.r >= 3 && hdist(a.pos, player.pos) < 60) feed(tr('botSigned', { bot: a.name, c: `<b style="color:${rColor(c.def.r)}">${c.def.name}</b>` }));
   return true;
 }
 function grab(a, c) {
@@ -1120,17 +1147,17 @@ function grab(a, c) {
   c.p.root.scale.setScalar(c.baseScale * 0.8);
   Snd.play('steal');
   if (a.isPlayer) {
-    banner(`😈 GOT ${c.def.name.toUpperCase()}! RUN HOME!`, '#d68bff');
+    banner(tr('gotRun', { c: c.def.name.toUpperCase() }), '#d68bff');
     burst(c.pos.x, 2, c.pos.z, 25, [0xd68bff, 0xffffff]);
   } else if (c.homeOwner === player) {
-    banner(`🚨 ${a.name} grabbed your ${c.def.name}!`, '#ff4d6d'); Snd.play('alarm');
-    feed(`🚨 <b>${a.name}</b> is stealing <b>${c.def.name}</b>! Catch them or 📸 FLASH!`);
+    banner(tr('grabbedYour', { bot: a.name, c: c.def.name }), '#ff4d6d'); Snd.play('alarm');
+    feed(tr('stealingFeed', { bot: `<b>${a.name}</b>`, c: `<b>${c.def.name}</b>` }));
   }
   return true;
 }
 function deliver(a) {
   const c = a.carrying; const s = freeSlot(a);
-  if (!s) { returnHome(c); if (a.isPlayer) banner('🏢 No room! Upgrade your agency', '#ff9d00'); return; }
+  if (!s) { returnHome(c); if (a.isPlayer) banner(tr('noRoom'), '#ff9d00'); return; }
   const victim = c.homeOwner;
   clearSlot(c.homeSlot); a.carrying = null; c.carrier = null; c.homeOwner = null; c.homeSlot = null;
   c.p.root.scale.setScalar(c.baseScale); c.stored = 0;
@@ -1138,15 +1165,15 @@ function deliver(a) {
   burst(s.pos.x, 2.5, s.pos.z, 60);
   if (a.isPlayer) {
     game.stats.steals++;
-    banner(`🔥 STOLEN! ${c.def.name} is YOURS!`, '#ffcc00'); Snd.play('win'); game.shake = 0.5;
-    feed(`🔥 You stole <b>${c.def.name}</b> from ${victim.name}!`);
+    banner(tr('youStole', { c: c.def.name }), '#ffcc00'); Snd.play('win'); game.shake = 0.5;
+    feed(tr('youStoleFeed', { c: `<b>${c.def.name}</b>`, v: victim.name })); mission('steal'); recordAlbum(c);
     if (game.tut === 2) setTut(3);
     queueSave();
   } else if (victim === player) {
-    banner(`😱 ${a.name} stole your ${c.def.name}!`, '#ff4d6d'); Snd.play('caught');
-    feed(`😱 <b>${a.name}</b> stole your <b>${c.def.name}</b>. Steal it back!`);
+    banner(tr('stolenYours', { bot: a.name, c: c.def.name }), '#ff4d6d'); Snd.play('caught');
+    feed(tr('stoleYoursFeed', { bot: `<b>${a.name}</b>`, c: `<b>${c.def.name}</b>` }));
     queueSave();
-  } else if (hdist(a.pos, player.pos) < 70) feed(`🤖 ${a.name} stole ${c.def.name} from ${victim.name}`);
+  } else if (hdist(a.pos, player.pos) < 70) feed(tr('botStole', { bot: a.name, c: c.def.name, v: victim.name }));
 }
 function returnHome(c) {
   const a = c.carrier; if (a) a.carrying = null;
@@ -1154,13 +1181,13 @@ function returnHome(c) {
   c.p.root.scale.setScalar(c.baseScale);
   c.pos.set(c.slot.pos.x, slotY(c.slot), c.slot.pos.z); c.floor = c.slot.floor;
   burst(c.pos.x, 2, c.pos.z, 20, [0xffffff, 0x9be7ff]);
-  if (hdist(c.pos, player.pos) < 30) floatText('RETURNED!', c.pos.x, 3.6, c.pos.z, '#9be7ff');
+  if (hdist(c.pos, player.pos) < 30) floatText(tr('returned'), c.pos.x, 3.6, c.pos.z, '#9be7ff');
 }
 function sell(c) {
   if (!c || c.owner !== player || c.state !== 'placed') return;
   const v = Math.floor(price(c) * 0.5 + c.stored);
   player.cash += v; game.stats.earned += c.stored;
-  floatText(`SOLD +$${fmt(v)}`, c.pos.x, 3.6, c.pos.z, '#ffe14d'); burst(c.pos.x, 2, c.pos.z, 20, [0xffcc00]);
+  floatText(tr('sold', { x: fmt(v) }), c.pos.x, 3.6, c.pos.z, '#ffe14d'); burst(c.pos.x, 2, c.pos.z, 20, [0xffcc00]);
   clearSlot(c.slot); removeCeleb(c); Snd.play('coin'); queueSave();
 }
 function lockDuration(b) { return b.owner.isPlayer ? 20 + 10 * game.up.lock : 22; }
@@ -1170,13 +1197,13 @@ function lockBase(b) {
   for (const a of agents) {
     if (a === b.owner || !inside(b, a.pos.x, a.pos.z)) continue;
     if (a.carrying && a.carrying.homeOwner === b.owner) returnHome(a.carrying);
-    a.pos.x = b.doorOut.x + rand(-2.5, 2.5); a.pos.z = b.doorOut.z; a.floor = 0; a.stunT = Math.max(a.stunT, 0.7); a.path = [];
+    a.pos.x = b.doorOut.x + rand(-2.5, 2.5); a.pos.z = b.doorOut.z; a.floor = 0; a.stair = null; if (a.isPlayer && a.moveCeleb) endMove(null); a.stunT = Math.max(a.stunT, 0.7); a.path = [];
     burst(a.pos.x, 1.5, a.pos.z, 25, [0xff2a6d, 0xffffff]);
-    if (a.isPlayer) { banner('⚡ ZAPPED! They locked their doors!', '#ff5c8d'); Snd.play('zap'); game.shake = 0.4; }
+    if (a.isPlayer) { banner(tr('zapped'), '#ff5c8d'); Snd.play('zap'); game.shake = 0.4; }
   }
   if (hdist(player.pos, b.doorOut) < 40) Snd.play('lock');
-  if (b.owner.isPlayer) { feed('🔒 Your agency is <b>LOCKED</b>. Thieves can\'t get in!'); if (game.tut === 3) setTut(4); }
-  else if (hdist(player.pos, b.doorOut) < 30) feed(`🔒 ${b.owner.name} locked their doors!`);
+  if (b.owner.isPlayer) { feed(tr('lockedFeed')); mission('lock'); if (game.tut === 3) setTut(4); }
+  else if (hdist(player.pos, b.doorOut) < 30) feed(tr('botLocked', { bot: b.owner.name }));
   drawSign(b);
   return true;
 }
@@ -1190,13 +1217,13 @@ function doFlash() {
   for (const b of bots) {
     if (hdist(b.pos, P.pos) > fs.r || (b.floor || 0) !== (P.floor || 0)) continue;
     b.stunT = 2.6; b.path = []; b.ai.state = 'home'; hit++;
-    if (b.carrying) { const c = b.carrying; const mine = c.homeOwner === player; returnHome(c); if (mine) { banner(`🛡️ SAVED ${c.def.name}!`, '#5dff7a'); Snd.play('win'); } }
+    if (b.carrying) { const c = b.carrying; const mine = c.homeOwner === player; returnHome(c); if (mine) { banner(tr('saved', { c: c.def.name }), '#5dff7a'); Snd.play('win'); mission('defend'); } }
   }
   ringFx(P.pos.x, P.pos.z, 0xffffff, fs.r); ringFx(P.pos.x, P.pos.z, 0x9be7ff, fs.r * 0.7);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: game.flashTex, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
   s.position.set(P.pos.x, 2, P.pos.z); s.scale.set(6, 6, 1); scene.add(s); floaters.push({ s: { sprite: s, tex: { dispose() {} } }, t: 0, life: 0.35 });
   Snd.play('flash');
-  if (hit) floatText(hit > 1 ? `STUNNED x${hit}!` : 'STUNNED!', P.pos.x, 3.6, P.pos.z, '#9be7ff');
+  if (hit) { floatText(tr('stunned') + (hit > 1 ? ` x${hit}` : ''), P.pos.x, 3.6, P.pos.z, '#9be7ff'); mission('flash', hit); }
 }
 
 // ---------------------------------------------------------------------
@@ -1282,8 +1309,8 @@ function updateBot(b, dt) {
       if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
       if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s, b.floor || 0);
       if (c.owner === player && !ai.warned && hdist(b.pos, player.base.doorOut) < 15) {
-        ai.warned = true; banner(`⚠️ ${b.name} is sneaking into your agency!`, '#ff9d00'); Snd.play('warn');
-        if (game.tut === 3) setHint('🔒 Thief incoming! Get home and step on the LOCK pad (or press LOCK)!');
+        ai.warned = true; banner(tr('sneaking', { bot: b.name }), '#ff9d00'); Snd.play('warn');
+        if (game.tut === 3) setHint(tr('tipLockNow'));
       }
       if ((b.floor || 0) === s.floor && hdist(b.pos, s.pos) < 2.5) { grab(b, c); ai.state = 'return'; ai.repath = 0; }
       break;
@@ -1336,8 +1363,8 @@ function checkCatches() {
       returnHome(c);
       a.stunT = 1.1; const dx = a.pos.x - d.pos.x, dz = a.pos.z - d.pos.z, l = Math.hypot(dx, dz) || 1; a.kb.x = dx / l * 14; a.kb.z = dz / l * 14;
       burst(a.pos.x, 1.6, a.pos.z, 25, [0xffffff, 0xffcc00]);
-      if (a.isPlayer) { banner(`💥 CAUGHT by ${d.name}!`, '#ff4d6d'); Snd.play('caught'); game.shake = 0.5; setHint('📸 Tip: FLASH stuns chasing bots so you can escape!', 6); }
-      else if (d.isPlayer) { banner(`🛡️ You saved ${c.def.name}!`, '#5dff7a'); Snd.play('win'); }
+      if (a.isPlayer) { banner(tr('caughtBy', { bot: d.name }), '#ff4d6d'); Snd.play('caught'); game.shake = 0.5; setHint(tr('tipFlash'), 6); }
+      else if (d.isPlayer) { banner(tr('saved', { c: c.def.name }), '#5dff7a'); Snd.play('win'); mission('defend'); }
     }
   }
 }
@@ -1373,6 +1400,7 @@ function updatePlayer(dt) {
   }
   applyKb(P, dt);
   P.pos.y = groundY(P.pos.x, P.pos.z, P.floor || 0);
+  updateStairs(P);
   animPerson(P.p, P.stunT > 0 ? 'stun' : P.carrying ? 'carry' : P.moving ? (len > 0.6 ? 'run' : 'walk') : 'idle', P.ph, game.t);
   P.p.root.rotation.y = P.yaw;
   if (P.carrying && inside(P.base, P.pos.x, P.pos.z)) deliver(P);
@@ -1387,12 +1415,21 @@ function updatePlayer(dt) {
       if (collectT <= 0 || v > 5) floatText(`+$${fmt(v)}`, c.pos.x, 3.2, c.pos.z, '#5dff7a', 0.9);
       Snd.play('coin'); burst(c.pos.x, 1.2, c.pos.z, 6, [0x5dff7a, 0xffcc00], 2, 5);
       if (game.tut === 1) setTut(2);
+      mission('collect', v);
     }
   }
   if (collectT <= 0) collectT = 0.25;
   // context target
   target = { kind: null, c: null }; sellTarget = null;
   let bd = 1e9;
+  if (P.moveCeleb) {
+    if (!inside(P.base, P.pos.x, P.pos.z)) { endMove(null); return; }
+    let best = null, sd = 2.6;
+    for (const s of playerSlots()) { if (s.floor !== (P.floor || 0)) continue; const d = hdist(P.pos, s.pos); if (d < sd && (!s.celeb || s.celeb === P.moveCeleb || (s.celeb.owner === P && s.celeb.state === 'placed'))) { sd = d; best = s; } }
+    target = best ? { kind: best.celeb && best.celeb !== P.moveCeleb ? 'swap' : 'place', c: P.moveCeleb, slot: best } : { kind: 'cancelMove', c: P.moveCeleb };
+    return;
+  }
+  if (!P.carrying && !P.floor && hdist(P.pos, FUSE_POS) < 4.3) { target = { kind: 'fuse', c: null }; bd = 3; }
   if (!P.carrying) {
     for (const c of celebs) {
       if (c.state === 'carpet') { const d = P.floor ? 99 : hdist(P.pos, c.pos); if (d < 3.3 && d < bd) { bd = d; target = { kind: 'buy', c }; } }
@@ -1403,26 +1440,31 @@ function updatePlayer(dt) {
 }
 function doAction() {
   if (!game.playing || game.shopOpen) return;
-  const t = target; if (!t.c) return;
+  const t = target;
+  if (t.kind === 'fuse') { openModal('fuse'); return; }
+  if (t.kind === 'place' || t.kind === 'swap') { endMove(t.slot); return; }
+  if (t.kind === 'cancelMove') { endMove(null); return; }
+  if (!t.c) return;
   if (t.kind === 'buy') buy(player, t.c);
   else if (t.kind === 'steal') {
-    if (!freeSlot(player)) { Snd.play('error'); banner('🏢 Agency full! Sell or upgrade first', '#ff9d00'); return; }
+    if (!freeSlot(player)) { Snd.play('error'); banner(tr('agencyFull'), '#ff9d00'); return; }
     grab(player, t.c);
   }
 }
 function doLockBtn() {
   if (!game.playing) return;
   const b = player.base;
-  if (!inside(b, player.pos.x, player.pos.z)) { Snd.play('error'); floatText('Go home to lock!', player.pos.x, 3.4, player.pos.z, '#ff9ec4'); return; }
+  if (!inside(b, player.pos.x, player.pos.z) || player.floor) { Snd.play('error'); floatText(tr('goHomeLock'), player.pos.x, player.pos.y + 3.4, player.pos.z, '#ff9ec4'); return; }
   if (!lockBase(b)) Snd.play('error');
 }
 function doSell() { if (sellTarget) sell(sellTarget); }
+function doMove() { if (player.moveCeleb) endMove(null); else if (sellTarget) startMove(sellTarget); }
 
 // ---------------------------------------------------------------------
 //  Celeb update
 // ---------------------------------------------------------------------
 function updateCelebs(dt) {
-  const mult = game.incomeMult, pm = (1 + 0.25 * game.up.star) * rebirthMult();
+  const mult = game.incomeMult, pm = playerIncomeMult();
   for (let i = celebs.length - 1; i >= 0; i--) {
     const c = celebs[i];
     switch (c.state) {
@@ -1452,6 +1494,10 @@ function updateCelebs(dt) {
           if (c.owner.isPlayer) c.stored += c.income * mult * pm * dt;
           else c.owner.cash += c.income * mult * dt * 0.4;
         }
+        break;
+      case 'moving':
+        c.pos.set(player.pos.x, player.pos.y + 2.25, player.pos.z); c.yaw = player.yaw;
+        animPerson(c.p, 'pose', c.ph, game.t);
         break;
       case 'carried': {
         const a = c.carrier;
@@ -1488,7 +1534,7 @@ function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); 
 //  HUD
 // ---------------------------------------------------------------------
 const $ = (id) => document.getElementById(id);
-const el = { hud: $('hud'), cash: $('cash'), cps: $('cps'), board: $('board'), banner: $('banner'), hint: $('hint'), feed: $('feed'), arrow: $('thiefArrow'), action: $('btnAction'), sell: $('btnSell'), flash: $('btnFlash'), lock: $('btnLock'), shop: $('shop'), shopList: $('shopList'), chip: $('eventChip'), mini: $('minimap'), joyBase: $('joyBase'), joyKnob: $('joyKnob'), popup: $('popup'), title: $('title'), play: $('playBtn') };
+const el = { move: $('btnMove'), hud: $('hud'), cash: $('cash'), cps: $('cps'), board: $('board'), banner: $('banner'), hint: $('hint'), feed: $('feed'), arrow: $('thiefArrow'), action: $('btnAction'), sell: $('btnSell'), flash: $('btnFlash'), lock: $('btnLock'), shop: $('shop'), shopList: $('shopList'), chip: $('eventChip'), mini: $('minimap'), joyBase: $('joyBase'), joyKnob: $('joyKnob'), popup: $('popup'), title: $('title'), play: $('playBtn') };
 const miniCtx = el.mini.getContext('2d');
 function banner(txt, color = '#fff') {
   el.banner.textContent = txt; el.banner.style.color = color;
@@ -1511,16 +1557,16 @@ const TUT = [
   '😈 Sneak into a rival bot agency and <b style="color:#d68bff">STEAL</b> their best celeb! Bring it home!',
   '🔒 Bots steal too! Step on your <b style="color:#ff9ec4">LOCK pad</b> to laser-lock your doors.',
 ];
-function showTutHint() { if (game.tut < TUT.length) setHint(TUT[game.tut]); else el.hint.classList.add('hidden'); }
+function showTutHint() { if (game.tut < TUT.length) setHint(tr('tut' + game.tut)); else el.hint.classList.add('hidden'); }
 function setTut(n) {
   game.tut = n;
-  if (n >= TUT.length) { setHint('🌟 You\'re a pro! Build the richest agency in Starville!', 5); queueSave(); return; }
+  if (n >= TUT.length) { setHint(tr('tutPro'), 5); queueSave(); return; }
   showTutHint(); queueSave();
 }
 const keyHint = (k) => isTouch ? '' : `<span class="key">${k}</span>`;
 let hudT = 0, boardT = 0, miniT = 0;
 function netWorth(a) { let n = a.cash; for (const c of celebs) if (c.owner === a) n += price(c); return n; }
-function playerCps() { let s = 0; for (const c of celebs) if (c.owner === player && c.state === 'placed') s += c.income; return s * game.incomeMult * (1 + 0.25 * game.up.star) * rebirthMult(); }
+function playerCps() { let s = 0; for (const c of celebs) if (c.owner === player && c.state === 'placed') s += c.income; return s * game.incomeMult * playerIncomeMult(); }
 function updateHUD(dt) {
   hudT -= dt; boardT -= dt; miniT -= dt;
   if (hudT <= 0) {
@@ -1530,24 +1576,30 @@ function updateHUD(dt) {
     // action button
     const t = target; const a = el.action;
     a.className = 'stroke';
-    if (player.carrying) { a.innerHTML = '🏃 RUN HOME!'; a.classList.add('carry'); }
+    if (player.carrying) { a.innerHTML = '🏃 ' + tr('runHome'); a.classList.add('carry'); }
     else if (t.kind === 'buy') {
       const cost = price(t.c), ok = player.cash >= cost && freeSlot(player);
-      a.innerHTML = ok ? `🛒 BUY $${fmt(cost)}${keyHint('E')}` : (!freeSlot(player) ? '🏢 FULL' : `NEED $${fmt(cost)}`);
+      a.innerHTML = ok ? `🛒 ${tr('buy')} $${fmt(cost)}${keyHint('E')}` : (!freeSlot(player) ? '🏢 ' + tr('full') : `${tr('need')} $${fmt(cost)}`);
       if (!ok) a.classList.add('no');
-    } else if (t.kind === 'steal') { a.innerHTML = `😈 STEAL!${keyHint('E')}`; a.classList.add('steal'); }
+    } else if (t.kind === 'steal') { a.innerHTML = `😈 ${tr('steal')}${keyHint('E')}`; a.classList.add('steal'); }
+    else if (t.kind === 'fuse') { a.innerHTML = `🧪 ${tr('fuseLab')}${keyHint('E')}`; a.classList.add('fuse'); }
+    else if (t.kind === 'place') { a.innerHTML = `📍 ${tr('placeHere')}${keyHint('E')}`; a.classList.add('carry'); }
+    else if (t.kind === 'swap') { a.innerHTML = `🔁 ${tr('swap')}${keyHint('E')}`; a.classList.add('carry'); }
+    else if (t.kind === 'cancelMove') { a.innerHTML = `❌ ${tr('cancel')}${keyHint('E')}`; a.classList.add('no'); }
     else a.classList.add('hidden');
-    if (sellTarget && !t.c) { el.sell.classList.remove('hidden'); el.sell.innerHTML = `💸 SELL $${fmt(price(sellTarget) * 0.5)}${keyHint('Q')}`; } else el.sell.classList.add('hidden');
-    { const rs = rebirthStatus(); const rb = document.getElementById('btnRebirth'); rb.classList.toggle('ready', !!rs.ok); rb.innerHTML = `♻️ REBIRTH ${game.rebirth}${keyHint('R')}`; }
+    const showSell = sellTarget && !t.kind && !player.moveCeleb;
+    el.sell.classList.toggle('hidden', !showSell); el.move.classList.toggle('hidden', !showSell);
+    if (showSell) { el.sell.innerHTML = `💸 ${tr('sell')} $${fmt(price(sellTarget) * 0.5)}${keyHint('Q')}`; el.move.innerHTML = `🔀 ${tr('move')}${keyHint('M')}`; }
+    updateMenuBar();
     // flash/lock
     const fcd = player.flashCd;
     el.flash.classList.toggle('dim', fcd > 0);
-    el.flash.querySelector('span').innerHTML = fcd > 0 ? `${Math.ceil(fcd)}s` : `FLASH${keyHint('F')}`;
+    el.flash.querySelector('span').innerHTML = fcd > 0 ? `${Math.ceil(fcd)}s` : `${tr('flash')}${keyHint('F')}`;
     const b = player.base, home = inside(b, player.pos.x, player.pos.z);
     el.lock.classList.toggle('dim', b.locked || b.lockCd > 0 || !home);
-    el.lock.querySelector('span').innerHTML = b.locked ? `ON ${Math.ceil(b.lockT)}s` : b.lockCd > 0 ? `${Math.ceil(b.lockCd)}s` : home ? `LOCK${keyHint('L')}` : 'HOME ONLY';
+    el.lock.querySelector('span').innerHTML = b.locked ? `${tr('on')} ${Math.ceil(b.lockT)}s` : b.lockCd > 0 ? `${Math.ceil(b.lockCd)}s` : home ? `${tr('lock')}${keyHint('L')}` : tr('homeOnly');
     // event chip
-    if (game.event) { el.chip.classList.remove('hidden'); el.chip.textContent = `${game.event.label} ${Math.ceil(game.event.t)}s`; } else el.chip.classList.add('hidden');
+    el.chip.classList.remove('hidden'); el.chip.textContent = game.event ? `${tr(game.event.key)} ${Math.ceil(game.event.t)}s` : '📅 ' + tr(todayTheme().key);
     // thief arrow
     const thief = bots.find((x) => x.carrying && x.carrying.homeOwner === player);
     if (thief) {
@@ -1557,13 +1609,13 @@ function updateHUD(dt) {
       const on = Math.abs(x) < 0.9 && Math.abs(y) < 0.85 && v.z < 1;
       if (!on) { const m = Math.max(Math.abs(x), Math.abs(y)) || 1; x = x / m * 0.82; y = y / m * 0.78; }
       el.arrow.style.left = ((x + 1) / 2 * innerWidth) + 'px'; el.arrow.style.top = ((1 - y) / 2 * innerHeight) + 'px';
-      el.arrow.textContent = on ? `🚨 ${thief.name}` : `🚨 THIEF ${Math.round(hdist(thief.pos, player.pos))}m`;
+      el.arrow.textContent = on ? `🚨 ${thief.name}` : `🚨 ${tr('thief')} ${Math.round(hdist(thief.pos, player.pos))}m`;
     } else el.arrow.classList.add('hidden');
   }
   if (boardT <= 0) {
     boardT = 1;
     const rows = agents.map((a) => ({ a, n: netWorth(a) })).sort((x, y) => y.n - x.n);
-    el.board.innerHTML = '<div class="t">🏆 RICHEST AGENCIES</div>' + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? 'YOU' + (game.rebirth ? ' ♻️' + game.rebirth : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
+    el.board.innerHTML = `<div class="t">${tr('richest')}</div>` + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? tr('you') + (game.rebirth ? ' ♻️' + game.rebirth : '') + (game.prestige ? ' 👑' + game.prestige : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
     const nw = netWorth(player);
     if (nw > game.stats.bestNet) game.stats.bestNet = nw;
   }
@@ -1595,8 +1647,8 @@ function upCost(u) { return Math.round(u.cost(game.up[u.id])); }
 function renderShop() {
   el.shopList.innerHTML = UPGRADES.map((u) => {
     const l = game.up[u.id], max = l >= u.max || (u.id === 'slots' && unlockedSlots(player) >= 8), cost = upCost(u), ok = player.cash >= cost;
-    return `<div class="up"><div class="ic">${u.icon}</div><div class="tx">${u.name} <span style="color:#ffd84d">Lv ${l}/${u.max}</span><small>${u.desc}</small></div>
-      <button data-u="${u.id}" class="${max ? 'max' : ok ? '' : 'no'} stroke">${max ? 'MAXED' : '$' + fmt(cost)}</button></div>`;
+    return `<div class="up"><div class="ic">${u.icon}</div><div class="tx">${tr('up_' + u.id)} <span style="color:#ffd84d">${tr('lv')} ${l}/${u.max}</span><small>${tr('ud_' + u.id)}</small></div>
+      <button data-u="${u.id}" class="${max ? 'max' : ok ? '' : 'no'} stroke">${max ? tr('maxed') : '$' + fmt(cost)}</button></div>`;
   }).join('');
 }
 el.shopList.addEventListener('pointerdown', (e) => {
@@ -1609,12 +1661,7 @@ el.shopList.addEventListener('pointerdown', (e) => {
   if (u.id === 'slots') refreshPlayerPodiums();
   renderShop(); queueSave();
 });
-function toggleShop(force) {
-  if (!game.playing) return;
-  game.shopOpen = force ?? !game.shopOpen;
-  el.shop.classList.toggle('hidden', !game.shopOpen);
-  if (game.shopOpen) renderShop();
-}
+function toggleShop(force) { if (force === false) { if (activeModal === 'shop') closeModal(); } else if (force === true) openModal('shop'); else toggleModal('shop'); }
 
 // ---------------------------------------------------------------------
 //  Input
@@ -1625,6 +1672,7 @@ addEventListener('keydown', (e) => {
   Snd.init();
   if (!game.playing) { if ((e.code === 'Enter' || e.code === 'Space') && game.loaded) startGame(); return; }
   if (e.repeat) return;
+  if (activeModal && !['Escape', 'KeyP', 'KeyB', 'KeyR'].includes(e.code)) return;
   switch (e.code) {
     case 'KeyE': case 'Space': case 'Enter': doAction(); break;
     case 'KeyF': doFlash(); break;
@@ -1632,7 +1680,9 @@ addEventListener('keydown', (e) => {
     case 'KeyQ': doSell(); break;
     case 'KeyB': toggleShop(); break;
     case 'KeyR': toggleRebirth(); break;
-    case 'Escape': toggleShop(false); toggleRebirth(false); break;
+    case 'KeyM': doMove(); break;
+    case 'KeyP': toggleModal('pause'); break;
+    case 'Escape': if (activeModal) closeModal(); else openModal('pause'); break;
   }
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -1665,9 +1715,11 @@ const ptrUp = (e) => {
 cvs.addEventListener('pointerup', ptrUp); cvs.addEventListener('pointercancel', ptrUp);
 cvs.addEventListener('wheel', (e) => { camDist = clamp(camDist + e.deltaY * 0.012, 8, 26); e.preventDefault(); }, { passive: false });
 function bindBtn(b, fn) { b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Snd.init(); fn(); }); }
-bindBtn(el.action, doAction); bindBtn(el.sell, doSell); bindBtn(el.flash, doFlash); bindBtn(el.lock, doLockBtn);
-bindBtn($('btnShop'), () => toggleShop()); bindBtn($('btnRebirth'), () => toggleRebirth()); bindBtn($('rebirthClose'), () => toggleRebirth(false));
-$('rebirthBody').addEventListener('pointerdown', (e) => { if (e.target.closest('#rbGo')) { e.preventDefault(); doRebirth(); } }); bindBtn($('shopClose'), () => toggleShop(false));
+bindBtn(el.action, doAction); bindBtn(el.sell, doSell); bindBtn(el.move, doMove); bindBtn(el.flash, doFlash); bindBtn(el.lock, doLockBtn);
+bindBtn($('btnShop'), () => toggleShop()); bindBtn($('btnRebirth'), () => toggleRebirth());
+for (const [b, m] of [['btnMissions', 'missions'], ['btnAlbum', 'album'], ['btnFuse', 'fuse'], ['btnPause', 'pause']]) bindBtn($(b), () => toggleModal(m));
+document.querySelectorAll('[data-close]').forEach((b) => bindBtn(b, () => closeModal()));
+$('rebirthBody').addEventListener('pointerdown', (e) => { const g = e.target.closest('#rbGo'); if (g) { e.preventDefault(); if (g.dataset.prestige) doPrestige(); else doRebirth(); } });
 el.play.addEventListener('click', () => { Snd.init(); startGame(); });
 
 // ---------------------------------------------------------------------
@@ -1688,19 +1740,19 @@ function updateEvents(dt) {
   if (!game.playing) return;
   const ad = adminInfo();
   if (ad.active && (!game.event || game.event.id !== 'admin')) {
-    game.event = { id: 'admin', label: '👑 ADMIN ABUSE — Superstars only!', t: ad.left };
+    game.event = { id: 'admin', key: 'evAdmin', t: ad.left };
     game.luck = 6; game.incomeMult = 3; game.spawnT = 0;
-    banner('👑 ADMIN ABUSE! Only SUPERSTARS & ICONS spawn!', '#ff5cf4');
-    feed('👑 <b>WEEKLY ADMIN ABUSE</b>: superstars only, cash x3!'); Snd.play('legend');
+    banner(tr('admin'), '#ff5cf4');
+    feed(tr('adminFeed')); Snd.play('legend');
     return;
   }
   if (!game.event) {
     game.eventT -= dt;
     if (game.eventT <= 0) {
-      const e = eventIdx++ % 2 === 0 ? { id: 'storm', label: '🌟 STAR STORM — Luck x4!', t: 40 } : { id: 'gold', label: '🌅 GOLDEN HOUR — Cash x2!', t: 45 };
+      const e = eventIdx++ % 2 === 0 ? { id: 'storm', key: 'evStorm', t: 40 } : { id: 'gold', key: 'evGold', t: 45 };
       game.event = e;
-      if (e.id === 'storm') { game.luck = 4; banner('🌟 STAR STORM! Rare celebs incoming!', '#ffcc00'); }
-      else { game.incomeMult = 2; banner('🌅 GOLDEN HOUR! All income x2!', '#ff9d00'); }
+      if (e.id === 'storm') { game.luck = 4; banner(tr('storm'), '#ffcc00'); }
+      else { game.incomeMult = 2; banner(tr('gold'), '#ff9d00'); }
       Snd.play('legend');
     }
   } else {
@@ -1719,7 +1771,7 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, tut: game.tut, stats: game.stats, celebs: list });
+  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, celebs: list });
 }
 let saving = false;
 async function doSave() {
@@ -1737,7 +1789,13 @@ function applySave(str) {
   player.cash = Math.max(0, +d.cash || 0);
   for (const k of Object.keys(game.up)) game.up[k] = clamp(Math.floor(d.up?.[k] || 0), 0, UPGRADES.find((u) => u.id === k).max);
   game.tut = clamp(d.tut | 0, 0, 4);
-  game.rebirth = clamp(d.rb | 0, 0, REBIRTHS.length); updateNameTag();
+  game.rebirth = clamp(d.rb | 0, 0, REBIRTHS.length); game.prestige = Math.max(0, d.pr | 0);
+  if (d.al && typeof d.al === 'object') for (const [k, v] of Object.entries(d.al)) if (CELEBS[+k]) game.album[+k] = v | 0;
+  if (d.ad && typeof d.ad === 'object') game.albumDone = d.ad;
+  if (d.st && typeof d.st === 'object') game.streak = { last: String(d.st.last || ''), count: d.st.count | 0, claimed: String(d.st.claimed || '') };
+  if (d.mi && d.mi.list) game.missions = d.mi;
+  game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : '';
+  updateNameTag(); applyPrestigeLook();
   Object.assign(game.stats, d.stats || {});
   refreshPlayerPodiums();
   let incSum = 0;
@@ -1746,11 +1804,11 @@ function applySave(str) {
     let slot = player.base.slots[s.s];
     if (!slot || slot.celeb || !playerSlots().includes(slot)) slot = freeSlot(player);
     if (!slot) continue;
-    const c = createCeleb(def, mut); placeCeleb(c, slot, player); c.stored = Math.max(0, s.st || 0);
+    const c = createCeleb(def, mut); placeCeleb(c, slot, player); c.stored = Math.max(0, s.st || 0); recordAlbum(c, true);
     incSum += c.income;
   }
   const away = clamp((Date.now() - (d.t || Date.now())) / 1000, 0, 7200);
-  const offline = Math.floor(incSum * (1 + 0.25 * game.up.star) * rebirthMult() * away * 0.25);
+  const offline = Math.floor(incSum * playerIncomeMult() * away * 0.25);
   return away > 60 ? offline : 0;
 }
 
@@ -1854,6 +1912,7 @@ function update(dt) {
   for (const b of game.beams) { b.m.rotation.z = Math.sin(game.t * 0.5 + b.ph) * 0.45; b.m.rotation.x = Math.cos(game.t * 0.37 + b.ph) * 0.3; }
   // rainbow
   const hue = (game.t * 0.25) % 1; rainbowMat.color.setHSL(hue, 0.9, 0.6);
+  updateFuseLab(dt);
   for (const m of rainbowBasics) m.color.setHSL((hue + 0.5) % 1, 1, 0.6);
   if (game.playing) {
     updateIndicators(); updateHUD(dt);
@@ -1884,6 +1943,403 @@ function resume() { if (!game.paused) return; game.paused = false; last = perfor
 SDK.onPause(pause); SDK.onResume(resume);
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else if (!IN_YT) resume(); });
 
+// =====================================================================
+//  v3 features: menus, daily streak & missions, celeb album, fuse lab,
+//  weekly schedule, prestige, podium moving, stairs, pause, languages
+// =====================================================================
+const rColor = (i) => { const c = RARITIES[i].color; return c === 'rainbow' ? '#ff8cf0' : c; };
+const sig2 = (n) => { if (n < 100) return Math.max(1, Math.round(n)); const m = Math.pow(10, Math.floor(Math.log10(n)) - 1); return Math.round(n / m) * m; };
+
+// ---------- modal manager (every panel pauses the game) ----------
+let activeModal = null;
+const MODAL_RENDER = { shop: () => renderShop(), rebirth: () => renderRebirth(), missions: () => renderMissions(), album: () => renderAlbum(), fuse: () => renderFuse(), pause: () => renderPause() };
+function openModal(id) {
+  if (!game.playing) return;
+  if (activeModal && activeModal !== id) closeModal();
+  activeModal = id; game.shopOpen = true; game.rebirthConfirm = false;
+  for (const k in keys) keys[k] = false;
+  document.getElementById(id).classList.remove('hidden');
+  if (MODAL_RENDER[id]) MODAL_RENDER[id]();
+}
+function closeModal() {
+  if (!activeModal) return;
+  document.getElementById(activeModal).classList.add('hidden');
+  activeModal = null; game.shopOpen = false; last = performance.now();
+}
+function toggleModal(id) { if (activeModal === id) closeModal(); else openModal(id); }
+
+// ---------- popup queue (welcome back, daily streak) ----------
+const popupQueue = [];
+function queuePopup(fn) { popupQueue.push(fn); if (el.popup.classList.contains('hidden')) nextPopup(); }
+function nextPopup() {
+  const fn = popupQueue.shift();
+  if (!fn) { el.popup.classList.add('hidden'); return; }
+  el.popup.innerHTML = ''; fn(el.popup); el.popup.classList.remove('hidden');
+}
+
+// ---------- calendar helpers (device local time) ----------
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const prevDayKey = () => { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); };
+const msToMidnight = () => { const d = new Date(), m = new Date(d); m.setHours(24, 0, 0, 0); return m - d; };
+function seeded(str) {
+  let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+}
+
+// ---------- weekly content schedule ----------
+// Every week: a FEATURED celeb (8x spawn, x2 income) and a LIMITED celeb that only appears in Admin Abuse.
+// Every day: a theme day that makes one kind of celeb 4x more common.
+const weekIndex = (now = Date.now()) => Math.floor((now - ADMIN_ANCHOR) / WEEK);
+const FEATURE_POOL = CELEBS.filter((c) => c.r >= 3 && c.r <= 5).map((c) => c.id);
+const wrap = (i, n) => ((i % n) + n) % n;
+function featuredId() { return FEATURE_POOL[wrap(weekIndex() * 37, FEATURE_POOL.length)]; }
+function limitedId() { return LIMITED_IDS[wrap(weekIndex(), LIMITED_IDS.length)]; }
+function todayTheme() { return THEME_DAYS[new Date().getDay()]; }
+function pickSpawnDef(r) {
+  const list = CELEBS.filter((c) => c.r === r), th = todayTheme().arch, f = featuredId();
+  return wpick(list, (c) => (c.id === f ? 8 : 1) * (th.includes(c.arch) ? 4 : 1));
+}
+function refreshTitleText() {
+  el.play.textContent = game.loaded ? tr('play') : tr('loading');
+  const ai = adminInfo(), an = document.getElementById('adminNext');
+  if (an) an.textContent = ai.active ? tr('adminLive') : tr('adminNext', { when: new Date(ai.next).toLocaleString(getLang(), { weekday: 'long', hour: 'numeric', minute: '2-digit' }), wait: fmtWait(ai.next - Date.now()) });
+  const sc = document.getElementById('scheduleLine');
+  if (sc) sc.textContent = tr('schedule', { theme: tr(todayTheme().key), feat: CELEBS[featuredId()].name, lim: CELEBS[limitedId()].name });
+}
+
+// ---------- income multipliers ----------
+const albumCount = () => Object.keys(game.album).length;
+const albumMult = () => 1 + 0.01 * albumCount();
+const prestigeMult = (p = game.prestige) => 1 + 0.5 * p;
+function playerIncomeMult() { return (1 + 0.25 * game.up.star) * rebirthMult() * albumMult() * prestigeMult(); }
+
+// ---------- celeb album ----------
+function recordAlbum(c, silent) {
+  const id = c.def.id, bit = 1 << c.mut.id, had = game.album[id] || 0;
+  if (had & bit) return;
+  game.album[id] = had | bit;
+  if (had || silent) return;
+  setTimeout(() => banner(tr('newAlbum', { c: c.def.name }), '#9be7ff'), 900);
+  mission('album');
+  const r = c.def.r, page = CELEBS.filter((x) => x.r === r);
+  if (!game.albumDone[r] && page.every((x) => game.album[x.id])) {
+    game.albumDone[r] = 1; const reward = Math.round(2000 * Math.pow(8, Math.min(r, 6)));
+    player.cash += reward;
+    setTimeout(() => { banner(tr('alPageDone', { r: tr('r' + r), x: fmt(reward) }), '#ffcc00'); Snd.play('legend'); }, 2600);
+  }
+}
+let albumTab = 0;
+function renderAlbum() {
+  const found = albumCount();
+  let h = `<div class="al-top"><b>${tr('alFound', { a: found, b: CELEBS.length })}</b><small>${tr('alBonus', { x: found })}</small></div><div class="tabs">`;
+  for (let r = 0; r < RARITIES.length; r++) {
+    const list = CELEBS.filter((c) => c.r === r), f = list.filter((c) => game.album[c.id]).length;
+    h += `<button data-tab="${r}" class="${r === albumTab ? 'on' : ''}" style="--c:${rColor(r)}">${tr('r' + r)} <small>${f}/${list.length}${game.albumDone[r] ? ' ✅' : ''}</small></button>`;
+  }
+  h += '</div><div class="al-grid">';
+  for (const c of CELEBS.filter((x) => x.r === albumTab)) {
+    const m = game.album[c.id] || 0;
+    if (!m) { h += `<div class="al-card lock"><div class="al-q">?</div><div class="al-n">???</div><div class="al-t">${tr('r' + c.r)}</div></div>`; continue; }
+    h += `<div class="al-card" style="--c:${rColor(c.r)}"><div class="al-n">${c.name}</div><div class="al-t">${c.title}</div>
+      <div class="al-m">${[0, 1, 2, 3].map((i) => `<i class="${m & (1 << i) ? 'y' : ''} mu${i}" title="${i ? tr('mu' + i) : ''}"></i>`).join('')}</div><div class="al-i">+$${fmt(c.inc)}/s</div></div>`;
+  }
+  document.getElementById('albumBody').innerHTML = h + '</div>';
+}
+document.getElementById('albumBody').addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-tab]'); if (b) { e.preventDefault(); albumTab = +b.dataset.tab; renderAlbum(); } });
+
+// ---------- daily missions ----------
+const MISSION_TYPES = [
+  { type: 'buy', n: () => randi(3, 7) }, { type: 'steal', n: () => randi(1, 3) }, { type: 'collect', n: 'cash' },
+  { type: 'defend', n: () => randi(1, 2) }, { type: 'lock', n: () => randi(1, 2) }, { type: 'flash', n: () => randi(2, 5) },
+  { type: 'rare', n: () => 1 }, { type: 'album', n: () => randi(1, 3) }, { type: 'floor', n: () => randi(1, 3), need: () => floorsUnlocked() > 0 },
+];
+function ensureMissions() {
+  const key = dayKey();
+  if (game.missions && game.missions.day === key && Array.isArray(game.missions.list)) return;
+  const R = seeded('missions' + key), pool = MISSION_TYPES.filter((m) => !m.need || m.need()), list = [];
+  const base = Math.max(600, playerCps() * 240);
+  let guard = 0;
+  while (list.length < 3 && guard++ < 100) {
+    const m = pool[Math.floor(R() * pool.length)];
+    if (list.some((x) => x.type === m.type)) continue;
+    list.push({ type: m.type, n: m.n === 'cash' ? sig2(base * 4) : m.n(), prog: 0, claimed: false, reward: sig2(base * (1 + list.length * 0.6)) });
+  }
+  game.missions = { day: key, list, bonus: false };
+}
+const missionText = (m) => tr('m_' + m.type, { n: m.type === 'collect' ? fmt(m.n) : m.n });
+function mission(type, amt = 1) {
+  if (!game.playing) return;
+  ensureMissions();
+  for (const m of game.missions.list) {
+    if (m.type !== type || m.prog >= m.n) continue;
+    m.prog = Math.min(m.n, m.prog + amt);
+    if (m.prog >= m.n) { setTimeout(() => banner(tr('missionDone', { m: missionText(m) }), '#7dffb0'), 400); Snd.play('upgrade'); }
+  }
+}
+function missionsClaimable() {
+  ensureMissions(); const L = game.missions.list;
+  return streakReady() || L.some((m) => m.prog >= m.n && !m.claimed) || (!game.missions.bonus && L.every((m) => m.claimed));
+}
+function renderMissions() {
+  ensureMissions();
+  const L = game.missions.list, hrs = Math.floor(msToMidnight() / 3600e3), mins = Math.floor(msToMidnight() / 60e3) % 60;
+  let h = streakHtml(true) + `<h4>${tr('misTitle')} <small>${tr('misReset', { t: `${hrs}h ${mins}m` })}</small></h4>`;
+  L.forEach((m, i) => {
+    const pct = Math.round(m.prog / m.n * 100), ready = m.prog >= m.n;
+    h += `<div class="mi-row ${m.claimed ? 'done' : ''}"><div class="mi-tx">${missionText(m)}<div class="mi-bar"><i style="width:${pct}%"></i></div><small>${m.type === 'collect' ? fmt(m.prog) + ' / ' + fmt(m.n) : m.prog + ' / ' + m.n} • +$${fmt(m.reward)}</small></div>
+      <button data-claim="${i}" class="${ready && !m.claimed ? '' : 'no'} stroke">${m.claimed ? tr('done') : tr('claim')}</button></div>`;
+  });
+  const all = L.every((m) => m.claimed), bonus = sig2(L.reduce((s, m) => s + m.reward, 0));
+  h += `<div class="mi-row bonus ${game.missions.bonus ? 'done' : ''}"><div class="mi-tx">${tr('misBonus')}<small>+$${fmt(bonus)}</small></div>
+    <button data-claim="bonus" class="${all && !game.missions.bonus ? '' : 'no'} stroke">${game.missions.bonus ? tr('done') : tr('claim')}</button></div>`;
+  document.getElementById('missionsBody').innerHTML = h;
+}
+document.getElementById('missionsBody').addEventListener('pointerdown', (e) => {
+  const st = e.target.closest('[data-streak]'); if (st) { e.preventDefault(); claimStreak(); renderMissions(); return; }
+  const b = e.target.closest('[data-claim]'); if (!b) return; e.preventDefault();
+  const M = game.missions;
+  if (b.dataset.claim === 'bonus') {
+    if (M.bonus || !M.list.every((m) => m.claimed)) return Snd.play('error');
+    M.bonus = true; const v = sig2(M.list.reduce((s, m) => s + m.reward, 0)); player.cash += v; floatText(`+$${fmt(v)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
+  } else {
+    const m = M.list[+b.dataset.claim]; if (!m || m.claimed || m.prog < m.n) return Snd.play('error');
+    m.claimed = true; player.cash += m.reward; floatText(`+$${fmt(m.reward)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
+  }
+  Snd.play('win'); burst(player.pos.x, player.pos.y + 2, player.pos.z, 30); queueSave(); renderMissions();
+});
+
+// ---------- daily login streak ----------
+function updateStreakOnStart() {
+  const s = game.streak, today = dayKey();
+  if (s.last === today) return;
+  s.count = s.last === prevDayKey() ? s.count + 1 : 1; s.last = today;
+}
+const streakDay = () => ((Math.max(1, game.streak.count) - 1) % 7) + 1;
+const streakReady = () => game.streak.last === dayKey() && game.streak.claimed !== dayKey();
+const streakCash = (d) => sig2(Math.max(300, playerCps() * 90) * d);
+function streakHtml(inPanel) {
+  const cur = streakDay(), ready = streakReady();
+  let h = `<div class="st-wrap"><h4>${tr('stTitle')} 🔥${game.streak.count}</h4><div class="st-row">`;
+  for (let d = 1; d <= 7; d++) {
+    const past = d < cur || (d === cur && !ready);
+    h += `<div class="st-day ${d === cur ? 'cur' : ''} ${past ? 'got' : ''}"><b>${tr('stDay', { n: d })}</b><span>${d === 7 ? '⭐' : '💰'}</span><small>${d === 7 ? tr('r3') : '$' + fmt(streakCash(d))}</small></div>`;
+  }
+  h += '</div>';
+  h += ready ? `<button data-streak="1" class="st-claim stroke">${tr('claim')}: ${cur === 7 ? tr('stCeleb') : '$' + fmt(streakCash(cur))}</button>` : `<p class="st-back">${tr('stBack', { n: (cur % 7) + 1 })}</p>`;
+  return h + '</div>';
+}
+function claimStreak() {
+  if (!streakReady()) return false;
+  const d = streakDay(); game.streak.claimed = dayKey();
+  if (d === 7) {
+    const def = pick(CELEBS.filter((c) => c.r === 3)), s = freeSlot(player);
+    if (s) { const c = createCeleb(def, MUTS[0]); placeCeleb(c, s, player); recordAlbum(c); burst(c.pos.x, c.pos.y + 2, c.pos.z, 60); }
+    else player.cash += def.cost;
+  } else player.cash += streakCash(d);
+  banner(tr('stGot', { n: d }), '#ffb347'); Snd.play('win'); burst(player.pos.x, player.pos.y + 2, player.pos.z, 50); queueSave();
+  if (!el.popup.classList.contains('hidden') && el.popup.querySelector('.st-wrap')) nextPopup();
+  return true;
+}
+function streakPopup(box) {
+  box.innerHTML = streakHtml(false) + `<button class="stroke st-later" id="stLater">${tr('close')}</button>`;
+  const c = box.querySelector('[data-streak]');
+  if (c) bindBtn(c, () => { claimStreak(); nextPopup(); });
+  bindBtn(box.querySelector('#stLater'), () => nextPopup());
+}
+
+// ---------- fuse lab ----------
+const FUSE_POS = { x: 19, z: 20 };
+let fuseLiquid = null;
+function buildFuseLab() {
+  const g = new THREE.Group(); g.position.set(FUSE_POS.x, 0, FUSE_POS.z); scene.add(g);
+  M(cylG(2.6, 2.8, 0.3, 24), toon(0x2b2d42), 0, 0.15, 0, g);
+  M(torG(2.6, 0.12, 6, 32), new THREE.MeshBasicMaterial({ color: 0x00ffd5 }), 0, 0.32, 0, g).rotation.x = -Math.PI / 2;
+  M(cylG(1.5, 1.6, 0.5, 20), toon(0xd8dde6), 0, 0.55, 0, g);
+  fuseLiquid = M(cylG(1.15, 1.15, 2.6, 20), new THREE.MeshBasicMaterial({ color: 0x00ffd5, transparent: true, opacity: 0.85 }), 0, 2.1, 0, g);
+  M(new THREE.CylinderGeometry(1.35, 1.35, 3.1, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.25, depthWrite: false, side: THREE.DoubleSide }), 0, 2.3, 0, g);
+  M(cylG(1.5, 1.4, 0.4, 20), toon(0xd8dde6), 0, 4.0, 0, g); M(sphG(0.4, 10, 8), toon(0xff00aa), 0, 4.45, 0, g);
+  for (const a of [0, 2.1, 4.2]) { const t = M(cylG(0.14, 0.14, 2.4, 8), toon(0xffcc33), Math.cos(a) * 2.1, 1.4, Math.sin(a) * 2.1, g); t.rotation.z = Math.cos(a) * 0.35; t.rotation.x = -Math.sin(a) * 0.35; }
+  const sign = labelSprite('fuTitle', null, '#00ffd5', 512, 128, 1.5, 70); sign.position.set(0, 5.6, 0); g.add(sign);
+  circles.push({ x: FUSE_POS.x, z: FUSE_POS.z, r: 2.3 });
+  game.fuseLab = g;
+}
+function updateFuseLab(dt) {
+  if (!fuseLiquid) return;
+  fuseLiquid.material.color.setHSL((game.t * 0.15) % 1, 1, 0.55);
+  fuseLiquid.scale.y = 0.85 + Math.sin(game.t * 3) * 0.1;
+  if (Math.random() < dt * 4) burst(FUSE_POS.x + rand(-0.8, 0.8), 3.4, FUSE_POS.z + rand(-0.8, 0.8), 2, [0x00ffd5, 0xff00aa, 0xffffff], 0.6, 2);
+}
+const nearFuse = () => !player.floor && hdist(player.pos, FUSE_POS) < 4.6;
+function fuseStatus(rec) {
+  const used = new Set();
+  const need = rec.need.map((id) => {
+    const pickC = celebs.filter((c) => c.owner === player && c.state === 'placed' && c.def.id === id && !used.has(c)).sort((a, b) => a.mut.id - b.mut.id)[0] || null;
+    if (pickC) used.add(pickC); return pickC;
+  });
+  return { need, has: need.every(Boolean), ok: need.every(Boolean) && player.cash >= rec.fee };
+}
+function renderFuse() {
+  const near = nearFuse();
+  let h = `<p class="fu-desc">${tr('fuDesc')}</p>` + (near ? '' : `<p class="fu-warn">📍 ${tr('fuNeedLab')}</p>`);
+  RECIPES.forEach((r, i) => {
+    const st = fuseStatus(r), res = CELEBS[r.result], have = game.album[res.id];
+    h += `<div class="fu-card ${st.ok ? 'ready' : ''}"><div class="fu-res"><b>${have ? '✅ ' : ''}${res.name}</b><small>${res.title}</small><span>+$${fmt(res.inc)}/s</span></div>
+      <div class="fu-need">${r.need.map((id, k) => `<span class="${st.need[k] ? 'ok' : ''}" style="--c:${rColor(CELEBS[id].r)}">${st.need[k] ? '✅' : '❌'} ${CELEBS[id].name}<small>${tr('r' + CELEBS[id].r)}</small></span>`).join('<em>+</em>')}</div>
+      <div class="fu-row"><span>${tr('fuFee')}: $${fmt(r.fee)}</span><button data-fuse="${i}" class="${st.ok && near ? '' : 'no'} stroke">${st.has ? tr('fuGo') : tr('fuMissing')}</button></div></div>`;
+  });
+  document.getElementById('fuseBody').innerHTML = h;
+}
+function doFuse(i) {
+  const r = RECIPES[i]; if (!r) return false;
+  const st = fuseStatus(r);
+  if (!st.ok || !nearFuse()) { Snd.play('error'); return false; }
+  player.cash -= r.fee;
+  const sameMut = st.need.every((c) => c.mut.id === st.need[0].mut.id) ? st.need[0].mut : MUTS[0];
+  const slot = st.need[0].slot;
+  for (const c of st.need) { clearSlot(c.slot); removeCeleb(c); }
+  const nc = createCeleb(CELEBS[r.result], sameMut); placeCeleb(nc, slot, player); recordAlbum(nc);
+  game.stats.fused = (game.stats.fused || 0) + 1;
+  banner(tr('fused', { c: nc.def.name }), '#00ffd5'); Snd.play('legend'); setTimeout(() => Snd.play('win'), 350);
+  for (let k = 0; k < 4; k++) burst(FUSE_POS.x, 4, FUSE_POS.z, 50, [0x00ffd5, 0xff00aa, 0xffe600, 0xffffff], 7, 9);
+  ringFx(FUSE_POS.x, FUSE_POS.z, 0x00ffd5, 8); game.shake = 0.5;
+  closeModal(); queueSave();
+  return true;
+}
+document.getElementById('fuseBody').addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-fuse]'); if (b) { e.preventDefault(); doFuse(+b.dataset.fuse); } });
+
+// ---------- prestige (after Rebirth 10) ----------
+const PRESTIGE_TITLES = ['Starville Legend', 'Hall of Famer', 'Living Icon', 'Galaxy Mogul', 'Eternal Superstar', 'Ultimate Tycoon', 'Mythic Mogul', 'Star Emperor'];
+const prestigeTitle = (p) => p <= 0 ? '' : PRESTIGE_TITLES[Math.min(p, PRESTIGE_TITLES.length) - 1] + (p > PRESTIGE_TITLES.length ? ' ' + (p - PRESTIGE_TITLES.length + 1) : '');
+const prestigeCash = (p = game.prestige) => 25e9 * Math.pow(4, p);
+function prestigeStatus() {
+  const hasCash = player.cash >= prestigeCash();
+  const hasEx = celebs.some((c) => c.owner === player && c.def.r === 6 && (c.state === 'placed' || c.state === 'moving'));
+  return { hasCash, hasEx, ok: game.rebirth >= REBIRTHS.length && hasCash && hasEx };
+}
+function applyPrestigeLook() {
+  const gold = game.prestige > 0;
+  playerDecoMat.color.set(gold ? 0xffe28a : 0xffffff); playerDecoMat.emissive.set(gold ? 0x3a2a00 : 0x000000);
+}
+function doPrestige() {
+  const st = prestigeStatus(); if (!st.ok) { Snd.play('error'); return; }
+  if (!game.rebirthConfirm) { game.rebirthConfirm = true; renderRebirth(); return; }
+  game.rebirthConfirm = false;
+  game.prestige++;
+  resetAgency(); applyPrestigeLook(); closeModal();
+  banner(tr('pDone', { n: game.prestige, title: prestigeTitle(game.prestige) }), '#ffd84d');
+  Snd.play('legend'); setTimeout(() => Snd.play('win'), 400); game.shake = 0.7;
+  for (let i = 0; i < 8; i++) burst(player.pos.x + rand(-5, 5), 3, player.pos.z + rand(-5, 5), 50, [0xffd84d, 0xffffff, 0xffb703]);
+  doSave();
+}
+
+// ---------- rearranging podiums ----------
+function startMove(c) {
+  if (!c || c.owner !== player || c.state !== 'placed' || player.carrying || player.moveCeleb) return false;
+  player.moveCeleb = c; c.state = 'moving'; c.p.root.scale.setScalar(c.baseScale * 0.8);
+  if (c.slot.label) c.slot.label.sprite.visible = false;
+  Snd.play('pop'); return true;
+}
+function endMove(slot) {
+  const c = player.moveCeleb; if (!c) return;
+  player.moveCeleb = null; c.p.root.scale.setScalar(c.baseScale);
+  const from = c.slot;
+  if (slot && slot !== from) {
+    const other = slot.celeb;
+    if (other && other !== c) {
+      if (other.owner !== player || other.state !== 'placed') { placeCeleb(c, from, player); return; }
+      placeCeleb(other, from, player);
+    } else clearSlot(from);
+    placeCeleb(c, slot, player);
+    floatText(tr('moved'), c.pos.x, c.pos.y + 3, c.pos.z, '#ffe14d'); burst(c.pos.x, c.pos.y + 1, c.pos.z, 20); Snd.play('pop'); queueSave();
+  } else placeCeleb(c, from, player);
+}
+
+// ---------- stairs (player agency, alongside the elevator) ----------
+// A straight stair runs along the left wall from z'=0 (bottom) to z'=-6 (top), one per floor gap.
+const STAIR_X0 = -10.6, STAIR_X1 = -9.0, STAIR_LEN = 6;
+function buildStairs(b, k) {
+  const g = new THREE.Group(), deco = new THREE.Group(); g.add(deco);
+  const steps = 12, y0 = k * FH + 0.12, rise = FH / steps, run = STAIR_LEN / steps;
+  const stepM = toon(0xf4f0ff), edgeM = toon(lighten(b.owner.color, 0.1)), chrome = toon(0xd8dde6);
+  for (let i = 0; i < steps; i++) {
+    const p = b.local((STAIR_X0 + STAIR_X1) / 2, -(i + 0.5) * run), top = y0 + (i + 1) * rise;
+    M(boxG(1.55, 0.24, +(run + 0.04).toFixed(2)), stepM, p.x, top - 0.12, p.z, deco);
+    M(boxG(1.56, 0.05, 0.08), edgeM, p.x, top + 0.005, b.local(0, -i * run - 0.04).z, deco);
+    if (i % 3 === 0) { const q = b.local(STAIR_X1 + 0.05, -(i + 0.5) * run); M(cylG(0.04, 0.04, 1.0, 6), chrome, q.x, top + 0.5, q.z, deco); }
+  }
+  const ang = b.f * Math.atan2(FH, STAIR_LEN), len = Math.hypot(FH, STAIR_LEN);
+  const mid = b.local(STAIR_X1 + 0.05, -STAIR_LEN / 2), midS = b.local((STAIR_X0 + STAIR_X1) / 2, -STAIR_LEN / 2);
+  const rail = M(boxG(0.07, 0.07, +len.toFixed(2)), chrome, mid.x, y0 + FH / 2 + 1.0, mid.z, deco); rail.rotation.x = ang;
+  const str = M(boxG(1.5, 0.3, +len.toFixed(2)), edgeM, midS.x, y0 + FH / 2 - 0.3, midS.z, deco); str.rotation.x = ang;
+  mergeGroup(deco, null, playerDecoMat);
+  return g;
+}
+function addStairColliders(b) {
+  for (let n = 0; n <= 4; n++) {
+    const a = b.local(STAIR_X1 - 0.05, -5.8), c = b.local(STAIR_X1 + 0.05, -0.3);
+    walls.push({ minX: Math.min(a.x, c.x), maxX: Math.max(a.x, c.x), minZ: Math.min(a.z, c.z), maxZ: Math.max(a.z, c.z), floor: n, needFloors: n === 0 ? 1 : 0 });
+  }
+  const a = b.local(STAIR_X0 - 0.1, -6.25), c = b.local(STAIR_X1, -6.05);
+  walls.push({ minX: Math.min(a.x, c.x), maxX: Math.max(a.x, c.x), minZ: Math.min(a.z, c.z), maxZ: Math.max(a.z, c.z), floor: 0, needFloors: 1 });
+}
+function updateStairs(P) {
+  const b = P.base; if (!b.floors) return;
+  const lx = P.pos.x - b.cx, lz = (P.pos.z - b.cz) * b.f, u = game.fu || 0;
+  if (P.stair != null) {
+    P.pos.x = b.cx + clamp(lx, STAIR_X0 + 0.4, STAIR_X1 - 0.4);
+    if (lz > 0.35) { P.floor = P.stair; P.stair = null; }
+    else if (lz < -STAIR_LEN - 0.3) { P.floor = P.stair + 1; P.stair = null; elevFx(P, P.floor); mission('floor'); }
+    else P.pos.y = P.stair * FH + 0.12 + clamp(-lz / STAIR_LEN, 0, 1) * FH;
+    return;
+  }
+  if (!(lx > STAIR_X0 - 0.05 && lx < STAIR_X1 + 0.05) || !inside(b, P.pos.x, P.pos.z)) return;
+  const fl = P.floor || 0;
+  if (lz <= 0.2 && lz >= -0.45 && u >= fl + 1) P.stair = fl;
+  else if (fl >= 1 && lz <= -STAIR_LEN + 0.3 && lz >= -STAIR_LEN - 0.2) { P.stair = fl - 1; P.floor = fl - 1; }
+}
+
+// ---------- pause menu ----------
+function renderPause() {
+  const langBtns = Object.entries(LANGS).map(([code, name]) => `<button data-lang="${code}" class="${getLang() === code ? 'on' : ''}">${name}</button>`).join('');
+  document.getElementById('pauseBody').innerHTML = `
+    <button id="paResume" class="pa-big stroke">${tr('resume')}</button>
+    <div class="pa-row"><span>🔊 ${tr('sound')}</span><button id="paSound" class="${game.soundOn ? 'on' : ''}">${game.soundOn ? tr('on') : tr('off')}</button></div>
+    <div class="pa-row col"><span>🌐 ${tr('language')}</span><div class="pa-langs">${langBtns}</div></div>
+    <div class="pa-row col"><span>🎮 ${tr('controls')}</span><small>${isTouch ? tr('ctrlTouch') : tr('ctrlKeys')}</small></div>
+    <p class="pa-fine">${tr('fine')}</p>`;
+}
+document.getElementById('pauseBody').addEventListener('pointerdown', (e) => {
+  const t0 = e.target.closest('button'); if (!t0) return; e.preventDefault();
+  if (t0.id === 'paResume') { closeModal(); return; }
+  if (t0.id === 'paSound') { game.soundOn = !game.soundOn; Snd.apply(); queueSave(); renderPause(); return; }
+  if (t0.dataset.lang) { game.lang = t0.dataset.lang; setLang(game.lang); applyLangUI(); queueSave(); renderPause(); }
+});
+
+// ---------- language ----------
+function applyLangUI() {
+  document.documentElement.lang = getLang();
+  document.querySelectorAll('[data-i18n]').forEach((n) => { n.innerHTML = tr(n.dataset.i18n); });
+  const kh = document.getElementById('keysHint'); if (kh) kh.textContent = tr('ctrlKeys');
+  refreshTitleText();
+  for (const draw of i18nSprites) draw();
+  for (const b of bases) { b.signKey = ''; drawSign(b); }
+  for (const c of celebs) drawCelebLabel(c);
+  updateNameTag();
+  if (game.playing) showTutHint();
+  if (activeModal && MODAL_RENDER[activeModal]) MODAL_RENDER[activeModal]();
+}
+
+// ---------- menu bar badges ----------
+function updateMenuBar() {
+  const rs = rebirthStatus(), ps = rs.max ? prestigeStatus() : null;
+  const rb = document.getElementById('btnRebirth');
+  rb.classList.toggle('ready', !!(rs.ok || (ps && ps.ok)));
+  rb.querySelector('b').textContent = rs.max ? '👑' + game.prestige : '♻️' + game.rebirth;
+  document.getElementById('btnMissions').classList.toggle('ready', missionsClaimable());
+  document.getElementById('btnAlbum').querySelector('b').textContent = albumCount();
+  document.getElementById('btnFuse').classList.toggle('ready', nearFuse() || RECIPES.some((r) => fuseStatus(r).ok));
+}
+
 // ---------------------------------------------------------------------
 //  Boot
 // ---------------------------------------------------------------------
@@ -1894,18 +2350,21 @@ function startGame() {
   el.title.classList.add('hidden'); el.hud.classList.remove('hidden');
   const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
   camTarget.set(player.pos.x, 1.6, player.pos.z);
-  if (offlineEarned > 0) {
-    el.popup.innerHTML = `<h3 class="stroke">WELCOME BACK!</h3><div>Your celebs earned while you were away:</div><p class="stroke">+$${fmt(offlineEarned)}</p><button class="stroke" id="claimBtn">COLLECT</button>`;
-    el.popup.classList.remove('hidden');
-    $('claimBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); player.cash += offlineEarned; game.stats.earned += offlineEarned; offlineEarned = 0; el.popup.classList.add('hidden'); Snd.play('win'); burst(player.pos.x, 2, player.pos.z, 60); queueSave(); });
-  }
+  if (offlineEarned > 0) queuePopup((box) => {
+    box.innerHTML = `<h3 class="stroke">${tr('welcomeBack')}</h3><div>${tr('earnedAway')}</div><p class="stroke">+$${fmt(offlineEarned)}</p><button class="stroke" id="claimBtn">${tr('collect')}</button>`;
+    bindBtn(box.querySelector('#claimBtn'), () => { player.cash += offlineEarned; game.stats.earned += offlineEarned; offlineEarned = 0; Snd.play('win'); burst(player.pos.x, 2, player.pos.z, 60); queueSave(); nextPopup(); });
+  });
+  updateStreakOnStart(); ensureMissions();
+  if (streakReady()) queuePopup(streakPopup);
   showTutHint();
-  feed('🎬 Welcome to <b>Starville</b>! Build the richest talent agency.');
+  feed(tr('welcome'));
   queueSave();
 }
 async function boot() {
   game.paps = []; game.beams = [];
+  setLang(navigator.language);
   buildWorld();
+  buildFuseLab();
   player = createAgent({ id: 0, name: 'You', color: 0x2ee6d6, isPlayer: true, look: { skin: 0xf1c27d, hair: 0x3b2314, hairStyle: 'short', top: 0x2ee6d6, bottom: 0x22313f, shoes: 0xffffff, acc: ['cap', 'camera'], capColor: 0xff3355 } });
   player.flashCd = 0;
   makeBase(0, BASE_DEFS[0], player);
@@ -1917,14 +2376,14 @@ async function boot() {
   requestAnimationFrame(frame);
   const data = await SDK.load();
   offlineEarned = applySave(data);
+  setLang(game.lang || await SDK.lang()); applyLangUI();
   if (!data) player.cash = 100;
   setupBots();
   game.loaded = true;
-  el.play.disabled = false; el.play.textContent = '▶ PLAY';
-  const ai = adminInfo(), an = document.getElementById('adminNext');
-  if (an) an.textContent = ai.active ? '👑 ADMIN ABUSE IS LIVE RIGHT NOW!' : `👑 Weekly Admin Abuse: ${new Date(ai.next).toLocaleString([], { weekday: 'long', hour: 'numeric', minute: '2-digit' })} (in ${fmtWait(ai.next - Date.now())})`;
+  el.play.disabled = false;
+  refreshTitleText();
   SDK.ready();
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
