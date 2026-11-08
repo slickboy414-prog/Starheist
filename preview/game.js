@@ -845,6 +845,75 @@ function doRebirth() {
 }
 function toggleRebirth(force) { if (force === false) { if (activeModal === 'rebirth') closeModal(); } else if (force === true) openModal('rebirth'); else toggleModal('rebirth'); }
 
+
+// ---------- All-Time GOAT animation ----------
+// Arrival: rainbow light pillar from the sky + shockwave ring + bounce-in + confetti.
+// Always on: 3 orbiting rainbow sparkle-stars, a soft rising glow and a gentle hover.
+let sparkleTex = null;
+function getSparkleTex() {
+  if (sparkleTex) return sparkleTex;
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r = i % 2 ? 7 : 30; g.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r); }
+  g.closePath(); g.fill();
+  sparkleTex = new THREE.CanvasTexture(c); sparkleTex.colorSpace = THREE.SRGBColorSpace; return sparkleTex;
+}
+const goatBeamGeo = new THREE.CylinderGeometry(0.55, 1.1, 9, 18, 1, true); goatBeamGeo.translate(0, 4.5, 0);
+const pillarGeo = new THREE.CylinderGeometry(1.4, 1.4, 60, 20, 1, true); pillarGeo.translate(0, 30, 0);
+const goatPillars = [];
+function addGoatFx(c) {
+  const root = c.p.root, orbs = [];
+  for (let i = 0; i < 3; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: getSparkleTex(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false }));
+    s.scale.set(0.75, 0.75, 1); root.add(s); orbs.push(s);
+  }
+  const beam = new THREE.Mesh(goatBeamGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  root.add(beam);
+  c.goat = { orbs, beam, ph: Math.random() * 6 };
+}
+function goatArrival(c, big = true) {
+  const m = new THREE.Mesh(pillarGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+  m.position.set(c.pos.x, c.pos.y, c.pos.z); scene.add(m);
+  goatPillars.push({ m, c, t: 0, life: big ? 2.4 : 1.6 });
+  ringFx(c.pos.x, c.pos.z, 0xffd84d, big ? 9 : 6); ringFx(c.pos.x, c.pos.z, 0xff5cf4, big ? 6 : 4);
+  burst(c.pos.x, c.pos.y + 2.5, c.pos.z, big ? 90 : 50, [0xffd700, 0xffffff, 0xff5cf4, 0x3bc8ff, 0x5dff7a], 7, 10);
+  if (big) c.arriveT = 0.9;
+  if (hdist(c.pos, player.pos) < 40) game.shake = Math.max(game.shake, big ? 0.35 : 0.2);
+}
+const easeOutBack = (x) => { const k = 1.70158; return 1 + (k + 1) * Math.pow(x - 1, 3) + k * Math.pow(x - 1, 2); };
+function updateGoatFx(c, dt) {
+  const g = c.goat; if (!g) return;
+  const t = game.t + g.ph, hue = (game.t * 0.25) % 1;
+  g.orbs.forEach((s, i) => {
+    const a = t * 2.2 + i * 2.094;
+    s.position.set(Math.cos(a) * 1.15, 1.3 + Math.sin(t * 3 + i * 2) * 0.55, Math.sin(a) * 1.15);
+    s.material.color.setHSL((hue + i / 3) % 1, 1, 0.65);
+    const k = 0.6 + 0.25 * Math.sin(t * 5 + i); s.scale.set(k, k, 1);
+  });
+  g.beam.material.color.setHSL((hue + 0.5) % 1, 1, 0.6);
+  g.beam.material.opacity = 0.1 + 0.06 * Math.sin(t * 2.5);
+  // gentle hover while standing on a podium or the carpet
+  if (c.state === 'placed' || c.state === 'carpet') c.p.body.position.y += 0.12 + Math.sin(t * 2) * 0.08;
+  // bounce-in on arrival (carpet only, so carrying / moving scale is untouched)
+  if (c.arriveT > 0) {
+    c.arriveT -= dt;
+    if (c.state === 'carpet') c.p.root.scale.setScalar(c.baseScale * Math.max(0.05, easeOutBack(clamp(1 - c.arriveT / 0.9, 0, 1))));
+    if (c.arriveT <= 0 && c.state === 'carpet') c.p.root.scale.setScalar(c.baseScale);
+  }
+  if (c.p.root.visible && Math.random() < dt * 3 && hdist(c.pos, player.pos) < 45) burst(c.pos.x + rand(-0.6, 0.6), c.pos.y + 0.3, c.pos.z + rand(-0.6, 0.6), 2, [0xffd700, 0xffffff, 0xff5cf4], 0.4, 3);
+}
+function updateGoatPillars(dt) {
+  for (let i = goatPillars.length - 1; i >= 0; i--) {
+    const p = goatPillars[i]; p.t += dt; const k = p.t / p.life;
+    p.m.position.set(p.c.pos.x, p.c.pos.y, p.c.pos.z);
+    p.m.material.color.setHSL((game.t * 0.4) % 1, 1, 0.7);
+    p.m.material.opacity = 0.85 * (1 - k);
+    const w = 0.4 + (k < 0.15 ? k / 0.15 : 1 - (k - 0.15) * 0.6); p.m.scale.set(w, 1, w);
+    if (k >= 1 || !celebs.includes(p.c)) { scene.remove(p.m); p.m.material.dispose(); goatPillars.splice(i, 1); }
+  }
+}
+
 // ---------- bot rebirths ----------
 // Bots rebirth too: they keep only their best celeb, restart their cash, and come back
 // with more income, more speed and more frequent steals (aimed more at the player).
@@ -1100,6 +1169,7 @@ function createCeleb(def, mut) {
   scene.add(p.root);
   const feat = def.id === featuredId();
   const c = { id: celebUid++, def, mut, featured: feat, income: def.inc * mut.mult * (feat ? 2 : 1), p, label, state: 'carpet', owner: null, slot: null, stored: 0, pos: p.root.position, yaw: Math.PI / 2, ph: Math.random() * 10, path: [], carrier: null, homeOwner: null, homeSlot: null, poseT: 0, baseScale: sc, dance: 'dance' + (Math.floor(Math.random() * 3)) };
+  if (def.r === 5) addGoatFx(c);
   celebs.push(c); drawCelebLabel(c);
   return c;
 }
@@ -1121,6 +1191,7 @@ function removeCeleb(c) {
   scene.remove(c.p.root); disposeSprite(c.label);
   c.p.root.traverse((o) => { if (o.isMesh && o.userData.merged) o.geometry.dispose(); });
   if (c.p.aura) { const k = rainbowBasics.indexOf(c.p.aura.material); if (k >= 0) rainbowBasics.splice(k, 1); c.p.aura.material.dispose(); }
+  if (c.goat) { for (const s of c.goat.orbs) s.material.dispose(); c.goat.beam.material.dispose(); c.goat = null; }
 }
 function rarityChance(i) {
   if (i === 6) return tr('fusionOnly'); if (i === 7) return tr('limitedOnly');
@@ -1137,6 +1208,7 @@ function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
   if (forceR == null && game.event && game.event.id === 'admin' && Math.random() < 0.12) { def = CELEBS[limitedId()]; r = 7; }
   const c = createCeleb(def, rollMut());
   c.pos.set(x, 0.08, rand(-1.5, 1.5)); c.state = 'carpet';
+  if (def.r === 5 && game.playing) goatArrival(c, true);
   if (game.playing && (r >= (game.event && game.event.id === 'admin' ? 4 : 3) || c.mut.id >= 2)) {
     const col = r >= 3 ? RARITIES[r].color : c.mut.color;
     banner(tr('carpetSpawn', { r: r >= 3 ? tr('r' + r) : tr('mu' + c.mut.id), c: def.name }), col === 'rainbow' ? '#ff8cf0' : col);
@@ -1147,6 +1219,7 @@ function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
 function placeCeleb(c, slot, owner) {
   slot.celeb = c; c.slot = slot; c.owner = owner; c.state = 'placed'; c.path = [];
   c.pos.set(slot.pos.x, slotY(slot), slot.pos.z); c.floor = slot.floor;
+  if (c.def.r === 5 && owner === player && game.playing) goatArrival(c, false);
   slot.ring.material.color.set(c.def.r === 5 ? 0xffffff : RARITIES[c.def.r].hex);
   drawCelebLabel(c);
 }
@@ -1552,6 +1625,7 @@ function updateCelebs(dt) {
     const dcam = hdist(c.pos, player.pos);
     c.label.sprite.visible = dcam < (c.def.r >= 3 ? 70 : 34);
     if (c.p.aura) c.p.aura.rotation.z += dt * 2;
+    if (c.goat) updateGoatFx(c, dt);
   }
 }
 let podLabelT = 0;
@@ -1962,7 +2036,7 @@ function update(dt) {
   if (game.playing) checkCatches();
   updateCelebs(dt);
   updatePodiumLabels(dt);
-  updateParticles(dt); updateFloaters(dt); updateRings(dt);
+  updateParticles(dt); updateFloaters(dt); updateRings(dt); updateGoatPillars(dt);
   // paparazzi flashes
   for (const p of game.paps) { p.t -= dt; if (p.t <= 0) { p.t = rand(0.6, 3.5); p.fl.material.opacity = 1; } else p.fl.material.opacity = Math.max(0, p.fl.material.opacity - dt * 6); }
   if (game.beacon) game.beacon.visible = !game.playing || hdist(player.pos, player.base.doorIn) > 22;
@@ -2516,4 +2590,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
