@@ -844,6 +844,35 @@ function doRebirth() {
   doSave();
 }
 function toggleRebirth(force) { if (force === false) { if (activeModal === 'rebirth') closeModal(); } else if (force === true) openModal('rebirth'); else toggleModal('rebirth'); }
+
+// ---------- bot rebirths ----------
+// Bots rebirth too: they keep only their best celeb, restart their cash, and come back
+// with more income, more speed and more frequent steals (aimed more at the player).
+const botLvl = (b) => b.rebirth || 0;
+function botCanRebirth(b) {
+  const r = botLvl(b), req = REBIRTHS[r]; if (!req) return false;
+  if (b.carrying || b.ai.state !== 'home') return false;
+  if (b.cash < req.cash * 0.6) return false;
+  return celebs.some((c) => c.owner === b && c.state === 'placed' && c.def.r >= Math.max(1, req.tier - 1));
+}
+function botRebirth(b) {
+  let best = null;
+  for (const c of celebs) if (c.owner === b && c.state === 'placed' && (!best || c.income > best.income)) best = c;
+  for (const c of [...celebs]) if (c.owner === b && c.state === 'placed' && c !== best) { clearSlot(c.slot); removeCeleb(c); }
+  b.rebirth = botLvl(b) + 1;
+  b.cash = Math.min(50000, 250 * Math.pow(4, b.rebirth));
+  updateBotTag(b);
+  burst(b.pos.x, b.pos.y + 2, b.pos.z, 50, [0x7dffb0, 0xffffff, b.color]);
+  feed(tr('botRebirth', { bot: `<b>${b.name}</b>`, n: b.rebirth }));
+  if (hdist(b.pos, player.pos) < 45) { floatText('♻️ ' + b.rebirth, b.pos.x, b.pos.y + 3.6, b.pos.z, '#7dffb0'); Snd.play('upgrade'); }
+  queueSave();
+}
+function updateBotTag(b) {
+  const tag = b.tagSprite; if (!tag) return;
+  tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
+  strokeText(tag.ctx, '🤖 ' + b.name + (botLvl(b) ? ' ♻️' + botLvl(b) : ''), 256, 50, 58, '#' + new THREE.Color(b.color).getHexString(), 500);
+  tag.tex.needsUpdate = true;
+}
 function updateNameTag() {
   const tag = player && player.tagSprite; if (!tag) return;
   tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
@@ -1248,11 +1277,19 @@ function bestCarpetFor(b) {
 }
 function pickStealTarget(b) {
   let best = null, bs = 0;
+  // when the player's cooldown is ready, bots mostly come for the player's best celeb (more often at higher rebirths)
+  if (game.playerStealCd <= 0 && game.tut >= 2 && !player.base.locked && Math.random() < Math.min(0.9, 0.6 + 0.06 * (b.rebirth || 0))) {
+    for (const c of celebs) {
+      if (c.owner !== player || c.state !== 'placed' || bots.some((o) => o !== b && o.ai.celeb === c)) continue;
+      const sc = c.income * rand(0.7, 1.3); if (sc > bs) { bs = sc; best = c; }
+    }
+    if (best) return best;
+  }
   for (const c of celebs) {
     if (c.state !== 'placed' || c.owner === b || c.slot.base.locked) continue;
     if (c.owner === player && (game.playerStealCd > 0 || game.tut < 2)) continue;
     if (bots.some((o) => o !== b && o.ai.celeb === c)) continue;
-    const s = c.income * (c.owner === player ? 1.8 : 1) * rand(0.5, 1.5);
+    const s = c.income * (c.owner === player ? 1.8 * (1 + 0.2 * (b.rebirth || 0)) : 1) * rand(0.5, 1.5);
     if (s > bs) { bs = s; best = c; }
   }
   return best;
@@ -1269,6 +1306,7 @@ function botThink(b) {
   const intr = agents.some((a) => a !== b && !a.carrying && hdist(a.pos, b.base.doorOut) < 8);
   if (intr) { if (!ai.sawIntr) { ai.sawIntr = true; if (!b.base.locked && b.base.lockCd <= 0 && Math.random() < 0.28) lockBase(b.base); } } else ai.sawIntr = false;
   if (ai.state !== 'home' || ai.decide > 0) return;
+  if (game.playing && botCanRebirth(b) && Math.random() < 0.5) { botRebirth(b); ai.decide = rand(2, 4); return; }
   ai.decide = rand(1.5, 4);
   const c = bestCarpetFor(b);
   if (c && Math.random() < 0.65) { ai.state = 'buy'; ai.celeb = c; ai.repath = 0; return; }
@@ -1279,8 +1317,8 @@ function botThink(b) {
       if (!ok) { const w = weakest(b); if (w && t.income > w.income * 1.5) { b.cash += price(w) * 0.5; clearSlot(w.slot); removeCeleb(w); ok = true; } }
       if (ok) {
         ai.state = 'steal'; ai.celeb = t; ai.slot = t.slot; ai.warned = false; b.path = [];
-        ai.stealCd = rand(35, 75); game.stealCd = rand(9, 18);
-        if (t.owner === player) game.playerStealCd = rand(40, 70);
+        ai.stealCd = rand(35, 75) / (1 + 0.15 * (b.rebirth || 0)); game.stealCd = rand(9, 18);
+        if (t.owner === player) game.playerStealCd = rand(40, 70) / (1 + 0.1 * (b.rebirth || 0));
       }
     }
   }
@@ -1330,7 +1368,7 @@ function updateBot(b, dt) {
       break;
     }
   }
-  const speed = 6.1 * (b.carrying ? 0.66 : 1) * (ai.state === 'chase' ? 1.04 : 1) * (ai.state === 'home' ? 0.5 : 1);
+  const speed = 6.1 * (1 + 0.03 * (b.rebirth || 0)) * (b.carrying ? 0.66 : 1) * (ai.state === 'chase' ? 1.04 : 1) * (ai.state === 'home' ? 0.5 : 1);
   followPath(b, speed, dt);
   applyKb(b, dt);
   // stuck detection
@@ -1496,7 +1534,7 @@ function updateCelebs(dt) {
         animPerson(c.p, c.dance, c.ph, game.t);
         if (game.playing) {
           if (c.owner.isPlayer) c.stored += c.income * mult * pm * dt;
-          else c.owner.cash += c.income * mult * dt * 0.4;
+          else c.owner.cash += c.income * mult * dt * 0.4 * (1 + 0.5 * (c.owner.rebirth || 0));
         }
         break;
       case 'moving':
@@ -1629,7 +1667,7 @@ function updateHUD(dt) {
     boardT = 1;
     placeHint();
     const rows = agents.map((a) => ({ a, n: netWorth(a) })).sort((x, y) => y.n - x.n);
-    el.board.innerHTML = `<div class="t">${tr('richest')}</div>` + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? tr('you') + (game.rebirth ? ' ♻️' + game.rebirth : '') + (game.prestige ? ' 👑' + game.prestige : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
+    el.board.innerHTML = `<div class="t">${tr('richest')}</div>` + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? tr('you') + (game.rebirth ? ' ♻️' + game.rebirth : '') + (game.prestige ? ' 👑' + game.prestige : '') : r.a.name + (r.a.rebirth ? ' ♻️' + r.a.rebirth : '')}</span><span>$${fmt(r.n)}</span></div>`).join('');
     const nw = netWorth(player);
     if (nw > game.stats.bestNet) game.stats.bestNet = nw;
   }
@@ -1787,7 +1825,7 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, celebs: list });
+  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, br: bots.map((b) => b.rebirth || 0), celebs: list });
 }
 let saving = false;
 async function doSave() {
@@ -1810,6 +1848,7 @@ function applySave(str) {
   if (d.ad && typeof d.ad === 'object') game.albumDone = d.ad;
   if (d.st && typeof d.st === 'object') game.streak = { last: String(d.st.last || ''), count: d.st.count | 0, claimed: String(d.st.claimed || '') };
   if (d.mi && d.mi.list) game.missions = d.mi;
+  game.savedBotRb = Array.isArray(d.br) ? d.br.map((x) => clamp(x | 0, 0, REBIRTHS.length)) : null;
   game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : ''; game.seenHowTo = !!d.hw;
   updateNameTag(); applyPrestigeLook();
   Object.assign(game.stats, d.stats || {});
@@ -1840,6 +1879,8 @@ function setupBots() {
     const b = createAgent({ id: i + 1, name: info.name, color: info.color, isPlayer: false, look });
     makeBase(i + 1, BASE_DEFS[i + 1], b);
     const p = b.base.doorIn; b.pos.set(p.x + rand(-3, 3), 0.12, p.z); b.yaw = b.base.f > 0 ? 0 : Math.PI;
+    b.rebirth = game.savedBotRb && game.savedBotRb[i] != null ? game.savedBotRb[i] : clamp(game.rebirth - randi(0, 2), 0, REBIRTHS.length);
+    updateBotTag(b);
     b.cash = 150 * Math.pow(3, Math.max(0, tier + 1)) * rand(0.6, 1.4);
     const n = randi(3, 5); const maxT = clamp(tier, 0, 3);
     const tiers = [];
@@ -2475,4 +2516,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };

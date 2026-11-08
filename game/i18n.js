@@ -387,6 +387,13 @@ Object.assign(id, { howTo: '❓ CARA BERMAIN', htNext: 'LANJUT ▶', htBack: '�
   ht7t: 'Kembali setiap hari', ht7: 'Ambil hadiah beruntun harian, selesaikan 3 misi harian, dan ikuti Badai Bintang, Jam Emas, serta Admin Abuse mingguan.',
   ht8t: 'Kontrol' });
 
+
+Object.assign(en, { botRebirth: '♻️ {bot} reached Rebirth {n}! They earn more and steal faster now.' });
+Object.assign(es, { botRebirth: '♻️ ¡{bot} llegó al Renacer {n}! Ahora gana más y roba más rápido.' });
+Object.assign(pt, { botRebirth: '♻️ {bot} chegou ao Renascer {n}! Agora ganha mais e rouba mais rápido.' });
+Object.assign(hi, { botRebirth: '♻️ {bot} रीबर्थ {n} पर पहुँच गया! अब वह ज़्यादा कमाता है और तेज़ी से चोरी करता है।' });
+Object.assign(id, { botRebirth: '♻️ {bot} mencapai Rebirth {n}! Sekarang dia menghasilkan lebih banyak dan mencuri lebih cepat.' });
+
 const TABLES = { en, es, pt, hi, id };
 let cur = en, curCode = 'en';
 export function pickLang(code) {
