@@ -1540,6 +1540,7 @@ function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); 
 const $ = (id) => document.getElementById(id);
 const el = { move: $('btnMove'), hud: $('hud'), cash: $('cash'), cps: $('cps'), board: $('board'), banner: $('banner'), hint: $('hint'), feed: $('feed'), arrow: $('thiefArrow'), action: $('btnAction'), sell: $('btnSell'), flash: $('btnFlash'), lock: $('btnLock'), shop: $('shop'), shopList: $('shopList'), chip: $('eventChip'), mini: $('minimap'), joyBase: $('joyBase'), joyKnob: $('joyKnob'), popup: $('popup'), title: $('title'), play: $('playBtn') };
 const miniCtx = el.mini.getContext('2d');
+el.board.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); el.board.classList.toggle('open'); });
 function banner(txt, color = '#fff') {
   el.banner.textContent = txt; el.banner.style.color = color;
   el.banner.classList.remove('show'); void el.banner.offsetWidth; el.banner.classList.add('show');
@@ -2350,6 +2351,7 @@ function computeUiScale() {
   document.documentElement.style.setProperty('--pu', clamp(u, 1, 1.25).toFixed(3));
   document.body.classList.toggle('portrait', h > w * 1.1);
   document.body.classList.toggle('short', h < 500 && w > h);
+  document.body.classList.toggle('phone', isTouch && short < 600);
   requestAnimationFrame(() => { if (el && el.hint) placeHint(); else placeFeed(); });
 }
 function placeFeed() {
