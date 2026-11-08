@@ -208,7 +208,11 @@
   #joyKnob{width:calc(54px*var(--u));height:calc(54px*var(--u));margin:calc(-27px*var(--u)) 0 0 calc(-27px*var(--u))}
   .modal .panel,#shop .panel,#rebirth .panel{font-size:calc(16px*var(--pu,1))}
   /* portrait phones: tutorial hint sits above the controls */
-  body.portrait #hint{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 200px*var(--u));max-width:calc(88vw / var(--u))}
+  body.portrait #hint{top:max(8px,env(safe-area-inset-top));bottom:auto;max-width:calc(94vw / var(--u))}
+  /* the top HUD moves down by the hint's height when the hint is shown at the top */
+  #cashBox,#board{top:calc(max(10px,env(safe-area-inset-top)) + var(--topPad,0px))}
+  #leftCol{top:calc(max(10px,env(safe-area-inset-top)) + 84px*var(--u) + var(--topPad,0px))}
+  #minimap{top:calc(max(10px,env(safe-area-inset-top)) + 158px*var(--u) + var(--topPad,0px))}
   body.portrait #feed{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 290px*var(--u));width:calc(64vw / var(--u))}
   body.portrait #board{min-width:136px}
   /* short landscape phones: one row of menu buttons, no minimap */

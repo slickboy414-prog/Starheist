@@ -1553,7 +1553,15 @@ let hintTimer = null;
 function setHint(txt, secs) {
   el.hint.innerHTML = txt; el.hint.classList.remove('hidden');
   clearTimeout(hintTimer);
-  if (secs) hintTimer = setTimeout(() => { if (game.tut >= 4) el.hint.classList.add('hidden'); else showTutHint(); }, secs * 1000);
+  if (secs) hintTimer = setTimeout(() => { if (game.tut >= 4) el.hint.classList.add('hidden'); else showTutHint(); placeHint(); }, secs * 1000);
+  placeHint();
+}
+// on tall screens the hint sits at the very top and pushes the top HUD down
+function placeHint() {
+  const on = document.body.classList.contains('portrait') && !el.hint.classList.contains('hidden') && !el.hud.classList.contains('hidden');
+  const h = on ? Math.ceil(el.hint.getBoundingClientRect().height + 8) : 0;
+  document.documentElement.style.setProperty('--topPad', h + 'px');
+  requestAnimationFrame(() => placeFeed());
 }
 const TUT = [
   '👉 Walk to the <b style="color:#ff4d6d">RED CARPET</b> and <b style="color:#5dff7a">BUY</b> a celeb!',
@@ -1618,7 +1626,7 @@ function updateHUD(dt) {
   }
   if (boardT <= 0) {
     boardT = 1;
-    placeFeed();
+    placeHint();
     const rows = agents.map((a) => ({ a, n: netWorth(a) })).sort((x, y) => y.n - x.n);
     el.board.innerHTML = `<div class="t">${tr('richest')}</div>` + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? tr('you') + (game.rebirth ? ' ♻️' + game.rebirth : '') + (game.prestige ? ' 👑' + game.prestige : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
     const nw = netWorth(player);
@@ -2342,7 +2350,7 @@ function computeUiScale() {
   document.documentElement.style.setProperty('--pu', clamp(u, 1, 1.25).toFixed(3));
   document.body.classList.toggle('portrait', h > w * 1.1);
   document.body.classList.toggle('short', h < 500 && w > h);
-  requestAnimationFrame(placeFeed);
+  requestAnimationFrame(() => { if (el && el.hint) placeHint(); else placeFeed(); });
 }
 function placeFeed() {
   const lc = document.getElementById('leftCol'); if (!lc) return;
