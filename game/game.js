@@ -1095,7 +1095,7 @@ function rarityChance(i) {
   return (p >= 1 ? +p.toFixed(1) : +p.toFixed(2)) + '%';
 }
 function rollRarity() {
-  if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [88, 11, 1][i - 3]);
+  if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [50, 35, 15][i - 3]);
  return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 4 ? Math.min(2, game.luck) : i >= 2 ? game.luck : 1)); }
 function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? game.luck : 1)); }
 function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
@@ -1741,7 +1741,7 @@ function updateEvents(dt) {
   const ad = adminInfo();
   if (ad.active && (!game.event || game.event.id !== 'admin')) {
     game.event = { id: 'admin', key: 'evAdmin', t: ad.left };
-    game.luck = 6; game.incomeMult = 3; game.spawnT = 0;
+    game.luck = 6; game.incomeMult = 3; game.spawnT = 0; game.adminDropT = 3;
     banner(tr('admin'), '#ff5cf4');
     feed(tr('adminFeed')); Snd.play('legend');
     return;
@@ -1892,6 +1892,7 @@ function update(dt) {
   game.stealCd -= dt; if (game.playing) game.playerStealCd -= dt;
   updateEvents(dt);
   game.spawnT -= dt;
+  if (game.event && game.event.id === 'admin' && game.playing) { game.adminDropT = (game.adminDropT ?? 3) - dt; if (game.adminDropT <= 0) { game.adminDropT = 60; spawnCarpetCeleb(CARPET_X0, 5); ringFx(CARPET_X0 + 2, 0, 0xff5cf4, 10); } }
   if (game.spawnT <= 0) { const adm = game.event && game.event.id === 'admin'; game.spawnT = adm ? rand(1.1, 1.6) : rand(2.0, 2.9); spawnCarpetCeleb(); if (adm) burst(rand(-55, 55), 8, rand(-3, 3), 25, [0xff5cf4, 0xffcc00, 0xffffff], 3, 2); }
   carpetTex.offset.x -= dt * CARPET_SPEED / 6;
   for (const b of bases) {

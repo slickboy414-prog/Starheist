@@ -41,7 +41,7 @@ All celebrities are fictional characters.
 2. **Steal loop:** you grab a celeb, a bot chases you, you flash it, and you get a "STOLEN!" confetti burst. That's a clip-worthy moment every minute.
 3. **Being robbed:** a siren, a red beam and a "THIEF" arrow make you want revenge, so you steal it back.
 4. **Rarity drops:** server-style banners say "LEGENDARY … hit the red carpet!", plus mutations (Gold x2, Diamond x3, Rainbow x5) and two SECRET celebs.
-5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes. **ADMIN ABUSE** happens once a week for everyone at the same moment (Saturday 18:00 UTC, 15 minutes). The title screen counts down to it in each player's local time. During it, only Superstar, Icon and GOAT tiers spawn, and cash is x3.
+5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes. **ADMIN ABUSE** happens once a week for everyone at the same moment (Saturday 18:00 UTC, 15 minutes). The title screen counts down to it in each player's local time. During it, only Superstar (50%), Icon (35%) and GOAT (15%) celebs spawn, a guaranteed GOAT drops every minute, and cash is x3.
 6. **Fame = rarity:** every nameplate shows the tier's spawn chance (Local Star 55%, Viral 28%, Famous 11%, Superstar 4.5%, Icon 0.35%, GOAT 0.04%).
 7. **Comeback reward:** "Welcome back! +$X" offline earnings.
 8. **Leaderboard:** "Richest Agencies" in the corner, and your best net worth goes to YouTube via `sendScore`.
