@@ -13,7 +13,7 @@ Rival bot agencies want them too. Sneak into their HQ, grab their best star, and
 Bots will steal from you too, so step on your laser LOCK pad to keep thieves out. 🔒
 📸 Use your Paparazzi FLASH to stun chasers and save your celebs.
 ⭐ Climb the fame ladder: LOCAL STAR → VIRAL → FAMOUS → SUPERSTAR → ICON → ALL-TIME GOAT. The more famous, the rarer!
-👑 WEEKLY ADMIN ABUSE every Saturday: for 15 minutes only superstars and icons hit the carpet!
+👑 WEEKLY ADMIN ABUSE every Saturday: for 30 minutes only superstars, icons and GOATs hit the carpet!
 💎 Hunt GOLD, DIAMOND and RAINBOW versions.
 ♻️ REBIRTH for permanent income multipliers, extra podiums and a badge on your name.
 🛗 Unlock up to 4 extra floors for your agency (Floor 2 to 5) with rebirths. Ride the elevator up, and watch out: bots ride it too!
@@ -41,7 +41,7 @@ All celebrities are fictional characters.
 2. **Steal loop:** you grab a celeb, a bot chases you, you flash it, and you get a "STOLEN!" confetti burst. That's a clip-worthy moment every minute.
 3. **Being robbed:** a siren, a red beam and a "THIEF" arrow make you want revenge, so you steal it back.
 4. **Rarity drops:** server-style banners say "LEGENDARY … hit the red carpet!", plus mutations (Gold x2, Diamond x3, Rainbow x5) and two SECRET celebs.
-5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes. **ADMIN ABUSE** happens once a week for everyone at the same moment (Saturday 18:00 UTC, 15 minutes). The title screen counts down to it in each player's local time. During it, only Superstar (50%), Icon (35%) and GOAT (15%) celebs spawn, a guaranteed GOAT drops every minute, and cash is x3.
+5. **Timed events:** STAR STORM (luck x4) and GOLDEN HOUR (cash x2) run every ~2 minutes. **ADMIN ABUSE** happens once a week for everyone at the same moment (Saturday 18:00 UTC, 30 minutes). The title screen counts down to it in each player's local time. During it, only Superstar (50%), Icon (35%) and GOAT (15%) celebs spawn, a guaranteed GOAT drops every minute, and cash is x3.
 6. **Fame = rarity:** every nameplate shows the tier's spawn chance (Local Star 55%, Viral 28%, Famous 11%, Superstar 4.5%, Icon 0.35%, GOAT 0.04%).
 7. **Comeback reward:** "Welcome back! +$X" offline earnings.
 8. **Leaderboard:** "Richest Agencies" in the corner, and your best net worth goes to YouTube via `sendScore`.

@@ -1726,8 +1726,8 @@ el.play.addEventListener('click', () => { Snd.init(); startGame(); });
 //  Events (Star Storm / Golden Hour)
 // ---------------------------------------------------------------------
 let eventIdx = 0;
-// Admin Abuse: once a week, same moment for every player (Saturday 18:00 UTC, 15 minutes)
-const WEEK = 7 * 864e5, ADMIN_LEN = 15 * 60e3;
+// Admin Abuse: once a week, same moment for every player (Saturday 18:00 UTC, 30 minutes)
+const WEEK = 7 * 864e5, ADMIN_LEN = 30 * 60e3;
 const ADMIN_ANCHOR = Date.UTC(2026, 0, 3, 18, 0, 0); // a Saturday, 18:00 UTC
 function adminInfo(now = Date.now()) {
   if (game.adminForceUntil > now) return { active: true, left: (game.adminForceUntil - now) / 1000 };
