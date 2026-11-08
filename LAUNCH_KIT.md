@@ -76,6 +76,8 @@ All celebrities are fictional characters.
 | No purchases, ads, loot boxes or real-money rewards | ✅ streak, missions and fusion only give in-game cash/celebs; fusion recipes are fixed (no random paid rolls) |
 | Save data size | ✅ about 1 KB (limit 3 MiB) |
 | Total bundle | ✅ about 916 KB unzipped |
+| Fits every screen (phones, tablets, desktops, portrait and landscape) | ✅ HUD scales with the device, camera keeps the same view width |
+| First-time tutorial | ✅ 8-page How to Play on first launch, reopen from the pause menu |
 | Only fictional characters | ✅ 166 original celebs; recipe/limited celebs are original too |
 
 ## How to submit

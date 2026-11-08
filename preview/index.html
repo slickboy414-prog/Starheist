@@ -104,19 +104,6 @@
   #popup p{font-size:30px;margin:6px 0 14px;color:var(--green)}
   #popup button{padding:10px 30px;border-radius:14px;border:3px solid #000;background:linear-gradient(180deg,#5dff7a,#1fae44);font-size:20px;box-shadow:0 4px 0 #000}
 
-  @media (max-width:640px){
-    #board{min-width:140px;font-size:10.5px;padding:4px 8px}
-    #minimap{width:104px;height:72px;top:calc(max(10px,env(safe-area-inset-top)) + 128px)}
-    #cash{font-size:24px}
-    #hint{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 190px);max-width:86vw}
-    .cbtn{width:66px;height:66px;font-size:24px}
-    #btnAction{min-width:128px;height:72px;font-size:17px}
-    #feed{top:40%;font-size:10.5px;width:56vw}
-  }
-  @media (max-height:460px){
-    #minimap{display:none}
-    #feed{top:34%}
-  }
   #rebirth{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
   #rebirth .panel{width:min(460px,92vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#0f4a3a,#0a2a26);border:5px solid #7dffb0;
     border-radius:24px;padding:14px 18px;box-shadow:0 10px 0 #04140f}
@@ -152,7 +139,7 @@
   #btnAlbum{background:linear-gradient(180deg,#ffb3d1,#ff4fa3)} #btnFuse{background:linear-gradient(180deg,#8ffff0,#00b39a)} #btnPause{background:linear-gradient(180deg,#e4e4f2,#8a8aa8)}
   #eventChip{position:static!important;max-width:200px}
   #btnMove{grid-area:move;height:56px;border-radius:16px;font-size:14px;padding:0 12px;border:4px solid #000;box-shadow:0 4px 0 #000;background:linear-gradient(180deg,#8fd3ff,#2a7fd6)}
-  #controls{grid-template-areas:"move sell action" ". flash lock";grid-template-columns:auto auto auto}
+  #controls{grid-template-areas:"move sell action action" ". . flash lock";grid-template-columns:auto auto auto auto}
   #btnAction.fuse{background:linear-gradient(180deg,#8ffff0,#00b39a)}
   .modal{position:fixed;inset:0;background:rgba(10,0,25,.6);display:flex;align-items:center;justify-content:center;z-index:5}
   .modal .panel{width:min(560px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#3a1c71,#24104a);border:5px solid var(--gold);border-radius:24px;padding:14px 16px;box-shadow:0 10px 0 #120624}
@@ -198,8 +185,41 @@
   .pa-row button{padding:7px 14px;border-radius:10px;border:3px solid #000;background:#555;font-size:13px} .pa-row button.on{background:linear-gradient(180deg,#5dff7a,#1fae44)}
   .pa-langs{display:flex;flex-wrap:wrap;gap:6px} .pa-fine{text-align:center;font-family:system-ui,sans-serif;font-weight:700;font-size:11px;opacity:.75}
   #scheduleLine{margin-top:8px;font-size:clamp(11px,2.2vw,14px);color:#ffe14d;max-width:92vw}
-  @media (max-width:640px){ #menuBar{grid-template-columns:repeat(3,50px);gap:6px} .mbtn{width:50px;height:50px} .mbtn .ic{font-size:19px} .mbtn small{font-size:7.5px;max-width:46px} #leftCol{top:calc(max(10px,env(safe-area-inset-top)) + 64px)} #feed{top:46%} }
-  @media (max-height:460px){ #feed{top:auto;bottom:10px;left:50%;transform:translateX(-50%);width:42vw} #menuBar{grid-template-columns:repeat(6,46px)} .mbtn{width:46px;height:46px} }
+  /* ---------- v4: fit every screen (--u is set by game.js from the device's size and shape) ---------- */
+  :root{--u:1}
+  #cashBox{transform:scale(var(--u));transform-origin:top left}
+  #leftCol{transform:scale(var(--u));transform-origin:top left;top:calc(max(10px,env(safe-area-inset-top)) + 84px*var(--u))}
+  #board{transform:scale(var(--u));transform-origin:top right}
+  #minimap{transform:scale(var(--u));transform-origin:top right;top:calc(max(10px,env(safe-area-inset-top)) + 158px*var(--u))}
+  #controls{transform:scale(var(--u));transform-origin:bottom right}
+  #hint{transform:translateX(-50%) scale(var(--u));transform-origin:top center;max-width:min(560px,calc(52vw / var(--u)))}
+  #banner{font-size:calc(clamp(22px,5vw,42px) * var(--u))}
+  #feed{transform:scale(var(--u));transform-origin:top left}
+  #thiefArrow{font-size:calc(15px * var(--u))}
+  #joyBase{width:calc(120px*var(--u));height:calc(120px*var(--u))}
+  #joyKnob{width:calc(54px*var(--u));height:calc(54px*var(--u));margin:calc(-27px*var(--u)) 0 0 calc(-27px*var(--u))}
+  .modal .panel,#shop .panel,#rebirth .panel{font-size:calc(16px*var(--pu,1))}
+  /* portrait phones: tutorial hint sits above the controls */
+  body.portrait #hint{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 200px*var(--u));max-width:calc(88vw / var(--u))}
+  body.portrait #feed{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 290px*var(--u));width:calc(64vw / var(--u))}
+  body.portrait #board{min-width:150px}
+  /* short landscape phones: one row of menu buttons, no minimap */
+  body.short #menuBar{grid-template-columns:repeat(6,58px)}
+  body.short #minimap{display:none}
+  body.short #feed{top:auto;bottom:10px;left:50%;transform:translateX(-50%) scale(var(--u));transform-origin:bottom center;width:calc(40vw / var(--u))}
+  body.short #hint{max-width:calc(44vw / var(--u))}
+  /* ---------- How to Play ---------- */
+  .ht-panel{max-width:min(520px,94vw)}
+  .ht-art{font-size:calc(54px*var(--pu,1));text-align:center;line-height:1.15;margin:4px 0 6px;letter-spacing:2px;filter:drop-shadow(0 4px 0 rgba(0,0,0,.35))}
+  .ht-step{text-align:center;font-size:12px;color:#d9c9ff;letter-spacing:1px}
+  .ht-t{text-align:center;font-size:calc(24px*var(--pu,1));color:#ffd84d;margin:4px 0 8px}
+  .ht-x{font-family:system-ui,sans-serif;font-weight:700;font-size:calc(16px*var(--pu,1));line-height:1.45;text-align:center;margin:0 auto 12px;max-width:42ch}
+  .ht-dots{display:flex;justify-content:center;gap:6px;margin:6px 0 12px}
+  .ht-dots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)} .ht-dots i.on{background:#ffd84d;transform:scale(1.25)}
+  .ht-nav{display:flex;gap:10px;justify-content:space-between;align-items:center}
+  .ht-nav button{padding:12px 18px;border-radius:14px;border:3px solid #000;font-size:calc(16px*var(--pu,1));box-shadow:0 4px 0 #000;background:#555}
+  .ht-nav .go{flex:1;background:linear-gradient(180deg,#5dff7a,#1fae44)}
+  .ht-nav .skip{background:transparent;border-color:transparent;box-shadow:none;text-decoration:underline;opacity:.8}
 </style>
 
 <div id="game"></div>
@@ -249,6 +269,7 @@
 <div id="missions" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="misTitle">📋 DAILY MISSIONS</h2><div id="missionsBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
 <div id="album" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="alTitle">📖 CELEB ALBUM</h2><div id="albumBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
 <div id="fuse" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="fuTitle">🧪 FUSE LAB</h2><div id="fuseBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
+<div id="howto" class="modal hidden"><div class="panel ht-panel"><div id="howtoBody"></div></div></div>
 <div id="pause" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="paTitle">⏸ PAUSED</h2><div id="pauseBody"></div></div></div>
 
 <div id="popup" class="hidden"></div>

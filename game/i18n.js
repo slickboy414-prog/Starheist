@@ -248,6 +248,145 @@ Object.assign(id, { botSigned: '🤖 {bot} merekrut {c}', botStole: '🤖 {bot} 
   youStoleFeed: '🔥 Kamu mencuri {c} dari {v}!', stoleYoursFeed: '😱 {bot} mencuri {c} milikmu. Curi balik!', adminFeed: '👑 ADMIN ABUSE MINGGUAN: hanya superstar, uang x3',
   rebirthFeed: '♻️ Kamu mencapai Rebirth {n}. Bangun lagi agensimu, lebih kuat!', floorTip: '🛗 Pakai pad oranye atau tangga untuk turun.' });
 
+
+// ---- v4: how-to-play guide, rare arrivals ----
+Object.assign(en, { howTo: '❓ HOW TO PLAY', next: 'NEXT ▶', back: '◀ BACK', skip: 'SKIP', letsGo: "LET'S GO! ▶",
+  hp1t: 'Sign celebs', hp1: 'Celebs walk down the red carpet. Walk up to one and tap BUY to sign them to your agency.',
+  hp2t: 'Earn cash', hp2: 'Your celebs dance on their podiums and earn cash every second. Walk next to them to collect it.',
+  hp3t: 'Steal from bots', hp3: 'Sneak into a rival bot agency, tap STEAL on their best celeb and run it home before they catch you.',
+  hp4t: 'Defend your agency', hp4: 'Bots steal too! FLASH stuns nearby bots, and the LOCK pad puts a laser across your door.',
+  hp5t: 'Rare celebs', hp5: 'The more famous, the rarer. Superstars, Icons and GOATs only show up once in a while. Watch for the light beam and the RARE ARRIVAL alert!',
+  hp6t: 'Grow your empire', hp6: 'Buy upgrades, rebirth to unlock new floors, fuse celebs into Exclusives, fill your album and finish daily missions.',
+  hp7t: 'Controls', rareSoon: '🌠 A RARE celeb arrives in {s}s! Get to the red carpet!', rareArrive: '🌠 RARE ARRIVAL: {r} {c}!', rareChip: '🌠 Rare arrival in {s}s' });
+Object.assign(es, { howTo: '❓ CÓMO JUGAR', next: 'SIGUIENTE ▶', back: '◀ ATRÁS', skip: 'SALTAR', letsGo: '¡A JUGAR! ▶',
+  hp1t: 'Ficha famosos', hp1: 'Los famosos desfilan por la alfombra roja. Acércate a uno y toca FICHAR para llevarlo a tu agencia.',
+  hp2t: 'Gana dinero', hp2: 'Tus famosos bailan en sus podios y ganan dinero cada segundo. Acércate a ellos para cobrarlo.',
+  hp3t: 'Roba a los bots', hp3: 'Entra en una agencia bot rival, toca ROBAR en su mejor famoso y llévalo a casa antes de que te atrapen.',
+  hp4t: 'Defiende tu agencia', hp4: '¡Los bots también roban! El FLASH aturde a los bots cercanos y la placa de CIERRE pone un láser en tu puerta.',
+  hp5t: 'Famosos raros', hp5: 'Cuanto más famoso, más raro. Las superestrellas, los íconos y los GOAT solo aparecen de vez en cuando. ¡Atento al rayo de luz y a la alerta de LLEGADA RARA!',
+  hp6t: 'Haz crecer tu imperio', hp6: 'Compra mejoras, renace para abrir pisos nuevos, fusiona famosos en Exclusivos, llena tu álbum y completa las misiones diarias.',
+  hp7t: 'Controles', rareSoon: '🌠 ¡Un famoso RARO llega en {s}s! ¡Ve a la alfombra roja!', rareArrive: '🌠 LLEGADA RARA: ¡{r} {c}!', rareChip: '🌠 Llegada rara en {s}s' });
+Object.assign(pt, { howTo: '❓ COMO JOGAR', next: 'PRÓXIMO ▶', back: '◀ VOLTAR', skip: 'PULAR', letsGo: 'VAMOS LÁ! ▶',
+  hp1t: 'Contrate celebridades', hp1: 'As celebridades desfilam no tapete vermelho. Chegue perto de uma e toque em CONTRATAR para levá-la à sua agência.',
+  hp2t: 'Ganhe dinheiro', hp2: 'Suas celebridades dançam nos pódios e geram dinheiro a cada segundo. Chegue perto delas para coletar.',
+  hp3t: 'Roube dos bots', hp3: 'Entre numa agência bot rival, toque em ROUBAR na melhor celebridade e leve para casa antes que te peguem.',
+  hp4t: 'Defenda sua agência', hp4: 'Os bots também roubam! O FLASH atordoa os bots por perto e a placa de TRANCA coloca um laser na sua porta.',
+  hp5t: 'Celebridades raras', hp5: 'Quanto mais famosa, mais rara. Superestrelas, Ícones e GOATs só aparecem de vez em quando. Fique de olho no feixe de luz e no alerta de CHEGADA RARA!',
+  hp6t: 'Cresça seu império', hp6: 'Compre melhorias, renasça para liberar andares, funda celebridades em Exclusivas, complete o álbum e as missões diárias.',
+  hp7t: 'Controles', rareSoon: '🌠 Uma celebridade RARA chega em {s}s! Vá para o tapete vermelho!', rareArrive: '🌠 CHEGADA RARA: {r} {c}!', rareChip: '🌠 Chegada rara em {s}s' });
+Object.assign(hi, { howTo: '❓ कैसे खेलें', next: 'आगे ▶', back: '◀ पीछे', skip: 'छोड़ें', letsGo: 'चलो खेलें! ▶',
+  hp1t: 'सेलेब्स साइन करो', hp1: 'सेलेब्स रेड कार्पेट पर चलते हैं। किसी के पास जाओ और उसे अपनी एजेंसी में लाने के लिए साइन दबाओ।',
+  hp2t: 'पैसे कमाओ', hp2: 'तुम्हारे सेलेब्स पोडियम पर नाचते हैं और हर सेकंड पैसे कमाते हैं। पैसे लेने के लिए उनके पास जाओ।',
+  hp3t: 'बॉट्स से चुराओ', hp3: 'किसी विरोधी बॉट एजेंसी में घुसो, उनके सबसे अच्छे सेलेब पर चुराओ दबाओ और पकड़े जाने से पहले घर भागो।',
+  hp4t: 'अपनी एजेंसी बचाओ', hp4: 'बॉट भी चोरी करते हैं! फ़्लैश पास के बॉट्स को बेहोश करता है, और ताला पैड तुम्हारे दरवाज़े पर लेज़र लगा देता है।',
+  hp5t: 'दुर्लभ सेलेब्स', hp5: 'जितना मशहूर, उतना दुर्लभ। सुपरस्टार, आइकन और GOAT कभी-कभी ही आते हैं। रोशनी की किरण और दुर्लभ आगमन अलर्ट पर नज़र रखो!',
+  hp6t: 'अपना साम्राज्य बढ़ाओ', hp6: 'अपग्रेड खरीदो, नई मंज़िलें खोलने के लिए रीबर्थ करो, सेलेब्स को फ़्यूज़ करके एक्सक्लूसिव बनाओ, एल्बम भरो और रोज़ के मिशन पूरे करो।',
+  hp7t: 'कंट्रोल', rareSoon: '🌠 {s} सेकंड में एक दुर्लभ सेलेब आ रहा है! रेड कार्पेट पर पहुँचो!', rareArrive: '🌠 दुर्लभ आगमन: {r} {c}!', rareChip: '🌠 दुर्लभ आगमन {s} सेकंड में' });
+Object.assign(id, { howTo: '❓ CARA BERMAIN', next: 'LANJUT ▶', back: '◀ KEMBALI', skip: 'LEWATI', letsGo: 'AYO MAIN! ▶',
+  hp1t: 'Rekrut seleb', hp1: 'Para seleb berjalan di karpet merah. Dekati salah satunya dan ketuk REKRUT untuk membawanya ke agensimu.',
+  hp2t: 'Dapatkan uang', hp2: 'Selebmu menari di podium dan menghasilkan uang setiap detik. Dekati mereka untuk mengambil uangnya.',
+  hp3t: 'Curi dari bot', hp3: 'Menyelinap ke agensi bot saingan, ketuk CURI pada seleb terbaik mereka, lalu lari pulang sebelum tertangkap.',
+  hp4t: 'Lindungi agensimu', hp4: 'Bot juga mencuri! FLASH membuat bot di dekatmu pingsan, dan pad KUNCI memasang laser di pintumu.',
+  hp5t: 'Seleb langka', hp5: 'Makin terkenal, makin langka. Superstar, Ikon, dan GOAT hanya muncul sesekali. Perhatikan sorot cahaya dan peringatan KEDATANGAN LANGKA!',
+  hp6t: 'Kembangkan kerajaanmu', hp6: 'Beli upgrade, lakukan rebirth untuk membuka lantai baru, fusikan seleb menjadi Eksklusif, lengkapi album, dan selesaikan misi harian.',
+  hp7t: 'Kontrol', rareSoon: '🌠 Seleb LANGKA datang dalam {s} detik! Pergi ke karpet merah!', rareArrive: '🌠 KEDATANGAN LANGKA: {r} {c}!', rareChip: '🌠 Kedatangan langka dalam {s} dtk' });
+
+
+// ---- how-to-play guide + rare drops ----
+Object.assign(en, { howTitle: '❓ HOW TO PLAY', next: 'NEXT ▶', back: '◀ BACK', skip: 'SKIP', letsGo: "LET'S GO! ▶", howBtn: '❓ How to play',
+  rareDrop: '🌠 RARE STAR! {r} {c} is on the red carpet. Grab it first!',
+  s1t: 'Sign celebs', s1d: 'Celebs walk down the red carpet. Stand next to one and tap BUY. They walk to your agency.',
+  s2t: 'Collect cash', s2d: 'Every celeb earns money every second. Walk past their podium to collect it.',
+  s3t: 'Steal from rivals', s3d: 'Sneak into a bot agency, tap STEAL and run home. If the owner touches you, you drop it!',
+  s4t: 'Defend your agency', s4d: 'Bots steal too. Step on your LOCK pad to laser-lock the door, and use FLASH to stun thieves.',
+  s5t: 'Rare stars', s5d: 'Famous celebs are rare. Every few minutes a RARE STAR arrives with a beam of light. Be the first to grab it! Saturdays bring Admin Abuse.',
+  s6t: 'Grow bigger', s6d: 'Buy upgrades, then REBIRTH for permanent boosts and extra floors. Take the stairs or the elevator to go up.',
+  s7t: 'Every day', s7d: 'Claim your daily streak, finish missions, fill your Celeb Album and fuse celebs into Exclusives.' });
+Object.assign(es, { howTitle: '❓ CÓMO JUGAR', next: 'SIGUIENTE ▶', back: '◀ ATRÁS', skip: 'SALTAR', letsGo: '¡A JUGAR! ▶', howBtn: '❓ Cómo jugar',
+  rareDrop: '🌠 ¡ESTRELLA RARA! {r} {c} está en la alfombra roja. ¡Atrápalo primero!',
+  s1t: 'Ficha famosos', s1d: 'Los famosos caminan por la alfombra roja. Ponte a su lado y toca FICHAR. Irán a tu agencia.',
+  s2t: 'Cobra dinero', s2d: 'Cada famoso gana dinero cada segundo. Pasa junto a su podio para cobrarlo.',
+  s3t: 'Roba a los rivales', s3d: 'Entra en una agencia bot, toca ROBAR y corre a casa. ¡Si el dueño te toca, lo sueltas!',
+  s4t: 'Defiende tu agencia', s4d: 'Los bots también roban. Pisa tu placa de CIERRE para bloquear la puerta con láser y usa el FLASH para aturdir a los ladrones.',
+  s5t: 'Estrellas raras', s5d: 'Los famosos importantes son raros. Cada pocos minutos llega una ESTRELLA RARA con un rayo de luz. ¡Sé el primero en atraparla! Los sábados hay Admin Abuse.',
+  s6t: 'Crece más', s6d: 'Compra mejoras y luego RENACE para obtener mejoras permanentes y más pisos. Usa las escaleras o el ascensor para subir.',
+  s7t: 'Cada día', s7d: 'Reclama tu racha diaria, completa misiones, llena tu álbum de famosos y fusiona famosos en Exclusivos.' });
+Object.assign(pt, { howTitle: '❓ COMO JOGAR', next: 'PRÓXIMO ▶', back: '◀ VOLTAR', skip: 'PULAR', letsGo: 'BORA JOGAR! ▶', howBtn: '❓ Como jogar',
+  rareDrop: '🌠 ESTRELA RARA! {r} {c} está no tapete vermelho. Pegue primeiro!',
+  s1t: 'Contrate celebridades', s1d: 'As celebridades andam pelo tapete vermelho. Fique ao lado de uma e toque em CONTRATAR. Ela vai para sua agência.',
+  s2t: 'Colete dinheiro', s2d: 'Cada celebridade ganha dinheiro a cada segundo. Passe pelo pódio para coletar.',
+  s3t: 'Roube dos rivais', s3d: 'Entre numa agência bot, toque em ROUBAR e corra para casa. Se o dono tocar em você, você solta!',
+  s4t: 'Defenda sua agência', s4d: 'Os bots também roubam. Pise na placa de TRANCA para fechar a porta com laser e use o FLASH para atordoar ladrões.',
+  s5t: 'Estrelas raras', s5d: 'Celebridades famosas são raras. A cada poucos minutos chega uma ESTRELA RARA com um feixe de luz. Seja o primeiro a pegar! Aos sábados tem Admin Abuse.',
+  s6t: 'Cresça mais', s6d: 'Compre melhorias e depois RENASÇA para ganhar bônus permanentes e andares extras. Use a escada ou o elevador para subir.',
+  s7t: 'Todo dia', s7d: 'Resgate sua sequência diária, complete missões, preencha seu álbum e funda celebridades em Exclusivas.' });
+Object.assign(hi, { howTitle: '❓ कैसे खेलें', next: 'आगे ▶', back: '◀ पीछे', skip: 'छोड़ें', letsGo: 'चलो खेलें! ▶', howBtn: '❓ कैसे खेलें',
+  rareDrop: '🌠 दुर्लभ स्टार! {r} {c} रेड कार्पेट पर है। सबसे पहले पकड़ो!',
+  s1t: 'सेलेब्स साइन करो', s1d: 'सेलेब्स रेड कार्पेट पर चलते हैं। किसी के पास खड़े होकर साइन दबाओ। वह तुम्हारी एजेंसी में चला जाएगा।',
+  s2t: 'पैसे इकट्ठा करो', s2d: 'हर सेलेब हर सेकंड पैसे कमाता है। पैसे लेने के लिए उसके पोडियम के पास से गुज़रो।',
+  s3t: 'विरोधियों से चुराओ', s3d: 'किसी बॉट एजेंसी में घुसो, चुराओ दबाओ और घर भागो। अगर मालिक ने छू लिया तो सेलेब छूट जाएगा!',
+  s4t: 'अपनी एजेंसी बचाओ', s4d: 'बॉट भी चोरी करते हैं। दरवाज़े पर लेज़र ताला लगाने के लिए ताला पैड पर खड़े हो जाओ, और चोरों को रोकने के लिए फ़्लैश इस्तेमाल करो।',
+  s5t: 'दुर्लभ स्टार', s5d: 'मशहूर सेलेब्स दुर्लभ होते हैं। हर कुछ मिनट में रोशनी की किरण के साथ एक दुर्लभ स्टार आता है। सबसे पहले पकड़ो! शनिवार को एडमिन एब्यूज़ होता है।',
+  s6t: 'और बड़े बनो', s6d: 'अपग्रेड खरीदो, फिर हमेशा के बूस्ट और नई मंज़िलों के लिए रीबर्थ करो। ऊपर जाने के लिए सीढ़ियाँ या लिफ़्ट लो।',
+  s7t: 'हर दिन', s7d: 'रोज़ की स्ट्रीक लो, मिशन पूरे करो, सेलेब एल्बम भरो और सेलेब्स को फ़्यूज़ करके एक्सक्लूसिव बनाओ।' });
+Object.assign(id, { howTitle: '❓ CARA BERMAIN', next: 'LANJUT ▶', back: '◀ KEMBALI', skip: 'LEWATI', letsGo: 'AYO MAIN! ▶', howBtn: '❓ Cara bermain',
+  rareDrop: '🌠 BINTANG LANGKA! {r} {c} ada di karpet merah. Ambil duluan!',
+  s1t: 'Rekrut seleb', s1d: 'Seleb berjalan di karpet merah. Berdiri di dekatnya dan ketuk REKRUT. Seleb akan berjalan ke agensimu.',
+  s2t: 'Ambil uang', s2d: 'Setiap seleb menghasilkan uang setiap detik. Lewati podiumnya untuk mengambil uangnya.',
+  s3t: 'Curi dari saingan', s3d: 'Menyelinap ke agensi bot, ketuk CURI, lalu lari pulang. Kalau pemiliknya menyentuhmu, selebnya jatuh!',
+  s4t: 'Lindungi agensimu', s4d: 'Bot juga mencuri. Injak pad KUNCI untuk mengunci pintu dengan laser, dan pakai FLASH untuk membuat pencuri pingsan.',
+  s5t: 'Bintang langka', s5d: 'Seleb terkenal itu langka. Setiap beberapa menit datang BINTANG LANGKA dengan sorotan cahaya. Jadilah yang pertama mengambilnya! Setiap Sabtu ada Admin Abuse.',
+  s6t: 'Jadi lebih besar', s6d: 'Beli upgrade, lalu REBIRTH untuk bonus permanen dan lantai tambahan. Naik lewat tangga atau lift.',
+  s7t: 'Setiap hari', s7d: 'Ambil hadiah beruntun harian, selesaikan misi, lengkapi Album Seleb, dan fusikan seleb menjadi Eksklusif.' });
+
+
+// ---- How to Play ----
+Object.assign(en, { howTo: '❓ HOW TO PLAY', htNext: 'NEXT ▶', htBack: '◀', htSkip: 'Skip', htGo: "LET'S PLAY!", htStep: 'STEP {n} OF {m}',
+  ht1t: 'Sign celebs', ht1: 'Celebs walk down the red carpet. Walk up to one and tap BUY to sign them. They walk to a podium in your agency.',
+  ht2t: 'Collect cash', ht2: 'Every celeb earns money every second. Walk next to their podium to collect it. Rarer, more famous celebs earn much more.',
+  ht3t: 'Steal from rivals', ht3: 'Sneak into a bot agency, stand next to a podium and tap STEAL. Carry the celeb into your agency before the owner catches you.',
+  ht4t: 'Defend your agency', ht4: 'Bots steal too! Step on your LOCK pad to put a laser across your door. Use 📸 FLASH to stun a thief and your celeb comes back.',
+  ht5t: 'Grow bigger', ht5: 'Buy UPGRADES for speed and podiums. REBIRTH for permanent income boosts and new floors, reached by stairs or the elevator.',
+  ht6t: 'Collect and fuse', ht6: 'Fill your ALBUM with all 166 celebs. Bring 3 specific celebs to the Fuse Lab to create a one-of-a-kind EXCLUSIVE.',
+  ht7t: 'Come back daily', ht7: 'Claim your daily streak, finish 3 daily missions, and catch Star Storms, Golden Hours and the weekly Admin Abuse.',
+  ht8t: 'Controls' });
+Object.assign(es, { howTo: '❓ CÓMO JUGAR', htNext: 'SIGUIENTE ▶', htBack: '◀', htSkip: 'Saltar', htGo: '¡A JUGAR!', htStep: 'PASO {n} DE {m}',
+  ht1t: 'Ficha famosos', ht1: 'Los famosos desfilan por la alfombra roja. Acércate a uno y toca FICHAR. Irá caminando a un podio de tu agencia.',
+  ht2t: 'Cobra dinero', ht2: 'Cada famoso gana dinero cada segundo. Acércate a su podio para cobrarlo. Los más famosos ganan mucho más.',
+  ht3t: 'Roba a los rivales', ht3: 'Entra en una agencia bot, ponte junto a un podio y toca ROBAR. Lleva al famoso a tu agencia antes de que el dueño te atrape.',
+  ht4t: 'Defiende tu agencia', ht4: '¡Los bots también roban! Pisa tu placa de CIERRE para poner un láser en la puerta. Usa el 📸 FLASH para aturdir al ladrón y recuperar a tu famoso.',
+  ht5t: 'Crece', ht5: 'Compra MEJORAS de velocidad y podios. RENACE para ganar más dinero para siempre y nuevos pisos, con escaleras o ascensor.',
+  ht6t: 'Colecciona y fusiona', ht6: 'Completa tu ÁLBUM con los 166 famosos. Lleva 3 famosos concretos al Lab. de Fusión para crear un EXCLUSIVO único.',
+  ht7t: 'Vuelve cada día', ht7: 'Reclama tu racha diaria, completa 3 misiones diarias y aprovecha las Tormentas Estelares, las Horas Doradas y el Admin Abuse semanal.',
+  ht8t: 'Controles' });
+Object.assign(pt, { howTo: '❓ COMO JOGAR', htNext: 'PRÓXIMO ▶', htBack: '◀', htSkip: 'Pular', htGo: 'BORA JOGAR!', htStep: 'PASSO {n} DE {m}',
+  ht1t: 'Contrate celebridades', ht1: 'As celebridades desfilam no tapete vermelho. Chegue perto de uma e toque em CONTRATAR. Ela vai até um pódio da sua agência.',
+  ht2t: 'Colete dinheiro', ht2: 'Cada celebridade gera dinheiro a cada segundo. Chegue perto do pódio para coletar. As mais famosas rendem muito mais.',
+  ht3t: 'Roube dos rivais', ht3: 'Entre numa agência bot, fique perto de um pódio e toque em ROUBAR. Leve a celebridade para sua agência antes que o dono te pegue.',
+  ht4t: 'Defenda sua agência', ht4: 'Os bots também roubam! Pise na placa de TRANCA para colocar um laser na porta. Use o 📸 FLASH para atordoar o ladrão e sua celebridade volta.',
+  ht5t: 'Cresça', ht5: 'Compre MELHORIAS de velocidade e pódios. RENASÇA para ganhar mais renda para sempre e novos andares, com escada ou elevador.',
+  ht6t: 'Colecione e funda', ht6: 'Complete seu ÁLBUM com as 166 celebridades. Leve 3 celebridades específicas ao Lab. de Fusão para criar uma EXCLUSIVA única.',
+  ht7t: 'Volte todo dia', ht7: 'Resgate sua sequência diária, complete 3 missões diárias e aproveite as Tempestades Estelares, as Horas Douradas e o Admin Abuse semanal.',
+  ht8t: 'Controles' });
+Object.assign(hi, { howTo: '❓ कैसे खेलें', htNext: 'आगे ▶', htBack: '◀', htSkip: 'छोड़ें', htGo: 'चलो खेलें!', htStep: 'चरण {n} / {m}',
+  ht1t: 'सेलेब्स साइन करो', ht1: 'सेलेब्स रेड कार्पेट पर चलते हैं। किसी के पास जाओ और साइन दबाओ। वह तुम्हारी एजेंसी के पोडियम पर चला जाएगा।',
+  ht2t: 'पैसे इकट्ठा करो', ht2: 'हर सेलेब हर सेकंड पैसे कमाता है। पैसे लेने के लिए उसके पोडियम के पास जाओ। ज़्यादा मशहूर सेलेब्स बहुत ज़्यादा कमाते हैं।',
+  ht3t: 'विरोधियों से चुराओ', ht3: 'किसी बॉट एजेंसी में घुसो, पोडियम के पास खड़े होकर चुराओ दबाओ। मालिक के पकड़ने से पहले सेलेब को अपनी एजेंसी में ले आओ।',
+  ht4t: 'अपनी एजेंसी बचाओ', ht4: 'बॉट भी चोरी करते हैं! दरवाज़े पर लेज़र लगाने के लिए ताला पैड पर खड़े हो जाओ। चोर को रोकने के लिए 📸 फ़्लैश करो, तुम्हारा सेलेब वापस आ जाएगा।',
+  ht5t: 'बड़े बनो', ht5: 'रफ़्तार और पोडियम के लिए अपग्रेड खरीदो। रीबर्थ करो और हमेशा के लिए ज़्यादा कमाई और नई मंज़िलें पाओ, जहाँ सीढ़ियों या लिफ़्ट से जा सकते हो।',
+  ht6t: 'इकट्ठा करो और फ़्यूज़ करो', ht6: 'अपने एल्बम में सभी 166 सेलेब्स भरो। 3 खास सेलेब्स को फ़्यूज़ लैब में लाकर एक अनोखा एक्सक्लूसिव बनाओ।',
+  ht7t: 'रोज़ वापस आओ', ht7: 'रोज़ की स्ट्रीक लो, 3 रोज़ के मिशन पूरे करो, और स्टार तूफ़ान, गोल्डन आवर और साप्ताहिक एडमिन एब्यूज़ का फ़ायदा उठाओ।',
+  ht8t: 'कंट्रोल' });
+Object.assign(id, { howTo: '❓ CARA BERMAIN', htNext: 'LANJUT ▶', htBack: '◀', htSkip: 'Lewati', htGo: 'AYO MAIN!', htStep: 'LANGKAH {n} DARI {m}',
+  ht1t: 'Rekrut seleb', ht1: 'Para seleb berjalan di karpet merah. Dekati salah satu dan ketuk REKRUT. Seleb itu akan berjalan ke podium di agensimu.',
+  ht2t: 'Kumpulkan uang', ht2: 'Setiap seleb menghasilkan uang tiap detik. Dekati podiumnya untuk mengambil uang. Seleb yang lebih terkenal menghasilkan jauh lebih banyak.',
+  ht3t: 'Curi dari saingan', ht3: 'Menyelinap ke agensi bot, berdiri di dekat podium dan ketuk CURI. Bawa seleb ke agensimu sebelum pemiliknya menangkapmu.',
+  ht4t: 'Lindungi agensimu', ht4: 'Bot juga mencuri! Injak pad KUNCI untuk memasang laser di pintumu. Pakai 📸 FLASH untuk membuat pencuri pingsan dan selebmu kembali.',
+  ht5t: 'Jadi lebih besar', ht5: 'Beli UPGRADE untuk kecepatan dan podium. Lakukan REBIRTH untuk pendapatan permanen dan lantai baru, lewat tangga atau lift.',
+  ht6t: 'Koleksi dan fusi', ht6: 'Lengkapi ALBUM dengan 166 seleb. Bawa 3 seleb tertentu ke Lab Fusi untuk membuat seleb EKSKLUSIF yang unik.',
+  ht7t: 'Kembali setiap hari', ht7: 'Ambil hadiah beruntun harian, selesaikan 3 misi harian, dan ikuti Badai Bintang, Jam Emas, serta Admin Abuse mingguan.',
+  ht8t: 'Kontrol' });
+
 const TABLES = { en, es, pt, hi, id };
 let cur = en, curCode = 'en';
 export function pickLang(code) {

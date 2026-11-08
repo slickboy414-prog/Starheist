@@ -1033,7 +1033,7 @@ const game = {
   spawnT: 0, stealCd: 25, playerStealCd: 85, eventT: 100, event: null, incomeMult: 1, luck: 1,
   up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 }, rebirth: 0, rebirthConfirm: false,
   stats: { earned: 0, steals: 0, bestNet: 0, lastScore: 0 },
-  tut: 0, adminForceUntil: 0, prestige: 0, album: {}, albumDone: {}, streak: { last: '', count: 0, claimed: '' }, missions: null, soundOn: true, lang: '', fu: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
+  tut: 0, adminForceUntil: 0, prestige: 0, seenHowTo: false, album: {}, albumDone: {}, streak: { last: '', count: 0, claimed: '' }, missions: null, soundOn: true, lang: '', fu: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
 };
 let player;
 
@@ -1682,7 +1682,7 @@ addEventListener('keydown', (e) => {
     case 'KeyR': toggleRebirth(); break;
     case 'KeyM': doMove(); break;
     case 'KeyP': toggleModal('pause'); break;
-    case 'Escape': if (activeModal) closeModal(); else openModal('pause'); break;
+    case 'Escape': if (activeModal === 'howto') finishHowTo(); else if (activeModal) closeModal(); else openModal('pause'); break;
   }
 });
 addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -1693,14 +1693,14 @@ cvs.addEventListener('pointerdown', (e) => {
   Snd.init();
   if (e.pointerType !== 'mouse' && e.clientX < innerWidth * 0.45 && joy.id === null) {
     joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
-    el.joyBase.style.left = (e.clientX - 60) + 'px'; el.joyBase.style.top = (e.clientY - 60) + 'px'; el.joyBase.style.bottom = 'auto';
+    el.joyBase.style.left = (e.clientX - 60 * uiScale) + 'px'; el.joyBase.style.top = (e.clientY - 60 * uiScale) + 'px'; el.joyBase.style.bottom = 'auto';
     el.joyKnob.style.transform = 'translate(0,0)';
   } else if (look.id === null) { look.id = e.pointerId; look.lx = e.clientX; look.ly = e.clientY; }
   try { cvs.setPointerCapture(e.pointerId); } catch (er) {}
 });
 cvs.addEventListener('pointermove', (e) => {
   if (e.pointerId === joy.id) {
-    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const m = Math.hypot(dx, dy), R = 55;
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const m = Math.hypot(dx, dy), R = 55 * uiScale;
     if (m > R) { dx *= R / m; dy *= R / m; }
     joy.x = dx / R; joy.y = -dy / R; el.joyKnob.style.transform = `translate(${dx}px,${dy}px)`;
   } else if (e.pointerId === look.id) {
@@ -1771,7 +1771,7 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, celebs: list });
+  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, celebs: list });
 }
 let saving = false;
 async function doSave() {
@@ -1794,7 +1794,7 @@ function applySave(str) {
   if (d.ad && typeof d.ad === 'object') game.albumDone = d.ad;
   if (d.st && typeof d.st === 'object') game.streak = { last: String(d.st.last || ''), count: d.st.count | 0, claimed: String(d.st.claimed || '') };
   if (d.mi && d.mi.list) game.missions = d.mi;
-  game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : '';
+  game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : ''; game.seenHowTo = !!d.hw;
   updateNameTag(); applyPrestigeLook();
   Object.assign(game.stats, d.stats || {});
   refreshPlayerPodiums();
@@ -1845,16 +1845,15 @@ function updateCamera(dt) {
     camera.lookAt(0, 1, 0); return;
   }
   camTarget.lerp(new THREE.Vector3(player.pos.x, player.pos.y + 1.6, player.pos.z), 1 - Math.pow(0.0001, dt));
-  const d = camDist * (camera.aspect < 0.8 ? 1.25 : 1);
+  const d = camDist * (camera.aspect < 0.8 ? 1.2 : camera.aspect > 2 ? 0.92 : 1);
   camera.position.set(camTarget.x + Math.sin(camYaw) * Math.cos(camPitch) * d, camTarget.y + Math.sin(camPitch) * d, camTarget.z + Math.cos(camYaw) * Math.cos(camPitch) * d);
   if (game.shake > 0) { game.shake -= dt; const s = game.shake * 0.6; camera.position.x += rand(-s, s); camera.position.y += rand(-s, s); }
   camera.lookAt(camTarget);
 }
-function onResize() {
-  renderer.setSize(innerWidth, innerHeight);
-  camera.aspect = innerWidth / innerHeight; camera.fov = camera.aspect < 1 ? 68 : 55; camera.updateProjectionMatrix();
-}
+function onResize() { fitCamera(); computeUiScale(); }
 addEventListener('resize', onResize);
+addEventListener('orientationchange', () => setTimeout(onResize, 120));
+if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 
 // ---------------------------------------------------------------------
 //  Indicators (tutorial pointer, target ring, thief beam)
@@ -1952,7 +1951,7 @@ const sig2 = (n) => { if (n < 100) return Math.max(1, Math.round(n)); const m = 
 
 // ---------- modal manager (every panel pauses the game) ----------
 let activeModal = null;
-const MODAL_RENDER = { shop: () => renderShop(), rebirth: () => renderRebirth(), missions: () => renderMissions(), album: () => renderAlbum(), fuse: () => renderFuse(), pause: () => renderPause() };
+const MODAL_RENDER = { howto: () => renderHowTo(), shop: () => renderShop(), rebirth: () => renderRebirth(), missions: () => renderMissions(), album: () => renderAlbum(), fuse: () => renderFuse(), pause: () => renderPause() };
 function openModal(id) {
   if (!game.playing) return;
   if (activeModal && activeModal !== id) closeModal();
@@ -1970,7 +1969,7 @@ function toggleModal(id) { if (activeModal === id) closeModal(); else openModal(
 
 // ---------- popup queue (welcome back, daily streak) ----------
 const popupQueue = [];
-function queuePopup(fn) { popupQueue.push(fn); if (el.popup.classList.contains('hidden')) nextPopup(); }
+function queuePopup(fn) { if (activeModal === 'howto') { howtoAfter.push(fn); return; } popupQueue.push(fn); if (el.popup.classList.contains('hidden')) nextPopup(); }
 function nextPopup() {
   const fn = popupQueue.shift();
   if (!fn) { el.popup.classList.add('hidden'); return; }
@@ -2303,6 +2302,7 @@ function renderPause() {
   const langBtns = Object.entries(LANGS).map(([code, name]) => `<button data-lang="${code}" class="${getLang() === code ? 'on' : ''}">${name}</button>`).join('');
   document.getElementById('pauseBody').innerHTML = `
     <button id="paResume" class="pa-big stroke">${tr('resume')}</button>
+    <button id="paHow" class="pa-big stroke" style="background:linear-gradient(180deg,#ffd84d,#ff9d00)">${tr('howTo')}</button>
     <div class="pa-row"><span>🔊 ${tr('sound')}</span><button id="paSound" class="${game.soundOn ? 'on' : ''}">${game.soundOn ? tr('on') : tr('off')}</button></div>
     <div class="pa-row col"><span>🌐 ${tr('language')}</span><div class="pa-langs">${langBtns}</div></div>
     <div class="pa-row col"><span>🎮 ${tr('controls')}</span><small>${isTouch ? tr('ctrlTouch') : tr('ctrlKeys')}</small></div>
@@ -2311,8 +2311,71 @@ function renderPause() {
 document.getElementById('pauseBody').addEventListener('pointerdown', (e) => {
   const t0 = e.target.closest('button'); if (!t0) return; e.preventDefault();
   if (t0.id === 'paResume') { closeModal(); return; }
+  if (t0.id === 'paHow') { openHowTo(0); return; }
   if (t0.id === 'paSound') { game.soundOn = !game.soundOn; Snd.apply(); queueSave(); renderPause(); return; }
   if (t0.dataset.lang) { game.lang = t0.dataset.lang; setLang(game.lang); applyLangUI(); queueSave(); renderPause(); }
+});
+
+
+// ---------- screen fitting: UI scale + camera framing for every device ----------
+let uiScale = 1;
+function computeUiScale() {
+  const w = innerWidth, h = innerHeight, short = Math.min(w, h);
+  let u;
+  if (isTouch) {
+    u = clamp(short / 390, 0.85, 1.5);              // phones ~1.0, tablets up to 1.5
+    if (h < 500 && w > h) u = clamp(h / 420, 0.78, 1.05); // landscape phones
+  } else {
+    u = clamp(Math.min(w / 1280, h / 760), 0.8, 1.4);  // desktop / laptop windows
+  }
+  uiScale = u;
+  document.documentElement.style.setProperty('--u', u.toFixed(3));
+  document.documentElement.style.setProperty('--pu', clamp(u, 1, 1.25).toFixed(3));
+  document.body.classList.toggle('portrait', h > w * 1.1);
+  document.body.classList.toggle('short', h < 500 && w > h);
+}
+function fitCamera() {
+  const w = innerWidth, h = innerHeight, aspect = w / h;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w * h > 1.6e6 ? 1.5 : 2));
+  renderer.setSize(w, h);
+  camera.aspect = aspect;
+  // keep roughly the same horizontal view on wide and tall screens
+  const hfov = 74 * Math.PI / 180;
+  camera.fov = clamp(2 * Math.atan(Math.tan(hfov / 2) / aspect) * 180 / Math.PI, 50, 80);
+  camera.updateProjectionMatrix();
+}
+
+// ---------- How to Play ----------
+const HOWTO_ART = ['🟥 🚶‍♀️ 🛒 ⭐', '💰 🏛️ 💵', '😈 🏃‍♂️ 🌟', '🔒 ⚡ 📸', '🛒 ♻️ 🛗', '📖 🧪 💎', '🔥 📋 👑', '🕹️ 👆'];
+let howtoPage = 0, howtoAfter = [];
+function renderHowTo() {
+  const n = HOWTO_ART.length, i = howtoPage, last = i === n - 1;
+  const text = i === n - 1 ? (isTouch ? tr('ctrlTouch') : tr('ctrlKeys')) : tr('ht' + (i + 1));
+  document.getElementById('howtoBody').innerHTML = `
+    <h2 class="stroke">${tr('howTo')}</h2>
+    <div class="ht-step">${tr('htStep', { n: i + 1, m: n })}</div>
+    <div class="ht-art">${HOWTO_ART[i]}</div>
+    <div class="ht-t stroke">${tr('ht' + (i + 1) + 't')}</div>
+    <p class="ht-x">${text}</p>
+    <div class="ht-dots">${HOWTO_ART.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="ht-nav">
+      ${i > 0 ? `<button data-ht="back" class="stroke">${tr('htBack')}</button>` : `<button data-ht="skip" class="skip">${tr('htSkip')}</button>`}
+      <button data-ht="${last ? 'done' : 'next'}" class="go stroke">${last ? tr('htGo') : tr('htNext')}</button>
+    </div>`;
+}
+function openHowTo(page = 0) { howtoPage = page; openModal('howto'); }
+function finishHowTo() {
+  game.seenHowTo = true; queueSave();
+  if (activeModal === 'howto') closeModal();
+  const later = howtoAfter; howtoAfter = [];
+  for (const fn of later) queuePopup(fn);
+}
+document.getElementById('howtoBody').addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('[data-ht]'); if (!b) return; e.preventDefault();
+  const a = b.dataset.ht;
+  if (a === 'next') { howtoPage = Math.min(HOWTO_ART.length - 1, howtoPage + 1); renderHowTo(); Snd.play('pop'); }
+  else if (a === 'back') { howtoPage = Math.max(0, howtoPage - 1); renderHowTo(); Snd.play('pop'); }
+  else { finishHowTo(); Snd.play('win'); }
 });
 
 // ---------- language ----------
@@ -2350,6 +2413,7 @@ function startGame() {
   el.title.classList.add('hidden'); el.hud.classList.remove('hidden');
   const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
   camTarget.set(player.pos.x, 1.6, player.pos.z);
+  if (!game.seenHowTo) openHowTo(0);
   if (offlineEarned > 0) queuePopup((box) => {
     box.innerHTML = `<h3 class="stroke">${tr('welcomeBack')}</h3><div>${tr('earnedAway')}</div><p class="stroke">+$${fmt(offlineEarned)}</p><button class="stroke" id="claimBtn">${tr('collect')}</button>`;
     bindBtn(box.querySelector('#claimBtn'), () => { player.cash += offlineEarned; game.stats.earned += offlineEarned; offlineEarned = 0; Snd.play('win'); burst(player.pos.x, 2, player.pos.z, 60); queueSave(); nextPopup(); });
@@ -2386,4 +2450,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin() { game.event = null; game.adminForceUntil = Date.now() + 35e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
