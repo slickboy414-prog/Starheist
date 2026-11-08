@@ -1914,7 +1914,8 @@ function applySave(str) {
   let d = null;
   try { d = str ? JSON.parse(str) : null; } catch (e) { d = null; }
   if (!d || d.v !== 1) { player.cash = 100; return 0; }
-  player.cash = Math.max(0, +d.cash || 0);
+  const fin = (v, max = 1e30) => { v = +v; return Number.isFinite(v) ? clamp(v, 0, max) : 0; };
+  player.cash = fin(d.cash);
   for (const k of Object.keys(game.up)) game.up[k] = clamp(Math.floor(d.up?.[k] || 0), 0, UPGRADES.find((u) => u.id === k).max);
   game.tut = clamp(d.tut | 0, 0, 4);
   game.rebirth = clamp(d.rb | 0, 0, REBIRTHS.length); game.prestige = Math.max(0, d.pr | 0);
@@ -1933,10 +1934,10 @@ function applySave(str) {
     let slot = player.base.slots[s.s];
     if (!slot || slot.celeb || !playerSlots().includes(slot)) slot = freeSlot(player);
     if (!slot) continue;
-    const c = createCeleb(def, mut); placeCeleb(c, slot, player); c.stored = Math.max(0, s.st || 0); recordAlbum(c, true);
+    const c = createCeleb(def, mut); placeCeleb(c, slot, player); c.stored = fin(s.st); recordAlbum(c, true);
     incSum += c.income;
   }
-  const away = clamp((Date.now() - (d.t || Date.now())) / 1000, 0, 7200);
+  const away = clamp((Date.now() - (fin(d.t, 1e15) || Date.now())) / 1000, 0, 7200);
   const offline = Math.floor(incSum * playerIncomeMult() * away * 0.25);
   return away > 60 ? offline : 0;
 }
@@ -2059,7 +2060,7 @@ function update(dt) {
 let last = performance.now(), firstFrame = false;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const dt = clamp((now - last) / 1000, 0, 0.05); last = Math.max(last, now);
   if (game.paused) return;
   if (!game.shopOpen) update(dt);
   renderer.render(scene, camera);
@@ -2586,6 +2587,9 @@ async function boot() {
   game.loaded = true;
   el.play.disabled = false;
   refreshTitleText();
+  // YouTube requires firstFrameReady before gameReady
+  await new Promise((res) => { const t0 = performance.now(); const chk = () => (firstFrame || performance.now() - t0 > 3000) ? res() : setTimeout(chk, 16); chk(); });
+  if (!firstFrame) { firstFrame = true; SDK.firstFrame(); }
   SDK.ready();
 }
 boot();
