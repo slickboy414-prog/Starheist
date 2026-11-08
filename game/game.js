@@ -2420,7 +2420,7 @@ function updateMenuBar() {
   const rs = rebirthStatus(), ps = rs.max ? prestigeStatus() : null;
   const rb = document.getElementById('btnRebirth');
   rb.classList.toggle('ready', !!(rs.ok || (ps && ps.ok)));
-  rb.querySelector('b').textContent = rs.max ? '👑' + game.prestige : '♻️' + game.rebirth;
+  rb.querySelector('b').textContent = rs.max ? '👑' + game.prestige : String(game.rebirth);
   document.getElementById('btnMissions').classList.toggle('ready', missionsClaimable());
   document.getElementById('btnAlbum').querySelector('b').textContent = albumCount();
   document.getElementById('btnFuse').classList.toggle('ready', nearFuse() || RECIPES.some((r) => fuseStatus(r).ok));

@@ -227,6 +227,46 @@
   .ht-nav button{padding:12px 18px;border-radius:14px;border:3px solid #000;font-size:calc(16px*var(--pu,1));box-shadow:0 4px 0 #000;background:#555}
   .ht-nav .go{flex:1;background:linear-gradient(180deg,#5dff7a,#1fae44)}
   .ht-nav .skip{background:transparent;border-color:transparent;box-shadow:none;text-decoration:underline;opacity:.8}
+  /* ---------- v5: glossy 3D buttons with drawn icons ---------- */
+  .ico{width:30px;height:30px;display:block;overflow:visible;filter:drop-shadow(0 2px 0 rgba(26,11,46,.45))}
+  .ico .s{fill:#fff;stroke:#1a0b2e;stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+  .ico .a{stroke:#1a0b2e;stroke-width:2;stroke-linejoin:round}
+  .ico .l{fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico .y{fill:#ffe14d} .ico .t{fill:#22e6c8} .ico .b{fill:#7fd3ff} .ico .k{fill:#1a0b2e}
+  .ico .g{stroke:#1fae44;stroke-width:3.4} .ico .d{stroke:#e8e8f4;stroke-width:3.2} .ico .w{stroke:#1a0b2e;stroke-width:6.6}
+  .mbtn,.cbtn,#btnAction,#btnSell,#btnMove,#playBtn{position:relative;overflow:visible;border:3px solid #1a0b2e;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.55),inset 0 -6px 0 rgba(0,0,0,.22),0 5px 0 #1a0b2e,0 9px 14px rgba(10,0,30,.45)}
+  .mbtn::before,.cbtn::before,#btnAction::before,#btnSell::before,#btnMove::before,#playBtn::before{content:"";position:absolute;left:12%;right:12%;top:6%;height:36%;
+    border-radius:999px 999px 45% 45%;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,0));pointer-events:none}
+  .mbtn{border-radius:18px}
+  .mbtn small{font-size:8.5px;letter-spacing:.3px;margin-top:1px;position:relative}
+  .mbtn .ico{position:relative}
+  .mbtn:active,.cbtn:active,#btnAction:active,#btnSell:active,#btnMove:active,#playBtn:active{transform:translateY(4px);
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.2),0 1px 0 #1a0b2e,0 3px 6px rgba(10,0,30,.4)}
+  #btnShop{background:linear-gradient(180deg,#ffe066 0%,#ffb703 55%,#f48c06 100%)}
+  #btnRebirth{background:linear-gradient(180deg,#a8ffcb 0%,#35d77b 55%,#159a4c 100%)}
+  #btnMissions{background:linear-gradient(180deg,#a8dcff 0%,#3d8ef0 55%,#1d56b8 100%)}
+  #btnAlbum{background:linear-gradient(180deg,#ffb3dc 0%,#ff4fa3 55%,#c91c74 100%)}
+  #btnFuse{background:linear-gradient(180deg,#a6fff4 0%,#1fd3b8 55%,#0a8f7a 100%)}
+  #btnPause{background:linear-gradient(180deg,#e8e8f6 0%,#9a9abd 55%,#5f5f86 100%)}
+  .mbtn b{background:linear-gradient(180deg,#ff6b86,#d61f45);border:2px solid #fff;box-shadow:0 2px 0 #1a0b2e;top:-8px;right:-8px;z-index:1}
+  .mbtn.ready{box-shadow:inset 0 3px 0 rgba(255,255,255,.55),inset 0 -6px 0 rgba(0,0,0,.22),0 5px 0 #1a0b2e,0 0 0 3px #fff,0 0 20px 5px #7dffb0}
+  .cbtn{border-width:4px}
+  .cbtn .ico{width:38px;height:38px;position:relative}
+  .cbtn span{font-size:10.5px;margin-top:0;position:relative}
+  .cbtn::after{content:"";position:absolute;inset:5px;border-radius:50%;border:2px solid rgba(255,255,255,.4);pointer-events:none}
+  #btnFlash{background:radial-gradient(circle at 50% 28%,#e3f8ff 0%,#5cc8ff 45%,#1d6fd0 100%)}
+  #btnLock{background:radial-gradient(circle at 50% 28%,#ffd6ea 0%,#ff4fa3 50%,#a3104f 100%)}
+  #btnAction{border-radius:24px;background:linear-gradient(180deg,#9dffad 0%,#2bd156 55%,#159a3b 100%)}
+  #btnAction.steal{background:linear-gradient(180deg,#e6b3ff 0%,#a64dff 55%,#6a1fc2 100%)}
+  #btnAction.no{background:linear-gradient(180deg,#ffb0b0 0%,#e53935 55%,#a61d1d 100%)}
+  #btnAction.carry{background:linear-gradient(180deg,#ffe99a 0%,#ffb300 55%,#e07b00 100%)}
+  #btnAction.fuse{background:linear-gradient(180deg,#b0fff6 0%,#1fd3b8 55%,#0a8f7a 100%)}
+  #btnSell{background:linear-gradient(180deg,#ffe99a 0%,#ffb300 55%,#d97c00 100%)}
+  #btnMove{background:linear-gradient(180deg,#b5e2ff 0%,#3d8ef0 55%,#1d56b8 100%)}
+  #playBtn{border-width:5px;background:linear-gradient(180deg,#9dffad 0%,#2bd156 55%,#159a3b 100%)}
+  .mbtn small,.cbtn span,.mbtn b{text-shadow:0 1px 0 #1a0b2e,1px 0 0 #1a0b2e,-1px 0 0 #1a0b2e,0 -1px 0 #1a0b2e,0 2px 2px rgba(0,0,0,.35)}
+  .mbtn small{font-size:9px}
 </style>
 
 <div id="game"></div>
@@ -235,12 +275,12 @@
   <div id="cashBox" class="stroke"><div id="cash">$0</div><div id="cps">+$0/s</div></div>
   <div id="leftCol">
     <div id="menuBar">
-      <button id="btnShop" class="mbtn stroke"><span class="ic">🛒</span><b></b><small data-i18n="mUpgrades">UPGRADES</small></button>
-      <button id="btnRebirth" class="mbtn stroke"><span class="ic">♻️</span><b>0</b><small data-i18n="mRebirth">REBIRTH</small></button>
-      <button id="btnMissions" class="mbtn stroke"><span class="ic">📋</span><b></b><small data-i18n="mMissions">MISSIONS</small></button>
-      <button id="btnAlbum" class="mbtn stroke"><span class="ic">📖</span><b>0</b><small data-i18n="mAlbum">ALBUM</small></button>
-      <button id="btnFuse" class="mbtn stroke"><span class="ic">🧪</span><b></b><small data-i18n="mFuse">FUSE</small></button>
-      <button id="btnPause" class="mbtn stroke"><span class="ic">⏸</span><b></b><small data-i18n="mPause">PAUSE</small></button>
+      <button id="btnShop" class="mbtn stroke" aria-label="Upgrades"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M16 3.5 27.5 15H21v12.5H11V15H4.5z"/><path class="s y" d="M25.5 3l1.2 2.6 2.6 1.2-2.6 1.2-1.2 2.6-1.2-2.6-2.6-1.2 2.6-1.2z"/></svg><b></b><small data-i18n="mUpgrades">UPGRADES</small></button>
+      <button id="btnRebirth" class="mbtn stroke" aria-label="Rebirth"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M16 5.5c4.7 0 8.6 3.2 9.7 7.6l2.6-1.2-1.4 8.1-6.9-4.4 2.6-1.2A6.6 6.6 0 0 0 16 9.6z"/><path class="s" d="M16 26.5c-4.7 0-8.6-3.2-9.7-7.6l-2.6 1.2 1.4-8.1 6.9 4.4-2.6 1.2A6.6 6.6 0 0 0 16 22.4z"/></svg><b>0</b><small data-i18n="mRebirth">REBIRTH</small></button>
+      <button id="btnMissions" class="mbtn stroke" aria-label="Missions"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><rect class="s" x="6.5" y="6" width="19" height="22.5" rx="3"/><rect class="s y" x="11" y="3.5" width="10" height="5.5" rx="1.8"/><path class="l g" d="M11 18.5l3.6 3.6 7-8"/></svg><b></b><small data-i18n="mMissions">MISSIONS</small></button>
+      <button id="btnAlbum" class="mbtn stroke" aria-label="Album"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M3.5 8c4.3-2.3 8.6-2.2 12.5 1v18c-3.9-3.1-8.2-3.2-12.5-1z"/><path class="s" d="M28.5 8c-4.3-2.3-8.6-2.2-12.5 1v18c3.9-3.1 8.2-3.2 12.5-1z"/><path class="s y" d="M22.2 11.5l1.1 2.3 2.5.4-1.8 1.8.4 2.5-2.2-1.2-2.2 1.2.4-2.5-1.8-1.8 2.5-.4z"/></svg><b>0</b><small data-i18n="mAlbum">ALBUM</small></button>
+      <button id="btnFuse" class="mbtn stroke" aria-label="Fuse Lab"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M12 3.5h8v2.6h-1.2v6.6l7.3 11.6a2.3 2.3 0 0 1-2 3.5H7.9a2.3 2.3 0 0 1-2-3.5l7.3-11.6V6.1H12z"/><path class="a t" d="M9.2 20.5h13.6l2.1 3.4a1 1 0 0 1-.9 1.5H8a1 1 0 0 1-.9-1.5z"/><circle class="s" cx="14" cy="16" r="1.4"/><circle class="s" cx="18.5" cy="12.5" r="1"/></svg><b></b><small data-i18n="mFuse">FUSE</small></button>
+      <button id="btnPause" class="mbtn stroke" aria-label="Pause"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><rect class="s" x="7.5" y="6" width="6" height="20" rx="2.2"/><rect class="s" x="18.5" y="6" width="6" height="20" rx="2.2"/></svg><b></b><small data-i18n="mPause">PAUSE</small></button>
     </div>
     <div id="eventChip" class="hidden stroke"></div>
   </div>
@@ -254,8 +294,8 @@
     <button id="btnMove" class="hidden stroke">🔀 MOVE</button>
     <button id="btnSell" class="hidden stroke">💸 SELL</button>
     <button id="btnAction" class="hidden stroke">BUY</button>
-    <button id="btnFlash" class="cbtn stroke">📸<span>FLASH <i class="key">F</i></span></button>
-    <button id="btnLock" class="cbtn stroke">🔒<span>LOCK <i class="key">L</i></span></button>
+    <button id="btnFlash" class="cbtn stroke" aria-label="Flash"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M4.5 12a2.5 2.5 0 0 1 2.5-2.5h3.6l2-3h6.8l2 3H25a2.5 2.5 0 0 1 2.5 2.5v11.5A2.5 2.5 0 0 1 25 26H7a2.5 2.5 0 0 1-2.5-2.5z"/><circle class="a b" cx="16" cy="17.5" r="5.2"/><circle class="s" cx="14.5" cy="16" r="1.4"/><path class="s y" d="M25.5 2.5l1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z"/></svg><span>FLASH <i class="key">F</i></span></button>
+    <button id="btnLock" class="cbtn stroke" aria-label="Lock"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="l w" d="M10.5 15v-3.5a5.5 5.5 0 0 1 11 0V15"/><path class="l d" d="M10.5 15v-3.5a5.5 5.5 0 0 1 11 0V15"/><rect class="s" x="6.5" y="14.5" width="19" height="13.5" rx="3"/><path class="a k" d="M16 18.5a2 2 0 0 1 1.2 3.6l.6 3h-3.6l.6-3a2 2 0 0 1 1.2-3.6z"/></svg><span>LOCK <i class="key">L</i></span></button>
   </div>
   <div id="joyBase"><div id="joyKnob"></div></div>
   <div id="keysHint" class="stroke">WASD / Arrows = move · Drag mouse = look · Scroll = zoom · E = buy/steal · F = flash · L = lock</div>
