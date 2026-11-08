@@ -59,8 +59,12 @@ function wpick(items, wfn) {
   for (const it of items) { r -= wfn(it); if (r <= 0) return it; }
   return items[items.length - 1];
 }
-const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+let isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
 if (isTouch) document.body.classList.add('touch');
+// iOS / iPadOS: stop pinch-zoom, double-tap zoom and page bounce from moving the controls
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', (e) => { if (!(e.target.closest && e.target.closest('.panel, #popup'))) e.preventDefault(); }, { passive: false });
 
 // ---------------------------------------------------------------------
 //  Game data
@@ -1614,6 +1618,7 @@ function updateHUD(dt) {
   }
   if (boardT <= 0) {
     boardT = 1;
+    placeFeed();
     const rows = agents.map((a) => ({ a, n: netWorth(a) })).sort((x, y) => y.n - x.n);
     el.board.innerHTML = `<div class="t">${tr('richest')}</div>` + rows.map((r, i) => `<div class="r ${r.a.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:#${new THREE.Color(r.a.color).getHexString()}"></span>${i + 1}. ${r.a.isPlayer ? tr('you') + (game.rebirth ? ' ♻️' + game.rebirth : '') + (game.prestige ? ' 👑' + game.prestige : '') : r.a.name}</span><span>$${fmt(r.n)}</span></div>`).join('');
     const nw = netWorth(player);
@@ -1689,6 +1694,8 @@ addEventListener('keyup', (e) => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 const cvs = renderer.domElement;
 cvs.addEventListener('contextmenu', (e) => e.preventDefault());
+function becomeTouch(e) { if (e.pointerType === 'touch' && !isTouch) { isTouch = true; document.body.classList.add('touch'); computeUiScale(); } }
+addEventListener('pointerdown', becomeTouch, true);
 cvs.addEventListener('pointerdown', (e) => {
   Snd.init();
   if (e.pointerType !== 'mouse' && e.clientX < innerWidth * 0.45 && joy.id === null) {
@@ -2324,7 +2331,8 @@ function computeUiScale() {
   const w = innerWidth, h = innerHeight, short = Math.min(w, h);
   let u;
   if (isTouch) {
-    u = clamp(short / 390, 0.85, 1.5);              // phones ~1.0, tablets up to 1.5
+    u = short >= 600 ? clamp(short / 600, 1.15, 1.3)      // tablets: 1.15-1.3
+      : clamp(Math.min(w, h) / 395, 0.74, 1.12);            // phones: follow screen width
     if (h < 500 && w > h) u = clamp(h / 420, 0.78, 1.05); // landscape phones
   } else {
     u = clamp(Math.min(w / 1280, h / 760), 0.8, 1.4);  // desktop / laptop windows
@@ -2334,6 +2342,12 @@ function computeUiScale() {
   document.documentElement.style.setProperty('--pu', clamp(u, 1, 1.25).toFixed(3));
   document.body.classList.toggle('portrait', h > w * 1.1);
   document.body.classList.toggle('short', h < 500 && w > h);
+  requestAnimationFrame(placeFeed);
+}
+function placeFeed() {
+  const lc = document.getElementById('leftCol'); if (!lc) return;
+  const r = lc.getBoundingClientRect();
+  if (r.height) document.documentElement.style.setProperty('--feedTop', Math.round(r.bottom + 10) + 'px');
 }
 function fitCamera() {
   const w = innerWidth, h = innerHeight, aspect = w / h;

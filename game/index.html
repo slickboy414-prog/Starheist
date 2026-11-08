@@ -192,14 +192,17 @@
   #scheduleLine{margin-top:8px;font-size:clamp(11px,2.2vw,14px);color:#ffe14d;max-width:92vw}
   /* ---------- v4: fit every screen (--u is set by game.js from the device's size and shape) ---------- */
   :root{--u:1}
+  #hud *,#title *{-webkit-touch-callout:none}
+  #hud button,#title button,.modal button,#popup button{touch-action:manipulation}
+  .panel,#popup{touch-action:pan-y}
   #cashBox{transform:scale(var(--u));transform-origin:top left}
   #leftCol{transform:scale(var(--u));transform-origin:top left;top:calc(max(10px,env(safe-area-inset-top)) + 84px*var(--u))}
   #board{transform:scale(var(--u));transform-origin:top right}
   #minimap{transform:scale(var(--u));transform-origin:top right;top:calc(max(10px,env(safe-area-inset-top)) + 158px*var(--u))}
   #controls{transform:scale(var(--u));transform-origin:bottom right}
-  #hint{transform:translateX(-50%) scale(var(--u));transform-origin:top center;max-width:min(560px,calc(52vw / var(--u)))}
+  #hint{transform:translateX(-50%) scale(var(--u));transform-origin:top center;max-width:min(560px,calc((100vw - 440px * var(--u)) / var(--u)))}
   #banner{font-size:calc(clamp(22px,5vw,42px) * var(--u))}
-  #feed{transform:scale(var(--u));transform-origin:top left}
+  #feed{transform:scale(var(--u));transform-origin:top left;top:var(--feedTop,44%)}
   #thiefArrow{font-size:calc(15px * var(--u))}
   #joyBase{width:calc(120px*var(--u));height:calc(120px*var(--u))}
   #joyKnob{width:calc(54px*var(--u));height:calc(54px*var(--u));margin:calc(-27px*var(--u)) 0 0 calc(-27px*var(--u))}
@@ -207,7 +210,7 @@
   /* portrait phones: tutorial hint sits above the controls */
   body.portrait #hint{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 200px*var(--u));max-width:calc(88vw / var(--u))}
   body.portrait #feed{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 290px*var(--u));width:calc(64vw / var(--u))}
-  body.portrait #board{min-width:150px}
+  body.portrait #board{min-width:136px}
   /* short landscape phones: one row of menu buttons, no minimap */
   body.short #menuBar{grid-template-columns:repeat(6,58px)}
   body.short #minimap{display:none}
