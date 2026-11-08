@@ -19,7 +19,7 @@ Bots will steal from you too, so step on your laser LOCK pad to keep thieves out
 🛗 Unlock up to 4 extra floors for your agency (Floor 2 to 5) with rebirths. Ride the elevator up, and watch out: bots ride it too!
 🏆 Climb the Richest Agencies leaderboard!
 🔥 Daily login streak and 3 daily missions
-📖 Collect all 166 celebs in your Celeb Album (+1% income each)
+📖 Collect all 210 celebs in your Celeb Album (+1% income each)
 🧪 Fuse 3 specific stars into one-of-a-kind EXCLUSIVE celebs at the Fuse Lab
 🔀 Rearrange your podiums, take the stairs or the elevator between floors
 👑 Prestige after Rebirth 10 for legendary titles and a golden agency
@@ -66,7 +66,7 @@ All celebrities are fictional characters.
 
 ## Content calendar (runs automatically, no update needed)
 - **Every day:** a theme day makes one kind of celeb 4x more common (Sun movies, Mon sports, Tue music, Wed viral creators, Thu chefs & hosts, Fri DJs & dancers, Sat royals, magicians & astronauts). Daily missions rotate at midnight local time.
-- **Every week:** a FEATURED celeb (8x spawn chance, x2 income) and a LIMITED celeb that only appears during the Saturday Admin Abuse. 8 Limited celebs rotate.
+- **Every week:** a FEATURED celeb (8x spawn chance, x2 income) and a LIMITED celeb that only appears during the Saturday Admin Abuse. 52 Limited celebs rotate on a seasonal calendar (winter stars in winter, summer stars in summer), so none repeat for a full year.
 
 ## v3 compliance notes
 | Requirement | Status |
@@ -78,7 +78,16 @@ All celebrities are fictional characters.
 | Total bundle | ✅ about 916 KB unzipped |
 | Fits every screen (phones, tablets, desktops, portrait and landscape) | ✅ HUD scales with the device, camera keeps the same view width |
 | First-time tutorial | ✅ 8-page How to Play on first launch, reopen from the pause menu |
-| Only fictional characters | ✅ 166 original celebs; recipe/limited celebs are original too |
+| Only fictional characters | ✅ 210 original celebs; recipe/limited celebs are original too |
+
+
+## Admin Abuse checklist
+Admin Abuse runs inside the game on every player's device. There is no server and nothing to switch on each week.
+1. **Schedule:** every Saturday 18:00–18:30 UTC (set by `ADMIN_ANCHOR` and `ADMIN_LEN` in `game/game.js`).
+2. **It happens automatically** for anyone who has the game open during that window, including people who join halfway through.
+3. **Test it before launch:** run the game locally, open `http://localhost:8000/?debug`, press PLAY, open the browser console (F12) and run `__sh.forceAdmin(30)`. You can also set your computer clock to a Saturday at 18:05 UTC.
+4. **Make sure people show up:** post on your YouTube channel (Community post or Short) every Saturday before 18:00 UTC. The game itself cannot send notifications.
+5. **To change the day, time or length:** edit those two values, rebuild the zip and upload the new version to YouTube.
 
 ## How to submit
 1. YouTube Playables publishing is invite/partner based. Apply through the **YouTube Playables developer program** (search "YouTube Playables developer" on developers.google.com/youtube). Requirements change, so read their current Playables policies and certification checklist.

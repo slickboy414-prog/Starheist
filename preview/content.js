@@ -100,6 +100,49 @@ const LIMITED = [
   'Blizzard Belle|Limited: Winter Pop Star|singer|d', 'Pharaoh Flex|Limited: Desert Tour Legend|royal',
   'Lava Lamp Leo|Limited: Retro Funk Icon|dancer', 'Tidal Titania|Limited: Ocean Tour Queen|royal|d',
   'Voltage Vex|Limited: Arena Gamer Champ|gamer', 'Sunburst Sage|Limited: Summer Anthem Star|singer',
+  // ---- 44 more (keep appending at the end so saved celeb ids never change) ----
+  'Glacier Grace|Limited: Ice Show Star|dancer|d', 'Snowflake Sven|Limited: Winter Games Champ|athlete', 'Polar Penn|Limited: Arctic Explorer Star|astro',
+  'Lantern Lin|Limited: Lantern Festival Dancer|dancer|d', 'Cupid Cass|Limited: Valentine Pop Star|singer|d', 'Carnival Caio|Limited: Carnival Samba King|dancer',
+  'Clover Kip|Limited: Lucky Parade Host|host', 'Bloom Bianca|Limited: Spring Festival Diva|singer|d', 'Monsoon Mateo|Limited: Rainy Day Rocker|rock',
+  'Rocket Rina|Limited: Launch Day Astronaut|astro|d', 'Petal Pop Priya|Limited: Blossom Pop Idol|singer|d', 'Dino Dara|Limited: Dino Park Presenter|host|d',
+  'Nebula Nico|Limited: Space Tour Headliner|astro', 'Arcade Axel|Limited: Retro Arcade Champ|gamer', 'Wizard Wren|Limited: Wizard School Legend|magic|d',
+  'Hero Hollis|Limited: Comic Con Hero|actor', 'Ninja Nami|Limited: Stealth Stunt Star|athlete|d', 'Robo Remix Rhys|Limited: Robot Dance Champ|dj',
+  'Sandcastle Sora|Limited: Beach Party DJ|dj', 'Mermaid Marina|Limited: Underwater Show Star|singer|d', 'Heatwave Hana|Limited: Summer Surf Queen|athlete|d',
+  'Firework Finn|Limited: Fireworks Show Star|magic', 'Popsicle Pablo|Limited: Ice Cream Truck Legend|chef', 'Captain Coral|Limited: High Seas Showman|royal',
+  'Jungle Jaya|Limited: Jungle Expedition Star|influencer|d', 'Volcano Vic|Limited: Fire Dancer|dancer', 'Desert Dune Dax|Limited: Sand Dune Racer|athlete',
+  'Hot Air Hazel|Limited: Balloon Race Champ|influencer|d', 'Boombox Bree|Limited: Old-School Hip-Hop Icon|dj|d', 'Disco Fever Dawn|Limited: Disco Revival Diva|singer|d',
+  'Jazz Age Jules|Limited: Roaring Jazz Star|singer', 'Rockabilly Roy|Limited: Retro Rock Legend|rock', 'Thunderbolt Tia|Limited: Storm Chaser Star|host|d',
+  'Harvest Holt|Limited: Country Fair Legend|cowboy', 'Maple Myles|Limited: Autumn Acoustic Star|rock', 'Pumpkin Patch Poppy|Limited: Spooky Season Star|magic|d',
+  'Moonbeam Morgan|Limited: Haunted House Host|actor', 'Glitter Gala Gwen|Limited: Glam Rock Icon|rock|d', 'Medieval Merrick|Limited: Jousting Champion|athlete',
+  'Feast Felix|Limited: Holiday Feast Chef|chef', 'Safari Sela|Limited: Wildlife TV Star|host|d', 'Jingle Jada|Limited: Holiday Pop Star|singer|d',
+  'Countdown Cora|Limited: New Year Party Host|host|d', 'Grand Finale Grey|Limited: Season Finale Superstar|royal',
+];
+// Week-by-week rotation (week 1 = first Saturday of January). 52 weeks = a full year before any repeat.
+const LIMITED_CALENDAR = [
+  // January
+  'Glacier Grace', 'Blizzard Belle', 'Snowflake Sven', 'Polar Penn',
+  // February
+  'Lantern Lin', 'Cupid Cass', 'Carnival Caio', 'Neon Noir',
+  // March
+  'Clover Kip', 'Bloom Bianca', 'Monsoon Mateo', 'Comet Carnival', 'Rocket Rina',
+  // April
+  'Petal Pop Priya', 'Dino Dara', 'Nebula Nico', 'Arcade Axel',
+  // May
+  'Wizard Wren', 'Hero Hollis', 'Ninja Nami', 'Robo Remix Rhys',
+  // June
+  'Sandcastle Sora', 'Mermaid Marina', 'Tidal Titania', 'Sunburst Sage', 'Heatwave Hana',
+  // July
+  'Firework Finn', 'Popsicle Pablo', 'Captain Coral', 'Jungle Jaya',
+  // August
+  'Volcano Vic', 'Desert Dune Dax', 'Pharaoh Flex', 'Hot Air Hazel', 'Boombox Bree',
+  // September
+  'Lava Lamp Leo', 'Disco Fever Dawn', 'Jazz Age Jules', 'Rockabilly Roy',
+  // October
+  'Thunderbolt Tia', 'Harvest Holt', 'Maple Myles', 'Pumpkin Patch Poppy', 'Moonbeam Morgan',
+  // November
+  'Voltage Vex', 'Glitter Gala Gwen', 'Medieval Merrick', 'Feast Felix',
+  // December
+  'Safari Sela', 'Jingle Jada', 'Countdown Cora', 'Grand Finale Grey',
 ];
 
 // Archetypes of the original 21 celebs (same order as game.js CELEBS)
@@ -153,7 +196,7 @@ export function extendCelebs(CELEBS) {
   const limitedIds = [];
   LIMITED.forEach((s, i) => {
     const q = parse(s); limitedIds.push(CELEBS.length);
-    CELEBS.push({ name: q.name, title: q.title, r: 7, cost: 3e6 + i * 7e5, inc: 3e4 + i * 4e3, arch: q.arch, look: makeLook(CELEBS.length, 7, q.arch, q.dress) });
+    CELEBS.push({ name: q.name, title: q.title, r: 7, cost: 3e6 + (i % 8) * 7e5, inc: 3e4 + (i % 8) * 4e3, arch: q.arch, look: makeLook(CELEBS.length, 7, q.arch, q.dress) });
   });
   CELEBS.forEach((c, i) => (c.id = i));
   const byName = new Map(CELEBS.map((c) => [c.name, c]));
@@ -161,5 +204,7 @@ export function extendCelebs(CELEBS) {
     const need = x.need.map((n) => { const c = byName.get(n); if (!c) throw new Error('Recipe celeb missing: ' + n); return c.id; });
     return { result: exclusiveIds[i], need, fee: x.fee };
   });
-  return { RECIPES, LIMITED_IDS: limitedIds, EXCLUSIVE_IDS: exclusiveIds };
+  const rotation = LIMITED_CALENDAR.map((n) => { const c = byName.get(n); if (!c || c.r !== 7) throw new Error('Limited calendar celeb missing: ' + n); return c.id; });
+  if (new Set(rotation).size !== limitedIds.length) throw new Error('Every Limited celeb must appear exactly once in the calendar');
+  return { RECIPES, LIMITED_IDS: rotation, EXCLUSIVE_IDS: exclusiveIds };
 }
