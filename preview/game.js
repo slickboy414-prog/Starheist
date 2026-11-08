@@ -70,8 +70,8 @@ const RARITIES = [
   { name: 'VIRAL', color: '#4da6ff', hex: 0x4da6ff, w: 28 },
   { name: 'FAMOUS', color: '#c06bff', hex: 0xc06bff, w: 11 },
   { name: 'SUPERSTAR', color: '#ffcc00', hex: 0xffcc00, w: 4.5 },
-  { name: 'ICON', color: '#ff3b6b', hex: 0xff3b6b, w: 1.3 },
-  { name: 'ALL-TIME GOAT', color: 'rainbow', hex: 0xffffff, w: 0.22 },
+  { name: 'ICON', color: '#ff3b6b', hex: 0xff3b6b, w: 0.35 },
+  { name: 'ALL-TIME GOAT', color: 'rainbow', hex: 0xffffff, w: 0.04 },
   { name: 'EXCLUSIVE', color: '#00ffd5', hex: 0x00ffd5, w: 0 },
   { name: 'LIMITED', color: '#ff7af0', hex: 0xff7af0, w: 0 },
 ];
@@ -1095,8 +1095,8 @@ function rarityChance(i) {
   return (p >= 1 ? +p.toFixed(1) : +p.toFixed(2)) + '%';
 }
 function rollRarity() {
-  if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [70, 24, 6][i - 3]);
- return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 2 ? game.luck : 1)); }
+  if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [88, 11, 1][i - 3]);
+ return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 4 ? Math.min(2, game.luck) : i >= 2 ? game.luck : 1)); }
 function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? game.luck : 1)); }
 function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
   let r = forceR ?? rollRarity();
@@ -1817,7 +1817,7 @@ function applySave(str) {
 // ---------------------------------------------------------------------
 function setupBots() {
   let tier = -1; for (const c of celebs) if (c.owner === player) tier = Math.max(tier, c.def.r);
-  const juicy = clamp(tier + 1, 2, 4);
+  const juicy = clamp(tier + 1, 2, tier >= 4 ? 4 : 3);
   const juicyBot = randi(0, 4), secondBot = (juicyBot + randi(1, 4)) % 5;
   BOT_INFO.forEach((info, i) => {
     const look = { robot: true, skin: 0xb8c2cc, top: info.color, bottom: 0x333344, shoes: 0x222222, hairStyle: 'none', acc: info.acc };
