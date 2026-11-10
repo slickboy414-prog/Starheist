@@ -78,6 +78,7 @@ All celebrities are fictional characters.
 | Total bundle | ✅ about 916 KB unzipped |
 | Fits every screen (phones, tablets, desktops, portrait and landscape) | ✅ HUD scales with the device, camera keeps the same view width |
 | First-time tutorial | ✅ 8-page How to Play on first launch, reopen from the pause menu |
+| No real-money purchases (not supported by Playables yet) | ✅ Star Shop items are bought with Star Gems earned in play; `grantItem(id)` in `game.js` is the single hook to connect YouTube's purchase API if it launches |
 | Only fictional characters | ✅ 210 original celebs; recipe/limited celebs are original too |
 
 
@@ -88,6 +89,16 @@ Admin Abuse runs inside the game on every player's device. There is no server an
 3. **Test it before launch:** run the game locally, open `http://localhost:8000/?debug`, press PLAY, open the browser console (F12) and run `__sh.forceAdmin(30)`. You can also set your computer clock to a Saturday at 18:05 UTC.
 4. **Make sure people show up:** post on your YouTube channel (Community post or Short) every Saturday before 18:00 UTC. The game itself cannot send notifications.
 5. **To change the day, time or length:** edit those two values, rebuild the zip and upload the new version to YouTube.
+
+## Star Shop (4 boost items)
+| Item | Gems | Effect |
+|---|---|---|
+| 💎 VIP Pass | 250 | +50% income forever, VIP badge |
+| 🛡️ Bodyguard | 150 | Auto-locks your doors when a thief sneaks up |
+| 👟 Rocket Sneakers | 120 | +25% speed, no slowdown while carrying |
+| 🍀 Lucky Charm | 40 | 30 min double luck (stacks) |
+
+Gems: daily streak 5 (25 on day 7), each mission 3, all three +10, each album page 20, weekly Admin Abuse 15.
 
 ## How to submit
 1. YouTube Playables publishing is invite/partner based. Apply through the **YouTube Playables developer program** (search "YouTube Playables developer" on developers.google.com/youtube). Requirements change, so read their current Playables policies and certification checklist.

@@ -293,6 +293,20 @@
   body.phone #feed div:nth-child(n+3){display:none}
   body.phone #controls{transform:scale(calc(var(--u) * 0.88))}
   body.phone #joyBase{width:calc(110px*var(--u));height:calc(110px*var(--u))}
+  #btnGems{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:14px;border:3px solid #1a0b2e;font-size:14px;
+    background:linear-gradient(180deg,#d7fbff 0%,#5fd6ff 50%,#2a7fd6 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 4px 0 #1a0b2e}
+  #btnGems b{font-size:15px} #btnGems span{font-size:10px;letter-spacing:.5px}
+  #btnGems:active{transform:translateY(3px);box-shadow:0 1px 0 #1a0b2e}
+  body.phone #btnGems{padding:4px 9px;font-size:12px} body.phone #btnGems span{display:none}
+  .ss-panel{border-color:#8ff6ff!important}
+  .ss-gems{text-align:center;font-size:28px;color:#8ff6ff;margin-bottom:4px} .ss-gems small{font-size:12px;color:#d9c9ff}
+  .ss-desc{font-family:system-ui,sans-serif;font-weight:700;font-size:13px;text-align:center;margin:0 0 10px;color:#e8e0ff}
+  .ss-item{display:flex;align-items:center;gap:10px;background:rgba(143,246,255,.08);border:2px solid rgba(143,246,255,.35);border-radius:14px;padding:8px 10px;margin-bottom:8px}
+  .ss-item.own{opacity:.7} .ss-ic{font-size:32px;width:44px;text-align:center}
+  .ss-tx{flex:1;min-width:0;font-size:15px} .ss-tx small{display:block;font-family:system-ui,sans-serif;font-weight:700;font-size:12px;color:#d9c9ff}
+  .ss-tx em{display:block;font-style:normal;font-size:12px;color:#5dff7a;margin-top:2px}
+  .ss-item button{min-width:96px;padding:10px;border-radius:12px;border:3px solid #000;font-size:14px;box-shadow:0 3px 0 #000;background:linear-gradient(180deg,#d7fbff,#2a7fd6)}
+  .ss-item button.no{background:linear-gradient(180deg,#888,#555)} .ss-item button.max{background:linear-gradient(180deg,#ffd84d,#e08a00)}
 </style>
 </head>
 <body>
@@ -309,6 +323,7 @@
       <button id="btnFuse" class="mbtn stroke" aria-label="Fuse Lab"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><path class="s" d="M12 3.5h8v2.6h-1.2v6.6l7.3 11.6a2.3 2.3 0 0 1-2 3.5H7.9a2.3 2.3 0 0 1-2-3.5l7.3-11.6V6.1H12z"/><path class="a t" d="M9.2 20.5h13.6l2.1 3.4a1 1 0 0 1-.9 1.5H8a1 1 0 0 1-.9-1.5z"/><circle class="s" cx="14" cy="16" r="1.4"/><circle class="s" cx="18.5" cy="12.5" r="1"/></svg><b></b><small data-i18n="mFuse">FUSE</small></button>
       <button id="btnPause" class="mbtn stroke" aria-label="Pause"><svg class="ico" viewBox="0 0 32 32" aria-hidden="true"><rect class="s" x="7.5" y="6" width="6" height="20" rx="2.2"/><rect class="s" x="18.5" y="6" width="6" height="20" rx="2.2"/></svg><b></b><small data-i18n="mPause">PAUSE</small></button>
     </div>
+    <button id="btnGems" class="stroke" aria-label="Star Shop">💎 <b>0</b> <span data-i18n="mShop">STAR SHOP</span></button>
     <div id="eventChip" class="hidden stroke"></div>
   </div>
   <div id="board" class="stroke"></div>
@@ -344,6 +359,7 @@
 <div id="album" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="alTitle">📖 CELEB ALBUM</h2><div id="albumBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
 <div id="fuse" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="fuTitle">🧪 FUSE LAB</h2><div id="fuseBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
 <div id="howto" class="modal hidden"><div class="panel ht-panel"><div id="howtoBody"></div></div></div>
+<div id="starshop" class="modal hidden"><div class="panel ss-panel"><h2 class="stroke" data-i18n="ssTitle">💎 STAR SHOP</h2><div id="starshopBody"></div><button class="mclose stroke" data-close="1" data-i18n="close">CLOSE</button></div></div>
 <div id="pause" class="modal hidden"><div class="panel"><h2 class="stroke" data-i18n="paTitle">⏸ PAUSED</h2><div id="pauseBody"></div></div></div>
 
 <div id="popup" class="hidden"></div>

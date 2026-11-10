@@ -394,6 +394,43 @@ Object.assign(pt, { botRebirth: '♻️ {bot} chegou ao Renascer {n}! Agora ganh
 Object.assign(hi, { botRebirth: '♻️ {bot} रीबर्थ {n} पर पहुँच गया! अब वह ज़्यादा कमाता है और तेज़ी से चोरी करता है।' });
 Object.assign(id, { botRebirth: '♻️ {bot} mencapai Rebirth {n}! Sekarang dia menghasilkan lebih banyak dan mencuri lebih cepat.' });
 
+
+Object.assign(en, { mShop: 'STAR SHOP', ssTitle: '💎 STAR SHOP', ssGems: 'Star Gems', ssDesc: 'Boost items that make the game easier. Pay with Star Gems you earn by playing.',
+  ssHow: 'HOW TO GET STAR GEMS', ssEarn: '🔥 Daily streak: 5 a day, 25 on day 7 • 📋 Each daily mission: 3, all three: +10 • 📖 Each finished album page: 20 • 👑 Weekly Admin Abuse: 15',
+  ssOwned: 'OWNED', ssActive: 'Active', gemsGot: '+{n} 💎', itemGot: '💎 {item} unlocked!', guardLocked: '🛡️ Your Bodyguard locked the doors!',
+  it_vip: 'VIP Pass', itd_vip: '+50% income from all your celebs forever, plus a VIP badge',
+  it_guard: 'Bodyguard', itd_guard: 'Locks your doors automatically when a thief sneaks up (lock cooldown still applies)',
+  it_jet: 'Rocket Sneakers', itd_jet: 'Run 25% faster forever, and no slowdown while carrying a celeb',
+  it_luck: 'Lucky Charm', itd_luck: '30 minutes of double luck for rare celebs and mutations (stacks)' });
+Object.assign(es, { mShop: 'TIENDA', ssTitle: '💎 TIENDA ESTELAR', ssGems: 'Gemas estelares', ssDesc: 'Objetos que hacen el juego más fácil. Págalos con las gemas que ganas jugando.',
+  ssHow: 'CÓMO CONSEGUIR GEMAS', ssEarn: '🔥 Racha diaria: 5 al día, 25 el día 7 • 📋 Cada misión diaria: 3, las tres: +10 • 📖 Cada página del álbum completa: 20 • 👑 Admin Abuse semanal: 15',
+  ssOwned: 'TUYO', ssActive: 'Activo', gemsGot: '+{n} 💎', itemGot: '💎 ¡{item} desbloqueado!', guardLocked: '🛡️ ¡Tu guardaespaldas cerró las puertas!',
+  it_vip: 'Pase VIP', itd_vip: '+50% de ingresos de todos tus famosos para siempre y una insignia VIP',
+  it_guard: 'Guardaespaldas', itd_guard: 'Cierra tus puertas solo cuando se acerca un ladrón (el tiempo de espera del cierre sigue igual)',
+  it_jet: 'Zapatillas cohete', itd_jet: 'Corre un 25% más rápido para siempre y sin frenar al cargar un famoso',
+  it_luck: 'Amuleto de la suerte', itd_luck: '30 minutos de suerte doble para famosos raros y mutaciones (se acumula)' });
+Object.assign(pt, { mShop: 'LOJA', ssTitle: '💎 LOJA ESTELAR', ssGems: 'Gemas estelares', ssDesc: 'Itens que deixam o jogo mais fácil. Pague com gemas que você ganha jogando.',
+  ssHow: 'COMO GANHAR GEMAS', ssEarn: '🔥 Sequência diária: 5 por dia, 25 no dia 7 • 📋 Cada missão diária: 3, as três: +10 • 📖 Cada página do álbum completa: 20 • 👑 Admin Abuse semanal: 15',
+  ssOwned: 'SEU', ssActive: 'Ativo', gemsGot: '+{n} 💎', itemGot: '💎 {item} liberado!', guardLocked: '🛡️ Seu guarda-costas trancou as portas!',
+  it_vip: 'Passe VIP', itd_vip: '+50% de renda de todas as suas celebridades para sempre e um selo VIP',
+  it_guard: 'Guarda-costas', itd_guard: 'Tranca suas portas sozinho quando um ladrão se aproxima (a espera da tranca continua valendo)',
+  it_jet: 'Tênis foguete', itd_jet: 'Corra 25% mais rápido para sempre, sem ficar lento ao carregar uma celebridade',
+  it_luck: 'Amuleto da sorte', itd_luck: '30 minutos de sorte dobrada para celebridades raras e mutações (acumula)' });
+Object.assign(hi, { mShop: 'स्टार शॉप', ssTitle: '💎 स्टार शॉप', ssGems: 'स्टार जेम्स', ssDesc: 'ऐसी चीज़ें जो गेम को आसान बनाती हैं। खेलकर कमाए गए स्टार जेम्स से खरीदो।',
+  ssHow: 'स्टार जेम्स कैसे पाएँ', ssEarn: '🔥 रोज़ की स्ट्रीक: रोज़ 5, सातवें दिन 25 • 📋 हर रोज़ का मिशन: 3, तीनों: +10 • 📖 एल्बम का हर पूरा पेज: 20 • 👑 साप्ताहिक एडमिन एब्यूज़: 15',
+  ssOwned: 'तुम्हारा', ssActive: 'चालू', gemsGot: '+{n} 💎', itemGot: '💎 {item} खुल गया!', guardLocked: '🛡️ तुम्हारे बॉडीगार्ड ने दरवाज़े बंद कर दिए!',
+  it_vip: 'VIP पास', itd_vip: 'सभी सेलेब्स की कमाई हमेशा के लिए +50%, साथ में VIP बैज',
+  it_guard: 'बॉडीगार्ड', itd_guard: 'चोर पास आते ही दरवाज़े अपने आप बंद कर देता है (ताले का इंतज़ार समय वही रहेगा)',
+  it_jet: 'रॉकेट जूते', itd_jet: 'हमेशा के लिए 25% तेज़ दौड़ो, और सेलेब उठाने पर रफ़्तार कम नहीं होगी',
+  it_luck: 'लकी चार्म', itd_luck: 'दुर्लभ सेलेब्स और म्यूटेशन के लिए 30 मिनट दोगुनी किस्मत (जुड़ता जाता है)' });
+Object.assign(id, { mShop: 'TOKO', ssTitle: '💎 TOKO BINTANG', ssGems: 'Permata Bintang', ssDesc: 'Item yang membuat game lebih mudah. Bayar dengan permata yang kamu dapat saat bermain.',
+  ssHow: 'CARA DAPAT PERMATA', ssEarn: '🔥 Beruntun harian: 5 per hari, 25 di hari ke-7 • 📋 Tiap misi harian: 3, ketiganya: +10 • 📖 Tiap halaman album lengkap: 20 • 👑 Admin Abuse mingguan: 15',
+  ssOwned: 'DIMILIKI', ssActive: 'Aktif', gemsGot: '+{n} 💎', itemGot: '💎 {item} terbuka!', guardLocked: '🛡️ Pengawalmu mengunci pintu!',
+  it_vip: 'Pass VIP', itd_vip: '+50% pendapatan dari semua selebmu selamanya, plus lencana VIP',
+  it_guard: 'Pengawal', itd_guard: 'Mengunci pintumu otomatis saat pencuri mendekat (jeda kunci tetap berlaku)',
+  it_jet: 'Sepatu Roket', itd_jet: 'Lari 25% lebih cepat selamanya, dan tidak melambat saat membawa seleb',
+  it_luck: 'Jimat Keberuntungan', itd_luck: '30 menit hoki ganda untuk seleb langka dan mutasi (bisa ditumpuk)' });
+
 const TABLES = { en, es, pt, hi, id };
 let cur = en, curCode = 'en';
 export function pickLang(code) {

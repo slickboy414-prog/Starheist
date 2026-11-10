@@ -914,6 +914,54 @@ function updateGoatPillars(dt) {
   }
 }
 
+
+// ---------- Star Shop: 4 boost items paid with Star Gems ----------
+// Star Gems are earned in play (streak, missions, album pages, weekly Admin Abuse).
+// YouTube Playables does not allow real-money purchases yet; when it does, its
+// purchase API can grant gems or call grantItem() directly.
+const STAR_ITEMS = [
+  { id: 'vip', icon: '💎', cost: 250, kind: 'perm' },     // +50% income forever, VIP name tag
+  { id: 'guard', icon: '🛡️', cost: 150, kind: 'perm' },  // auto-locks your doors when a thief comes
+  { id: 'jet', icon: '👟', cost: 120, kind: 'perm' },    // +25% speed, no slowdown while carrying
+  { id: 'luck', icon: '🍀', cost: 40, kind: 'timed' },   // 30 minutes of double luck (stacks)
+];
+const LUCK_SECONDS = 1800;
+const effLuck = () => game.luck * (game.luckT > 0 ? 2 : 1);
+function addGems(n, why) {
+  if (!game.playing || !(n > 0)) return;
+  game.gems = (game.gems || 0) + n;
+  setTimeout(() => floatText(tr('gemsGot', { n }), player.pos.x, player.pos.y + 4.2, player.pos.z, '#8ff6ff'), 300);
+  queueSave();
+}
+function grantItem(id) {
+  if (id === 'luck') game.luckT = (game.luckT || 0) + LUCK_SECONDS;
+  else game.owned[id] = 1;
+  if (id === 'vip') updateNameTag();
+  banner(tr('itemGot', { item: tr('it_' + id) }), '#8ff6ff'); Snd.play('legend');
+  burst(player.pos.x, player.pos.y + 2, player.pos.z, 60, [0x8ff6ff, 0xffffff, 0xffd84d]);
+  queueSave();
+}
+function buyStarItem(id) {
+  const it = STAR_ITEMS.find((x) => x.id === id); if (!it) return false;
+  if (it.kind === 'perm' && game.owned[id]) return false;
+  if ((game.gems || 0) < it.cost) { Snd.play('error'); return false; }
+  game.gems -= it.cost; grantItem(id); renderStarShop(); return true;
+}
+const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function renderStarShop() {
+  const g = game.gems || 0;
+  let h = `<div class="ss-gems stroke">💎 ${g} <small>${tr('ssGems')}</small></div><p class="ss-desc">${tr('ssDesc')}</p>`;
+  for (const it of STAR_ITEMS) {
+    const own = it.kind === 'perm' && game.owned[it.id], active = it.id === 'luck' && game.luckT > 0;
+    const label = own ? tr('ssOwned') : `💎 ${it.cost}`;
+    h += `<div class="ss-item ${own ? 'own' : ''}"><div class="ss-ic">${it.icon}</div><div class="ss-tx"><b>${tr('it_' + it.id)}</b><small>${tr('itd_' + it.id)}</small>${active ? `<em>🍀 ${tr('ssActive')} ${fmtClock(game.luckT)}</em>` : ''}</div>
+      <button data-item="${it.id}" class="stroke ${own ? 'max' : g >= it.cost ? '' : 'no'}">${label}</button></div>`;
+  }
+  h += `<h4>${tr('ssHow')}</h4><p class="ss-desc">${tr('ssEarn')}</p>`;
+  document.getElementById('starshopBody').innerHTML = h;
+}
+document.getElementById('starshopBody').addEventListener('pointerdown', (e) => { const b = e.target.closest('[data-item]'); if (b) { e.preventDefault(); buyStarItem(b.dataset.item); } });
+
 // ---------- bot rebirths ----------
 // Bots rebirth too: they keep only their best celeb, restart their cash, and come back
 // with more income, more speed and more frequent steals (aimed more at the player).
@@ -945,7 +993,7 @@ function updateBotTag(b) {
 function updateNameTag() {
   const tag = player && player.tagSprite; if (!tag) return;
   tag.ctx.clearRect(0, 0, 512, 96); tag.ctx.textAlign = 'center'; tag.ctx.textBaseline = 'middle';
-  strokeText(tag.ctx, `★ ${tr('you')}${game.rebirth ? ' ♻️' + game.rebirth : ''}${game.prestige ? ' 👑' + game.prestige : ''} ★`, 256, 50, 58, game.prestige ? '#ffd84d' : '#2ee6d6', 500); tag.tex.needsUpdate = true;
+  strokeText(tag.ctx, `${game.owned && game.owned.vip ? '💎' : ''}★ ${tr('you')}${game.rebirth ? ' ♻️' + game.rebirth : ''}${game.prestige ? ' 👑' + game.prestige : ''} ★`, 256, 50, 58, game.prestige ? '#ffd84d' : '#2ee6d6', 500); tag.tex.needsUpdate = true;
 }
 function playerSlots() { const n = unlockedSlots(player), u = floorsUnlocked(); return player.base.slots.filter((s) => s.floor === 0 ? s.idx < n : s.floor <= u); }
 function freeSlot(a) { const list = a.isPlayer ? playerSlots() : a.base.slots; for (const s of list) if (!s.celeb) return s; return null; }
@@ -1135,7 +1183,7 @@ const game = {
   spawnT: 0, stealCd: 25, playerStealCd: 85, eventT: 100, event: null, incomeMult: 1, luck: 1,
   up: { speed: 0, slots: 0, lock: 0, flash: 0, star: 0 }, rebirth: 0, rebirthConfirm: false,
   stats: { earned: 0, steals: 0, bestNet: 0, lastScore: 0 },
-  tut: 0, adminForceUntil: 0, prestige: 0, seenHowTo: false, album: {}, albumDone: {}, streak: { last: '', count: 0, claimed: '' }, missions: null, soundOn: true, lang: '', fu: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
+  tut: 0, adminForceUntil: 0, prestige: 0, gems: 0, owned: { vip: 0, guard: 0, jet: 0 }, luckT: 0, gemWeek: null, seenHowTo: false, album: {}, albumDone: {}, streak: { last: '', count: 0, claimed: '' }, missions: null, soundOn: true, lang: '', fu: 0, shake: 0, paps: [], beams: [], flashTex: null, saveT: 20, dirtySave: 0,
 };
 let player;
 
@@ -1200,8 +1248,8 @@ function rarityChance(i) {
 }
 function rollRarity() {
   if (game.event && game.event.id === 'admin') return wpick([3, 4, 5], (i) => [50, 35, 15][i - 3]);
- return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 4 ? Math.min(2, game.luck) : i >= 2 ? game.luck : 1)); }
-function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? game.luck : 1)); }
+ return wpick(RARITIES.map((r, i) => i), (i) => RARITIES[i].w * (i >= 4 ? Math.min(2, game.luck) * (game.luckT > 0 ? 1.5 : 1) : i >= 2 ? effLuck() : 1)); }
+function rollMut() { return wpick(MUTS, (m) => m.w * (m.id ? effLuck() : 1)); }
 function spawnCarpetCeleb(x = CARPET_X0, forceR = null) {
   let r = forceR ?? rollRarity();
   let def = pickSpawnDef(r);
@@ -1425,6 +1473,7 @@ function updateBot(b, dt) {
       if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s, b.floor || 0);
       if (c.owner === player && !ai.warned && hdist(b.pos, player.base.doorOut) < 15) {
         ai.warned = true; banner(tr('sneaking', { bot: b.name }), '#ff9d00'); Snd.play('warn');
+        if (game.owned.guard && !player.base.locked && player.base.lockCd <= 0 && lockBase(player.base)) feed(tr('guardLocked'));
         if (game.tut === 3) setHint(tr('tipLockNow'));
       }
       if ((b.floor || 0) === s.floor && hdist(b.pos, s.pos) < 2.5) { grab(b, c); ai.state = 'return'; ai.repath = 0; }
@@ -1493,7 +1542,7 @@ const look = { id: null, lx: 0, ly: 0 };
 let camYaw = 0, camPitch = 0.62, camDist = 15;
 const camTarget = new THREE.Vector3();
 let target = { kind: null, c: null }, sellTarget = null, collectT = 0;
-function playerSpeed() { return 7 * rebirthSpeed() * (1 + 0.08 * game.up.speed) * (player.carrying ? 0.8 : 1); }
+function playerSpeed() { return 7 * rebirthSpeed() * (1 + 0.08 * game.up.speed) * (game.owned.jet ? 1.25 : 1) * (player.carrying && !game.owned.jet ? 0.8 : 1); }
 function updatePlayer(dt) {
   const P = player;
   P.flashCd = Math.max(0, P.flashCd - dt);
@@ -1697,7 +1746,9 @@ function updateHUD(dt) {
   if (hudT <= 0) {
     hudT = 0.1;
     el.cash.textContent = '$' + fmt(player.cash);
-    el.cps.textContent = `+$${fmt(playerCps())}/s` + (game.incomeMult > 1 ? ` (x${game.incomeMult})` : '');
+    el.cps.textContent = `+$${fmt(playerCps())}/s` + (game.incomeMult > 1 ? ` (x${game.incomeMult})` : '') + (game.luckT > 0 ? ` 🍀${fmtClock(game.luckT)}` : '');
+    document.getElementById('btnGems').querySelector('b').textContent = game.gems || 0;
+    if (activeModal === 'starshop' && game.luckT > 0) { const em = document.querySelector('#starshopBody em'); if (em) em.textContent = `🍀 ${tr('ssActive')} ${fmtClock(game.luckT)}`; }
     // action button
     const t = target; const a = el.action;
     a.className = 'stroke';
@@ -1845,7 +1896,7 @@ cvs.addEventListener('wheel', (e) => { camDist = clamp(camDist + e.deltaY * 0.01
 function bindBtn(b, fn) { b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Snd.init(); fn(); }); }
 bindBtn(el.action, doAction); bindBtn(el.sell, doSell); bindBtn(el.move, doMove); bindBtn(el.flash, doFlash); bindBtn(el.lock, doLockBtn);
 bindBtn($('btnShop'), () => toggleShop()); bindBtn($('btnRebirth'), () => toggleRebirth());
-for (const [b, m] of [['btnMissions', 'missions'], ['btnAlbum', 'album'], ['btnFuse', 'fuse'], ['btnPause', 'pause']]) bindBtn($(b), () => toggleModal(m));
+for (const [b, m] of [['btnMissions', 'missions'], ['btnAlbum', 'album'], ['btnFuse', 'fuse'], ['btnPause', 'pause'], ['btnGems', 'starshop']]) bindBtn($(b), () => toggleModal(m));
 document.querySelectorAll('[data-close]').forEach((b) => bindBtn(b, () => closeModal()));
 $('rebirthBody').addEventListener('pointerdown', (e) => { const g = e.target.closest('#rbGo'); if (g) { e.preventDefault(); if (g.dataset.prestige) doPrestige(); else doRebirth(); } });
 el.play.addEventListener('click', () => { Snd.init(); startGame(); });
@@ -1872,6 +1923,7 @@ function updateEvents(dt) {
     game.luck = 6; game.incomeMult = 3; game.spawnT = 0; game.adminDropT = 3;
     banner(tr('admin'), '#ff5cf4');
     feed(tr('adminFeed')); Snd.play('legend');
+    if (game.gemWeek !== weekIndex()) { game.gemWeek = weekIndex(); addGems(15); }
     return;
   }
   if (!game.event) {
@@ -1899,7 +1951,7 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, br: bots.map((b) => b.rebirth || 0), celebs: list });
+  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, br: bots.map((b) => b.rebirth || 0), gm: game.gems || 0, ow: game.owned, lk: Math.floor(game.luckT || 0), gw: game.gemWeek ?? null, celebs: list });
 }
 let saving = false;
 async function doSave() {
@@ -1923,6 +1975,8 @@ function applySave(str) {
   if (d.ad && typeof d.ad === 'object') game.albumDone = d.ad;
   if (d.st && typeof d.st === 'object') game.streak = { last: String(d.st.last || ''), count: d.st.count | 0, claimed: String(d.st.claimed || '') };
   if (d.mi && d.mi.list) game.missions = d.mi;
+  game.gems = Math.floor(fin(d.gm, 1e9)); game.luckT = fin(d.lk, 86400 * 30); game.gemWeek = Number.isFinite(d.gw) ? d.gw : null;
+  if (d.ow && typeof d.ow === 'object') for (const it of ['vip', 'guard', 'jet']) game.owned[it] = d.ow[it] ? 1 : 0;
   game.savedBotRb = Array.isArray(d.br) ? d.br.map((x) => clamp(x | 0, 0, REBIRTHS.length)) : null;
   game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : ''; game.seenHowTo = !!d.hw;
   updateNameTag(); applyPrestigeLook();
@@ -2045,6 +2099,7 @@ function update(dt) {
   // rainbow
   const hue = (game.t * 0.25) % 1; rainbowMat.color.setHSL(hue, 0.9, 0.6);
   updateFuseLab(dt);
+  if (game.playing && game.luckT > 0) game.luckT = Math.max(0, game.luckT - dt);
   for (const m of rainbowBasics) m.color.setHSL((hue + 0.5) % 1, 1, 0.6);
   if (game.playing) {
     updateIndicators(); updateHUD(dt);
@@ -2084,7 +2139,7 @@ const sig2 = (n) => { if (n < 100) return Math.max(1, Math.round(n)); const m = 
 
 // ---------- modal manager (every panel pauses the game) ----------
 let activeModal = null;
-const MODAL_RENDER = { howto: () => renderHowTo(), shop: () => renderShop(), rebirth: () => renderRebirth(), missions: () => renderMissions(), album: () => renderAlbum(), fuse: () => renderFuse(), pause: () => renderPause() };
+const MODAL_RENDER = { starshop: () => renderStarShop(), howto: () => renderHowTo(), shop: () => renderShop(), rebirth: () => renderRebirth(), missions: () => renderMissions(), album: () => renderAlbum(), fuse: () => renderFuse(), pause: () => renderPause() };
 function openModal(id) {
   if (!game.playing) return;
   if (activeModal && activeModal !== id) closeModal();
@@ -2143,7 +2198,7 @@ function refreshTitleText() {
 const albumCount = () => Object.keys(game.album).length;
 const albumMult = () => 1 + 0.01 * albumCount();
 const prestigeMult = (p = game.prestige) => 1 + 0.5 * p;
-function playerIncomeMult() { return (1 + 0.25 * game.up.star) * rebirthMult() * albumMult() * prestigeMult(); }
+function playerIncomeMult() { return (1 + 0.25 * game.up.star) * rebirthMult() * albumMult() * prestigeMult() * (game.owned.vip ? 1.5 : 1); }
 
 // ---------- celeb album ----------
 function recordAlbum(c, silent) {
@@ -2155,7 +2210,7 @@ function recordAlbum(c, silent) {
   mission('album');
   const r = c.def.r, page = CELEBS.filter((x) => x.r === r);
   if (!game.albumDone[r] && page.every((x) => game.album[x.id])) {
-    game.albumDone[r] = 1; const reward = Math.round(2000 * Math.pow(8, Math.min(r, 6)));
+    game.albumDone[r] = 1; addGems(20); const reward = Math.round(2000 * Math.pow(8, Math.min(r, 6)));
     player.cash += reward;
     setTimeout(() => { banner(tr('alPageDone', { r: tr('r' + r), x: fmt(reward) }), '#ffcc00'); Snd.play('legend'); }, 2600);
   }
@@ -2232,10 +2287,10 @@ document.getElementById('missionsBody').addEventListener('pointerdown', (e) => {
   const M = game.missions;
   if (b.dataset.claim === 'bonus') {
     if (M.bonus || !M.list.every((m) => m.claimed)) return Snd.play('error');
-    M.bonus = true; const v = sig2(M.list.reduce((s, m) => s + m.reward, 0)); player.cash += v; floatText(`+$${fmt(v)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
+    M.bonus = true; addGems(10); const v = sig2(M.list.reduce((s, m) => s + m.reward, 0)); player.cash += v; floatText(`+$${fmt(v)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
   } else {
     const m = M.list[+b.dataset.claim]; if (!m || m.claimed || m.prog < m.n) return Snd.play('error');
-    m.claimed = true; player.cash += m.reward; floatText(`+$${fmt(m.reward)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
+    m.claimed = true; addGems(3); player.cash += m.reward; floatText(`+$${fmt(m.reward)}`, player.pos.x, player.pos.y + 3.4, player.pos.z);
   }
   Snd.play('win'); burst(player.pos.x, player.pos.y + 2, player.pos.z, 30); queueSave(); renderMissions();
 });
@@ -2268,6 +2323,7 @@ function claimStreak() {
     if (s) { const c = createCeleb(def, MUTS[0]); placeCeleb(c, s, player); recordAlbum(c); burst(c.pos.x, c.pos.y + 2, c.pos.z, 60); }
     else player.cash += def.cost;
   } else player.cash += streakCash(d);
+  addGems(d === 7 ? 25 : 5);
   banner(tr('stGot', { n: d }), '#ffb347'); Snd.play('win'); burst(player.pos.x, player.pos.y + 2, player.pos.z, 50); queueSave();
   if (!el.popup.classList.contains('hidden') && el.popup.querySelector('.st-wrap')) nextPopup();
   return true;
@@ -2594,4 +2650,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { buyStarItem, addGems, playerSpeed, playerIncomeMult, spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
