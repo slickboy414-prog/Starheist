@@ -57,10 +57,10 @@ All celebrities are fictional characters.
 | `sendScore` (integer) | ✅ best net worth |
 | `health.logError/logWarning` on errors | ✅ |
 | No external network requests, ads, links, IAP or "subscribe/like" prompts | ✅ everything is bundled (three.js included) |
-| Small bundle | ✅ ~205 KB zipped, ~800 KB unzipped |
+| Small bundle | ✅ about 267 KB zipped, about 1.0 MB unzipped, 6 files, each under 512 KiB (three.js 0.171 ships as two files) |
 | Mobile + desktop, portrait + landscape, safe areas | ✅ |
 | Kid-safe content | ✅ cartoon style, no violence (the camera flash "stuns"), no strobe effects |
-| No real people's names or likenesses | ✅ all 21 celebs and 5 bots are original fictional archetypes (no real names) |
+| No real people's names or likenesses | ✅ all 210 celebs and 5 bots are original fictional characters (no real names) |
 | Not a copy of another game's name, art or characters | ✅ original name, art and characters; only the "buy/steal" genre is shared |
 
 
@@ -75,7 +75,7 @@ All celebrities are fictional characters.
 | In-game pause button, plus YouTube `onPause`/`onResume` | ✅ every panel pauses the simulation |
 | No purchases, ads, loot boxes or real-money rewards | ✅ streak, missions and fusion only give in-game cash/celebs; fusion recipes are fixed (no random paid rolls) |
 | Save data size | ✅ about 1 KB (limit 3 MiB) |
-| Total bundle | ✅ about 916 KB unzipped |
+| Total bundle | ✅ about 1.0 MB unzipped |
 | Fits every screen (phones, tablets, desktops, portrait and landscape) | ✅ HUD scales with the device, camera keeps the same view width |
 | First-time tutorial | ✅ 8-page How to Play on first launch, reopen from the pause menu |
 | No real-money purchases (not supported by Playables yet) | ✅ Star Shop items are bought with Star Gems earned in play; `grantItem(id)` in `game.js` is the single hook to connect YouTube's purchase API if it launches |
@@ -86,9 +86,9 @@ All celebrities are fictional characters.
 Admin Abuse runs inside the game on every player's device. There is no server and nothing to switch on each week.
 1. **Schedule:** every Saturday 18:00–18:30 UTC (set by `ADMIN_ANCHOR` and `ADMIN_LEN` in `game/game.js`).
 2. **It happens automatically** for anyone who has the game open during that window, including people who join halfway through.
-3. **Test it before launch:** run the game locally, open `http://localhost:8000/?debug`, press PLAY, open the browser console (F12) and run `__sh.forceAdmin(30)`. You can also set your computer clock to a Saturday at 18:05 UTC.
+3. **Test it before launch:** run the game locally from `game/`, open `http://localhost:8000/?debug`, press PLAY, open the browser console (F12) and run `__sh.forceAdmin(30)`. Don't test by changing the device clock: a save that sees the clock go backwards blocks Admin Abuse until real time catches up.
 4. **Make sure people show up:** post on your YouTube channel (Community post or Short) every Saturday before 18:00 UTC. The game itself cannot send notifications.
-5. **To change the day, time or length:** edit those two values, rebuild the zip and upload the new version to YouTube.
+5. **To change the day, time or length:** edit those two values, rebuild the zip with `node tools/build.js` and upload the new version to YouTube.
 
 ## Star Shop (4 boost items)
 | Item | Gems | Effect |
@@ -103,7 +103,7 @@ Gems: daily streak 5 (25 on day 7), each mission 3, all three +10, each album pa
 ## How to submit
 1. YouTube Playables publishing is invite/partner based. Apply through the **YouTube Playables developer program** (search "YouTube Playables developer" on developers.google.com/youtube). Requirements change, so read their current Playables policies and certification checklist.
 2. Test locally with the **Playables SDK test suite** they provide once you have access.
-3. Upload `star-heist-playables.zip` (index.html at the root) and the listing above.
+3. Build with `node tools/build.js` (it removes the `?debug` test hook), then upload `star-heist-playables.zip` (index.html at the root) and the listing above.
 
 ## Run locally
 ```bash
