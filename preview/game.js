@@ -937,6 +937,11 @@ const STAR_ITEMS = [
 const LUCK_SECONDS = 1800;
 const IDLE_SHIELD_S = 60;
 const shielded = () => game.playing && (game.idleT || 0) >= IDLE_SHIELD_S;
+// Owner's ruling (round 2): only All-Time GOATs are protected; other celebs can still be stolen from an idle player.
+const guarded = (c) => c.owner === player && c.def.r === 5 && shielded();
+// Holding a direction, the joystick or a camera drag is play, not idleness.
+const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+const steering = () => joy.id !== null || look.id !== null || MOVE_KEYS.some((k) => keys[k]);
 const effLuck = () => game.luck * (game.luckT > 0 ? 2 : 1);
 function addGems(n, why) {
   if (!game.playing || !(n > 0)) return;
@@ -1412,15 +1417,15 @@ function bestCarpetFor(b) {
 function pickStealTarget(b) {
   let best = null, bs = 0;
   // when the player's cooldown is ready, bots mostly come for the player's best celeb (more often at higher rebirths)
-  if (game.playerStealCd <= 0 && game.tut >= 2 && !player.base.locked && !shielded() && Math.random() < Math.min(0.9, 0.6 + 0.06 * (b.rebirth || 0))) {
+  if (game.playerStealCd <= 0 && game.tut >= 2 && !player.base.locked && Math.random() < Math.min(0.9, 0.6 + 0.06 * (b.rebirth || 0))) {
     for (const c of celebs) {
-      if (c.owner !== player || c.state !== 'placed' || bots.some((o) => o !== b && o.ai.celeb === c)) continue;
+      if (c.owner !== player || c.state !== 'placed' || guarded(c) || bots.some((o) => o !== b && o.ai.celeb === c)) continue;
       const sc = c.income * rand(0.7, 1.3); if (sc > bs) { bs = sc; best = c; }
     }
     if (best) return best;
   }
   for (const c of celebs) {
-    if (c.state !== 'placed' || c.owner === b || c.slot.base.locked || (c.owner === player && shielded())) continue;
+    if (c.state !== 'placed' || c.owner === b || c.slot.base.locked || guarded(c)) continue;
     if (c.owner === player && (game.playerStealCd > 0 || game.tut < 2)) continue;
     if (bots.some((o) => o !== b && o.ai.celeb === c)) continue;
     const s = c.income * (c.owner === player ? 1.8 * (1 + 0.2 * (b.rebirth || 0)) : 1) * rand(0.5, 1.5);
@@ -1482,7 +1487,7 @@ function updateBot(b, dt) {
     }
     case 'steal': {
       const s = ai.slot, c = s && s.celeb;
-      if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || (c.owner === player && shielded()) || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
+      if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || guarded(c) || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
       if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s, b.floor || 0);
       if (c.owner === player && !ai.warned && hdist(b.pos, player.base.doorOut) < 15) {
         ai.warned = true; banner(tr('sneaking', { bot: b.name }), '#ff9d00'); Snd.play('warn');
@@ -2094,7 +2099,7 @@ function updateIndicators() {
 // ---------------------------------------------------------------------
 function update(dt) {
   game.t += dt;
-  if (game.playing) { game.time += dt; const was = shielded(); game.idleT = (game.idleT || 0) + dt; if (!was && shielded()) feed(tr('idleShield')); }
+  if (game.playing) { game.time += dt; const was = shielded(); game.idleT = steering() ? 0 : (game.idleT || 0) + dt; if (!was && shielded()) feed(tr('idleShield')); }
   game.stealCd -= dt; if (game.playing) game.playerStealCd -= dt;
   updateEvents(dt);
   game.spawnT -= dt;
@@ -2676,4 +2681,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { doSave, shielded, buyStarItem, addGems, playerSpeed, playerIncomeMult, spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { guarded, steering, keys, get joy() { return joy; }, doSave, shielded, buyStarItem, addGems, playerSpeed, playerIncomeMult, spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };

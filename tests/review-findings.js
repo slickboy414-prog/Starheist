@@ -1,4 +1,4 @@
-// Regression tests for the round 1 review findings (B1, M1, M3, M4, m5).
+// Regression tests for the round 1 review findings (B1, M1, M3, M4, m5), with M4 as ruled by the owner in round 2.
 // Run: (cd game && python3 -m http.server 8765) then: node tests/review-findings.js
 // Each test opens a fresh browser so one failure cannot poison the next.
 const { chromium } = require('playwright');
@@ -88,19 +88,42 @@ async function open(cfg = {}) {
     ok('M3 control: an honest clock on Saturday 18:05 UTC still starts Admin Abuse', r2.event === 'admin' && !o.errs.length, JSON.stringify(r2));
     await o.b.close();
   }
-  // ---- M4: an idle player keeps their celebs; an active one can still be robbed ----
+  // ---- M4 (owner's round 2 ruling): the idle shield protects GOATs only, and never turns on while steering ----
   for (const mode of ['idle', 'active']) {
     const { b, p, errs } = await open({ loadFails: 0 });
     const r = await p.evaluate((mode) => {
-      const S = window.__sh, P = S.player, G = S.game; S.startGame(); S.finishHowTo(); G.tut = 4; G.rebirth = 9; S.refreshFloors(); P.cash = 1e9;
-      for (let i = 0; i < 40; i++) { const c = S.celebs.find((x) => x.state === 'carpet'); if (!c) { S.update(0.5); continue; } P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); }
+      const S = window.__sh, P = S.player, G = S.game; S.startGame(); S.finishHowTo(); G.tut = 4; G.rebirth = 9; S.refreshFloors(); P.cash = 1e12;
+      for (let i = 0; i < 3; i++) { const g = S.spawnCarpetCeleb(-20 + i * 4, 5); P.pos.set(g.pos.x, 0, g.pos.z); S.buy(P, g); }
+      for (let i = 0; i < 30; i++) { const c = S.celebs.find((x) => x.state === 'carpet' && x.def.r < 5); if (!c) { S.update(0.5); continue; } P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); }
       for (let i = 0; i < 600; i++) S.update(0.05);
-      P.pos.set(-70, 0, -50); const start = S.celebs.filter((c) => c.owner === P).length;
+      P.pos.set(-70, 0, -50);
+      const mine = () => S.celebs.filter((c) => c.owner === P), goats = () => mine().filter((c) => c.def.r === 5).length;
+      const start = { goats: goats(), others: mine().length - goats() };
       for (let i = 0; i < 3600 * 20; i++) { if (mode === 'active') G.idleT = 0; S.update(0.05); }
-      return { start, end: S.celebs.filter((c) => c.owner === P).length };
+      return { start, end: { goats: goats(), others: mine().length - goats() } };
     }, mode);
-    if (mode === 'idle') ok('M4 idle player keeps every celeb for a simulated hour', r.end === r.start && !errs.length, JSON.stringify(r));
-    else ok('M4 control: an active, unlocked player can still be robbed', r.end < r.start && !errs.length, JSON.stringify(r));
+    if (mode === 'idle') ok('M4 idle player keeps every GOAT; other celebs can still be stolen', r.start.goats > 0 && r.end.goats === r.start.goats && r.end.others < r.start.others && !errs.length, JSON.stringify(r));
+    else ok('M4 control: an active, unlocked player can lose GOATs too', r.end.goats < r.start.goats && !errs.length, JSON.stringify(r));
+    await b.close();
+  }
+  {
+    const { b, p, errs } = await open({ loadFails: 0 });
+    const r = await p.evaluate(() => {
+      const S = window.__sh, G = S.game; S.startGame(); S.finishHowTo(); G.tut = 4;
+      const run = (secs) => { for (let i = 0; i < secs * 20; i++) S.update(0.05); return S.shielded(); };
+      const res = {};
+      // hold W for two minutes: one keydown, no keyup
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
+      res.holdingKey = run(120);
+      window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', bubbles: true }));
+      res.afterKeyRelease = run(61);
+      // hold the joystick for two minutes
+      S.joy.id = 7; res.holdingJoystick = run(120);
+      S.joy.id = null; res.afterJoystickRelease = run(61);
+      return res;
+    });
+    ok('M4 the shield stays off while steering, and turns on 60 s after letting go',
+      r.holdingKey === false && r.holdingJoystick === false && r.afterKeyRelease === true && r.afterJoystickRelease === true && !errs.length, JSON.stringify(r));
     await b.close();
   }
   console.log(out.join('\n'));

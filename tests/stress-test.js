@@ -193,15 +193,17 @@ async function boot(b, opts = {}) {
     const out = await r.p.evaluate(() => {
       const S = window.__sh, P = S.player; S.startGame(); S.finishHowTo(); S.game.tut = 4; S.game.rebirth = 9; S.refreshFloors(); P.cash = 1e9;
       for (let i = 0; i < 40; i++) { const c = S.celebs.find((x) => x.state === 'carpet'); if (!c) { S.update(0.5); continue; } P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); }
-      P.pos.set(-70, 0, -50); const ownedStart = S.celebs.filter((c) => c.owner === P).length;
+      for (let i = 0; i < 2; i++) { const g = S.spawnCarpetCeleb(-20 + i * 4, 5); P.pos.set(g.pos.x, 0, g.pos.z); S.buy(P, g); }
+      for (let i = 0; i < 300; i++) S.update(0.05);
+      P.pos.set(-70, 0, -50); const goats = () => S.celebs.filter((c) => c.owner === P && c.def.r === 5).length; const ownedStart = goats();
       const bad = []; const t0 = performance.now(); const steps = 2 * 3600 * 20;
       for (let i = 0; i < steps; i++) { S.update(0.05); if (i % 2000 === 0) { const e = window.__inv(); if (e.length) bad.push(e[0]); } }
       const total = performance.now() - t0;
       const t1 = performance.now(); for (let i = 0; i < 300; i++) { S.update(1 / 60); S.renderer.render(S.scene, S.camera); } const frame = (performance.now() - t1) / 300;
-      return { bad, perStep: total / steps, frame, celebs: S.celebs.length, ownedStart, owned: S.celebs.filter((c) => c.owner === P).length, botRb: S.bots.map((b) => b.rebirth || 0), cash: P.cash };
+      return { bad, perStep: total / steps, frame, celebs: S.celebs.length, ownedStart, owned: goats(), botRb: S.bots.map((b) => b.rebirth || 0), cash: P.cash };
     });
-    ok('Long run: 2 simulated hours, idle player keeps every celeb', out.bad.length === 0 && Number.isFinite(out.cash) && out.owned === out.ownedStart && !r.errs.length,
-      `bots rebirths ${out.botRb.join(',')}, celebs alive ${out.celebs}, player owns ${out.owned} of ${out.ownedStart}${out.bad.length ? ' INVARIANT: ' + out.bad[0] : ''}`);
+    ok('Long run: 2 simulated hours, idle player keeps every GOAT', out.bad.length === 0 && Number.isFinite(out.cash) && out.owned === out.ownedStart && !r.errs.length,
+      `bots rebirths ${out.botRb.join(',')}, celebs alive ${out.celebs}, player keeps ${out.owned} of ${out.ownedStart} GOATs${out.bad.length ? ' INVARIANT: ' + out.bad[0] : ''}`);
     ok('Simulation speed', out.perStep < 4, `${out.perStep.toFixed(2)} ms per game-logic step; ${out.frame.toFixed(1)} ms per full frame in a software GPU (a real phone GPU is much faster)`);
     await r.ctx.close();
   }

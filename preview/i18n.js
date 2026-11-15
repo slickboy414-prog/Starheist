@@ -432,11 +432,11 @@ Object.assign(id, { mShop: 'TOKO', ssTitle: '💎 TOKO BINTANG', ssGems: 'Permat
   it_luck: 'Jimat Keberuntungan', itd_luck: '30 menit hoki ganda untuk seleb langka dan mutasi (bisa ditumpuk)' });
 
 
-Object.assign(en, { saveFail: "Your saved game couldn't be loaded, so progress in this session can't be saved. Reload the game to try again.", idleShield: "🛡️ Idle shield on: bots won't steal your celebs while you're away.", music: 'Music', effects: 'Sound effects' });
-Object.assign(es, { saveFail: 'No se pudo cargar tu partida guardada, así que el progreso de esta sesión no se puede guardar. Vuelve a cargar el juego para intentarlo de nuevo.', idleShield: '🛡️ Escudo de inactividad: los bots no robarán a tus famosos mientras no estés.', music: 'Música', effects: 'Efectos de sonido' });
-Object.assign(pt, { saveFail: 'Não foi possível carregar seu jogo salvo, então o progresso desta sessão não pode ser salvo. Recarregue o jogo para tentar de novo.', idleShield: '🛡️ Escudo de inatividade: os bots não vão roubar suas celebridades enquanto você estiver fora.', music: 'Música', effects: 'Efeitos sonoros' });
-Object.assign(hi, { saveFail: 'तुम्हारा सेव किया गेम लोड नहीं हो सका, इसलिए इस सेशन की प्रगति सेव नहीं होगी। फिर से कोशिश करने के लिए गेम रीलोड करो।', idleShield: '🛡️ इनएक्टिव शील्ड चालू: तुम्हारे दूर रहने पर बॉट तुम्हारे सेलेब्स नहीं चुराएँगे।', music: 'संगीत', effects: 'साउंड इफ़ेक्ट' });
-Object.assign(id, { saveFail: 'Game tersimpanmu tidak bisa dimuat, jadi progres sesi ini tidak bisa disimpan. Muat ulang game untuk mencoba lagi.', idleShield: '🛡️ Perisai diam aktif: bot tidak akan mencuri selebmu saat kamu pergi.', music: 'Musik', effects: 'Efek suara' });
+Object.assign(en, { saveFail: "Your saved game couldn't be loaded, so progress in this session can't be saved. Reload the game to try again.", idleShield: '🛡️ Idle shield on: bots won\'t steal your All-Time GOATs while you\'re away.', music: 'Music', effects: 'Sound effects' });
+Object.assign(es, { saveFail: 'No se pudo cargar tu partida guardada, así que el progreso de esta sesión no se puede guardar. Vuelve a cargar el juego para intentarlo de nuevo.', idleShield: '🛡️ Escudo de inactividad: los bots no robarán a tus GOAT de la historia mientras no estés.', music: 'Música', effects: 'Efectos de sonido' });
+Object.assign(pt, { saveFail: 'Não foi possível carregar seu jogo salvo, então o progresso desta sessão não pode ser salvo. Recarregue o jogo para tentar de novo.', idleShield: '🛡️ Escudo de inatividade: os bots não vão roubar seus GOATs de todos os tempos enquanto você estiver fora.', music: 'Música', effects: 'Efeitos sonoros' });
+Object.assign(hi, { saveFail: 'तुम्हारा सेव किया गेम लोड नहीं हो सका, इसलिए इस सेशन की प्रगति सेव नहीं होगी। फिर से कोशिश करने के लिए गेम रीलोड करो।', idleShield: '🛡️ इनएक्टिव शील्ड चालू: तुम्हारे दूर रहने पर बॉट तुम्हारे ऑल-टाइम GOAT नहीं चुराएँगे।', music: 'संगीत', effects: 'साउंड इफ़ेक्ट' });
+Object.assign(id, { saveFail: 'Game tersimpanmu tidak bisa dimuat, jadi progres sesi ini tidak bisa disimpan. Muat ulang game untuk mencoba lagi.', idleShield: '🛡️ Perisai diam aktif: bot tidak akan mencuri GOAT sepanjang masamu saat kamu pergi.', music: 'Musik', effects: 'Efek suara' });
 
 const TABLES = { en, es, pt, hi, id };
 let cur = en, curCode = 'en';
