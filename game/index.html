@@ -298,6 +298,8 @@
   #btnGems b{font-size:15px} #btnGems span{font-size:10px;letter-spacing:.5px}
   #btnGems:active{transform:translateY(3px);box-shadow:0 1px 0 #1a0b2e}
   body.phone #btnGems{padding:4px 9px;font-size:12px} body.phone #btnGems span{display:none}
+  /* bigger tap target on phones: a little taller, plus an invisible 8px hit margin around it */
+  #btnGems{position:relative;min-height:34px} #btnGems::after{content:'';position:absolute;inset:-8px}
   .ss-panel{border-color:#8ff6ff!important}
   .ss-gems{text-align:center;font-size:28px;color:#8ff6ff;margin-bottom:4px} .ss-gems small{font-size:12px;color:#d9c9ff}
   .ss-desc{font-family:system-ui,sans-serif;font-weight:700;font-size:13px;text-align:center;margin:0 0 10px;color:#e8e0ff}
