@@ -368,10 +368,25 @@
     <div data-i18n="feat2">😈 Steal from rival bot agencies</div>
     <div data-i18n="feat3">🔒 Lock up before they steal back</div>
   </div>
-  <button id="playBtn" class="stroke" disabled>LOADING…</button>
+  <button id="playBtn" class="stroke">▶ PLAY</button>
   <div id="scheduleLine" class="stroke"></div>
   <div id="adminNext" class="stroke" style="margin-top:16px;font-size:clamp(13px,2.6vw,17px);color:#ff9cf6"></div>
   <div id="fine" data-i18n="fine">All celebrities in this game are fictional characters.</div>
 </div>
 
-<script type="module" src="game.js"></script>
+<script>
+// PLAY works from the first frame: a tap before the game has finished loading starts it as soon as it is ready.
+// If the game code can't load at all (for example the page was opened as a downloaded file), say so instead of waiting forever.
+(function () {
+  var b = document.getElementById('playBtn');
+  b.addEventListener('click', function () { if (!window.__starLoaded) window.__starWantPlay = true; });
+  window.__starLoadFail = function () {
+    if (window.__starLoaded) return;
+    b.disabled = true; b.textContent = '⚠️ CAN\'T LOAD';
+    var f = document.getElementById('fine');
+    if (f) { f.style.color = '#ffd166'; f.textContent = 'This copy of the game cannot load its files. Open Star Heist from its game link instead.'; }
+  };
+  setTimeout(window.__starLoadFail, 20000);
+})();
+</script>
+<script type="module" src="game.js" onerror="window.__starLoadFail && window.__starLoadFail()"></script>

@@ -2,3 +2,4 @@ node_modules/
 dist/
 i18n-review/
 dist-smoke.png
+review/standalone-phone.png

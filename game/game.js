@@ -148,7 +148,7 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 } catch (e) {
-  document.getElementById('playBtn').textContent = 'WebGL not supported';
+  document.getElementById('playBtn').textContent = 'WebGL not supported'; document.getElementById('playBtn').disabled = true; window.__starLoaded = true;
   SDK.error();
   throw e;
 }
@@ -2212,7 +2212,7 @@ function pickSpawnDef(r) {
   return wpick(list, (c) => (c.id === f ? 8 : 1) * (th.includes(c.arch) ? 4 : 1));
 }
 function refreshTitleText() {
-  el.play.textContent = game.loaded ? tr('play') : tr('loading');
+  el.play.textContent = tr('play');
   const ai = adminInfo(), an = document.getElementById('adminNext');
   if (an) an.textContent = ai.active ? tr('adminLive') : tr('adminNext', { when: new Date(ai.next).toLocaleString(getLang(), { weekday: 'long', hour: 'numeric', minute: '2-digit' }), wait: fmtWait(ai.next - Date.now()) });
   const sc = document.getElementById('scheduleLine');
@@ -2636,6 +2636,7 @@ function startGame() {
   if (game.playing || !game.loaded) return;
   game.playing = true;
   el.title.classList.add('hidden'); el.hud.classList.remove('hidden');
+  hudT = 0; updateHUD(0); // fill the HUD now: How to Play opens next and pauses the loop, which left "$0" showing
   const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
   camTarget.set(player.pos.x, 1.6, player.pos.z);
   if (!game.seenHowTo) openHowTo(0);
@@ -2673,9 +2674,10 @@ async function boot() {
   setLang(game.lang || await SDK.lang()); applyLangUI();
   if (!data) player.cash = 100;
   setupBots();
-  game.loaded = true;
+  game.loaded = true; window.__starLoaded = true;
   el.play.disabled = false;
   refreshTitleText();
+  if (window.__starWantPlay) startGame(); // PLAY was tapped while the game was still loading
   // YouTube requires firstFrameReady before gameReady
   await new Promise((res) => { const t0 = performance.now(); const chk = () => (firstFrame || performance.now() - t0 > 3000) ? res() : setTimeout(chk, 16); chk(); });
   if (!firstFrame) { firstFrame = true; SDK.firstFrame(); }

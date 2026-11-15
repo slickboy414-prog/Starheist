@@ -112,5 +112,7 @@ cd game && python3 -m http.server 8000
 ```
 Then open http://localhost:8000. Add `?debug` to expose `window.__sh` for testing.
 
+**Sharing a copy to play outside YouTube:** send `star-heist-standalone.html` (the whole game in one file, built with `node tools/build-standalone.js`). It opens and plays from Files, Drive or a chat app. The normal `index.html` needs its other files next to it, so on its own it shows "CAN'T LOAD" and points to the game link.
+
 ## Ideas for v2
 More celeb packs (sports stars, chefs), cosmetic skins for your agency, and daily login rewards.
