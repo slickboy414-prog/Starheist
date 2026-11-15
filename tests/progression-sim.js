@@ -14,13 +14,13 @@ const HOURS = +(process.argv[2] || 48);
   const r = await p.evaluate((HOURS) => {
     const S = window.__sh, P = S.player, G = S.game;
     S.startGame(); S.finishHowTo(); G.tut = 4; G.rebirth = 7; S.refreshFloors(); P.cash = 50000; // rebirth 7 start cash
-    const log = [], DT = 0.1, END = HOURS * 3600; let t = 0, nextAct = 0, goatsSeen = 0, goatsBought = 0; const seen = new Set();
+    const log = [], DT = 0.1, END = HOURS * 3600; let t = 0, nextAct = 0, goatsSeen = 0, goatsBought = 0, iconsSeen = 0, iconsBought = 0; const seen = new Set();
     const cps = () => S.celebs.filter((c) => c.owner === P && c.state === 'placed').reduce((s, c) => s + c.income, 0) * S.playerIncomeMult();
     const UP = { star: (l) => 3000 * Math.pow(3, l), slots: (l) => 900 * Math.pow(4.2, l) };
     log.push({ h: 0, rebirth: G.rebirth, note: 'start', cash: P.cash });
     while (t < END && G.rebirth < 10) {
       G.idleT = 0; S.update(DT); t += DT;
-      for (const c of S.celebs) if (c.state === 'carpet' && c.def.r === 5 && !seen.has(c)) { seen.add(c); goatsSeen++; }
+      for (const c of S.celebs) if (c.state === 'carpet' && (c.def.r === 5 || c.def.r === 4) && !seen.has(c)) { seen.add(c); if (c.def.r === 5) goatsSeen++; else iconsSeen++; }
       if (t < nextAct) continue; nextAct = t + 1;
       // collect everything
       for (const c of S.celebs) if (c.owner === P && c.state === 'placed' && c.stored > 0) { P.cash += c.stored; c.stored = 0; }
@@ -37,13 +37,13 @@ const HOURS = +(process.argv[2] || 48);
       if (best) {
         if (!S.freeSlot(P)) { const mine = S.celebs.filter((c) => c.owner === P && c.state === 'placed').sort((a, b) => a.income - b.income); if (mine[0] && best.income > mine[0].income * 1.5 && !(st.req && mine[0].def.r >= st.req.tier && mine.filter((c) => c.def.r >= st.req.tier).length === 1)) S.sell(mine[0]); }
         P.floor = 0; P.stair = null; P.pos.set(best.pos.x, 0, best.pos.z);
-        if (S.buy(P, best) && best.def.r === 5) goatsBought++;
+        if (S.buy(P, best)) { if (best.def.r === 5) goatsBought++; if (best.def.r === 4) iconsBought++; }
       }
       if (Math.floor(t) % 3600 === 0) log.push({ h: +(t / 3600).toFixed(2), rebirth: G.rebirth, cash: Math.round(P.cash), cps: Math.round(cps()), need: st.req ? st.req.cash : null, ownsTier: !!st.hasTier });
     }
-    return { reached: G.rebirth, hours: +(t / 3600).toFixed(2), goatsSeen, goatsBought, log };
+    return { reached: G.rebirth, hours: +(t / 3600).toFixed(2), iconsSeen, iconsBought, goatsSeen, goatsBought, log };
   }, HOURS);
-  console.log(JSON.stringify({ reached: r.reached, hours: r.hours, goatsSeen: r.goatsSeen, goatsBought: r.goatsBought }));
+  console.log(JSON.stringify({ reached: r.reached, hours: r.hours, iconsSeen: r.iconsSeen, iconsBought: r.iconsBought, goatsSeen: r.goatsSeen, goatsBought: r.goatsBought }));
   for (const l of r.log) console.log(JSON.stringify(l));
   console.log(errs.join('\n') || 'no errors');
   await b.close();

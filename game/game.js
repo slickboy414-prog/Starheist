@@ -773,7 +773,7 @@ const unlockedSlots = (a) => a.isPlayer ? Math.min(8, 4 + game.up.slots + rebirt
 // ---------- Rebirth ----------
 const REBIRTHS = [
   { cash: 25e3, tier: 2 }, { cash: 150e3, tier: 2 }, { cash: 750e3, tier: 3 }, { cash: 3e6, tier: 3 }, { cash: 12e6, tier: 4 },
-  { cash: 50e6, tier: 4 }, { cash: 200e6, tier: 4 }, { cash: 800e6, tier: 5 }, { cash: 3e9, tier: 5 }, { cash: 12e9, tier: 5 },
+  { cash: 50e6, tier: 4 }, { cash: 200e6, tier: 4 }, { cash: 800e6, tier: 4 }, { cash: 3e9, tier: 4 }, { cash: 12e9, tier: 4 }, // 8-10: an Icon or better (owner's ruling, 15 Nov)
 ];
 const FH = 4.6;                          // height of one agency floor
 const FLOOR_REBIRTH = [1, 3, 6, 9];      // rebirth needed for Floor 2, 3, 4, 5
@@ -937,8 +937,8 @@ const STAR_ITEMS = [
 const LUCK_SECONDS = 1800;
 const IDLE_SHIELD_S = 60;
 const shielded = () => game.playing && (game.idleT || 0) >= IDLE_SHIELD_S;
-// Owner's ruling (round 2): only All-Time GOATs are protected; other celebs can still be stolen from an idle player.
-const guarded = (c) => c.owner === player && c.def.r === 5 && shielded();
+// Owner's rulings (15 Nov): All-Time GOATs, Exclusives and Limiteds are protected; tiers 0-4 can still be stolen from an idle player.
+const guarded = (c) => c.owner === player && c.def.r >= 5 && shielded(); // tiers 5-7: GOAT, Exclusive, Limited
 // Holding a direction, the joystick or a camera drag is play, not idleness.
 const MOVE_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 const steering = () => joy.id !== null || look.id !== null || MOVE_KEYS.some((k) => keys[k]);
@@ -2221,7 +2221,9 @@ function refreshTitleText() {
 
 // ---------- income multipliers ----------
 const albumCount = () => Object.keys(game.album).length;
-const albumMult = () => 1 + 0.01 * albumCount();
+// The album no longer multiplies income (round 3 proposal): it was free, permanent across rebirths and Prestige,
+// and stacked silently with every other multiplier. Completed pages still pay cash and 20 Star Gems.
+const albumMult = () => 1;
 const prestigeMult = (p = game.prestige) => 1 + 0.5 * p;
 function playerIncomeMult() { return (1 + 0.25 * game.up.star) * rebirthMult() * albumMult() * prestigeMult() * (game.owned.vip ? 1.5 : 1); }
 

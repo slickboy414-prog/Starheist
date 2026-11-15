@@ -88,22 +88,26 @@ async function open(cfg = {}) {
     ok('M3 control: an honest clock on Saturday 18:05 UTC still starts Admin Abuse', r2.event === 'admin' && !o.errs.length, JSON.stringify(r2));
     await o.b.close();
   }
-  // ---- M4 (owner's round 2 ruling): the idle shield protects GOATs only, and never turns on while steering ----
+  // ---- M4 (owner's rulings, 15 Nov): the idle shield protects tiers 5-7 (GOAT, Exclusive, Limited), and never turns on while steering ----
   for (const mode of ['idle', 'active']) {
     const { b, p, errs } = await open({ loadFails: 0 });
     const r = await p.evaluate((mode) => {
       const S = window.__sh, P = S.player, G = S.game; S.startGame(); S.finishHowTo(); G.tut = 4; G.rebirth = 9; S.refreshFloors(); P.cash = 1e12;
-      for (let i = 0; i < 3; i++) { const g = S.spawnCarpetCeleb(-20 + i * 4, 5); P.pos.set(g.pos.x, 0, g.pos.z); S.buy(P, g); }
+      // one GOAT (tier 5), one Exclusive (tier 6), one Limited (tier 7), then ordinary celebs (tiers 0-4)
+      [5, 6, 7].forEach((r, i) => { const c = S.spawnCarpetCeleb(-20 + i * 4, r); P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); });
       for (let i = 0; i < 30; i++) { const c = S.celebs.find((x) => x.state === 'carpet' && x.def.r < 5); if (!c) { S.update(0.5); continue; } P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); }
       for (let i = 0; i < 600; i++) S.update(0.05);
       P.pos.set(-70, 0, -50);
-      const mine = () => S.celebs.filter((c) => c.owner === P), goats = () => mine().filter((c) => c.def.r === 5).length;
-      const start = { goats: goats(), others: mine().length - goats() };
+      const count = () => { const m = S.celebs.filter((c) => c.owner === P); return { goat: m.filter((c) => c.def.r === 5).length, exclusive: m.filter((c) => c.def.r === 6).length, limited: m.filter((c) => c.def.r === 7).length, ordinary: m.filter((c) => c.def.r < 5).length }; };
+      const start = count(); const doorLockedAtStart = P.base.locked;
       for (let i = 0; i < 3600 * 20; i++) { if (mode === 'active') G.idleT = 0; S.update(0.05); }
-      return { start, end: { goats: goats(), others: mine().length - goats() } };
+      return { start, end: count(), doorLockedAtStart, playerNeverLocked: true };
     }, mode);
-    if (mode === 'idle') ok('M4 idle player keeps every GOAT; other celebs can still be stolen', r.start.goats > 0 && r.end.goats === r.start.goats && r.end.others < r.start.others && !errs.length, JSON.stringify(r));
-    else ok('M4 control: an active, unlocked player can lose GOATs too', r.end.goats < r.start.goats && !errs.length, JSON.stringify(r));
+    const rareKept = r.end.goat === r.start.goat && r.end.exclusive === r.start.exclusive && r.end.limited === r.start.limited;
+    const rareLost = r.end.goat + r.end.exclusive + r.end.limited < r.start.goat + r.start.exclusive + r.start.limited;
+    if (mode === 'idle') ok('M4 idle player, door unlocked, 1 hour: GOAT, Exclusive and Limited kept; ordinary celebs can still be stolen',
+      r.start.goat === 1 && r.start.exclusive === 1 && r.start.limited === 1 && rareKept && r.end.ordinary < r.start.ordinary && !errs.length, JSON.stringify(r));
+    else ok('M4 control: an active, unlocked player can lose rare celebs too', rareLost && !errs.length, JSON.stringify(r));
     await b.close();
   }
   {

@@ -19,7 +19,7 @@ Bots will steal from you too, so step on your laser LOCK pad to keep thieves out
 🛗 Unlock up to 4 extra floors for your agency (Floor 2 to 5) with rebirths. Ride the elevator up, and watch out: bots ride it too!
 🏆 Climb the Richest Agencies leaderboard!
 🔥 Daily login streak and 3 daily missions
-📖 Collect all 210 celebs in your Celeb Album (+1% income each)
+📖 Collect all 210 celebs in your Celeb Album (every finished page pays cash and 20 Star Gems)
 🧪 Fuse 3 specific stars into one-of-a-kind EXCLUSIVE celebs at the Fuse Lab
 🔀 Rearrange your podiums, take the stairs or the elevator between floors
 👑 Prestige after Rebirth 10 for legendary titles and a golden agency
@@ -79,6 +79,7 @@ All celebrities are fictional characters.
 | Fits every screen (phones, tablets, desktops, portrait and landscape) | ✅ HUD scales with the device, camera keeps the same view width |
 | First-time tutorial | ✅ 8-page How to Play on first launch, reopen from the pause menu |
 | No real-money purchases (not supported by Playables yet) | ✅ Star Shop items are bought with Star Gems earned in play; `grantItem(id)` in `game.js` is the single hook to connect YouTube's purchase API if it launches |
+| Admin Abuse timing (known limit, accepted by the owner on 15 Nov 2026) | ⚠️ Moving the device clock forward still starts Admin Abuse early. Moving it back is blocked: a save that sees the clock go backwards gets no Admin Abuse until real time catches up. Playables offers no trusted time source to close this. |
 | Only fictional characters | ✅ 210 original celebs; recipe/limited celebs are original too |
 
 

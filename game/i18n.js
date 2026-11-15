@@ -39,7 +39,7 @@ const en = {
   m_buy: 'Sign {n} celebs', m_steal: 'Steal {n} celebs', m_collect: 'Collect ${n}', m_defend: 'Stop {n} thieves', m_lock: 'Lock your agency {n} times',
   m_flash: 'Stun {n} bots with FLASH', m_rare: 'Sign {n} FAMOUS or better celebs', m_floor: 'Visit an upper floor {n} times', m_album: 'Find {n} new album celebs',
   stTitle: '🔥 DAILY STREAK', stDay: 'DAY {n}', stCeleb: 'SUPERSTAR celeb!', stBack: 'Come back tomorrow for Day {n}!', stGot: '🔥 Day {n} reward claimed!',
-  alTitle: '📖 CELEB ALBUM', alFound: '{a} / {b} found', alBonus: 'Album bonus: +{x}% income (1% per celeb found)', alPageDone: '📖 {r} page complete! +${x}',
+  alTitle: '📖 CELEB ALBUM', alFound: '{a} / {b} found', alBonus: 'Finish a page for a cash bonus and 20 Star Gems', alPageDone: '📖 {r} page complete! +${x}',
   fuTitle: '🧪 FUSE LAB', fuDesc: 'Fuse 3 specific celebs into a one-of-a-kind EXCLUSIVE. The 3 celebs are used up, so protect them from thieves first!',
   fuGo: '🧪 FUSE', fuNeedLab: 'Walk to the Fuse Lab next to your agency to fuse.', fuFee: 'Fee', fuMissing: 'MISSING', fuReady: 'READY',
   paTitle: '⏸ PAUSED', resume: '▶ RESUME', sound: 'Sound', off: 'OFF', language: 'Language', controls: 'Controls',
@@ -84,7 +84,7 @@ const es = {
   m_buy: 'Ficha {n} famosos', m_steal: 'Roba {n} famosos', m_collect: 'Cobra ${n}', m_defend: 'Detén a {n} ladrones', m_lock: 'Cierra tu agencia {n} veces',
   m_flash: 'Aturde a {n} bots con el FLASH', m_rare: 'Ficha {n} famosos FAMOSO o mejor', m_floor: 'Visita un piso superior {n} veces', m_album: 'Encuentra {n} famosos nuevos del álbum',
   stTitle: '🔥 RACHA DIARIA', stDay: 'DÍA {n}', stCeleb: '¡Famoso SUPERESTRELLA!', stBack: '¡Vuelve mañana por el día {n}!', stGot: '🔥 ¡Premio del día {n} reclamado!',
-  alTitle: '📖 ÁLBUM DE FAMOSOS', alFound: '{a} / {b} encontrados', alBonus: 'Bonus del álbum: +{x}% de ingresos (1% por famoso)', alPageDone: '📖 ¡Página {r} completa! +${x}',
+  alTitle: '📖 ÁLBUM DE FAMOSOS', alFound: '{a} / {b} encontrados', alBonus: 'Completa una página para ganar dinero y 20 gemas estelares', alPageDone: '📖 ¡Página {r} completa! +${x}',
   fuTitle: '🧪 LAB. DE FUSIÓN', fuDesc: 'Fusiona 3 famosos concretos en un EXCLUSIVO único. Los 3 se gastan, ¡protégelos de los ladrones!',
   fuGo: '🧪 FUSIONAR', fuNeedLab: 'Camina al Lab. de Fusión junto a tu agencia para fusionar.', fuFee: 'Coste', fuMissing: 'FALTAN', fuReady: 'LISTO',
   paTitle: '⏸ PAUSA', resume: '▶ CONTINUAR', sound: 'Sonido', off: 'OFF', language: 'Idioma', controls: 'Controles',
@@ -129,7 +129,7 @@ const pt = {
   m_buy: 'Contrate {n} celebridades', m_steal: 'Roube {n} celebridades', m_collect: 'Colete ${n}', m_defend: 'Pare {n} ladrões', m_lock: 'Tranque sua agência {n} vezes',
   m_flash: 'Atordoe {n} bots com o FLASH', m_rare: 'Contrate {n} celebridades FAMOSO ou melhor', m_floor: 'Visite um andar de cima {n} vezes', m_album: 'Encontre {n} celebridades novas do álbum',
   stTitle: '🔥 SEQUÊNCIA DIÁRIA', stDay: 'DIA {n}', stCeleb: 'Celebridade SUPERESTRELA!', stBack: 'Volte amanhã para o dia {n}!', stGot: '🔥 Prêmio do dia {n} resgatado!',
-  alTitle: '📖 ÁLBUM DE CELEBRIDADES', alFound: '{a} / {b} encontradas', alBonus: 'Bônus do álbum: +{x}% de renda (1% por celebridade)', alPageDone: '📖 Página {r} completa! +${x}',
+  alTitle: '📖 ÁLBUM DE CELEBRIDADES', alFound: '{a} / {b} encontradas', alBonus: 'Complete uma página para ganhar dinheiro e 20 gemas estelares', alPageDone: '📖 Página {r} completa! +${x}',
   fuTitle: '🧪 LAB. DE FUSÃO', fuDesc: 'Funda 3 celebridades específicas numa EXCLUSIVA única. As 3 são gastas, então proteja-as dos ladrões!',
   fuGo: '🧪 FUNDIR', fuNeedLab: 'Ande até o Lab. de Fusão ao lado da sua agência para fundir.', fuFee: 'Taxa', fuMissing: 'FALTAM', fuReady: 'PRONTO',
   paTitle: '⏸ PAUSADO', resume: '▶ CONTINUAR', sound: 'Som', off: 'OFF', language: 'Idioma', controls: 'Controles',
@@ -174,7 +174,7 @@ const hi = {
   m_buy: '{n} सेलेब्स साइन करो', m_steal: '{n} सेलेब्स चुराओ', m_collect: '${n} इकट्ठा करो', m_defend: '{n} चोरों को रोको', m_lock: 'एजेंसी पर {n} बार ताला लगाओ',
   m_flash: 'फ़्लैश से {n} बॉट्स को बेहोश करो', m_rare: '{n} फ़ेमस या बेहतर सेलेब साइन करो', m_floor: 'ऊपर की मंज़िल पर {n} बार जाओ', m_album: 'एल्बम के {n} नए सेलेब्स खोजो',
   stTitle: '🔥 रोज़ की स्ट्रीक', stDay: 'दिन {n}', stCeleb: 'सुपरस्टार सेलेब!', stBack: 'दिन {n} के लिए कल वापस आना!', stGot: '🔥 दिन {n} का इनाम मिल गया!',
-  alTitle: '📖 सेलेब एल्बम', alFound: '{a} / {b} मिले', alBonus: 'एल्बम बोनस: +{x}% कमाई (हर सेलेब पर 1%)', alPageDone: '📖 {r} पेज पूरा! +${x}',
+  alTitle: '📖 सेलेब एल्बम', alFound: '{a} / {b} मिले', alBonus: 'एक पेज पूरा करो और पैसे के साथ 20 स्टार जेम्स पाओ', alPageDone: '📖 {r} पेज पूरा! +${x}',
   fuTitle: '🧪 फ़्यूज़ लैब', fuDesc: '3 खास सेलेब्स को मिलाकर एक अनोखा एक्सक्लूसिव बनाओ। तीनों सेलेब्स खर्च हो जाते हैं, इसलिए पहले उन्हें चोरों से बचाओ!',
   fuGo: '🧪 फ़्यूज़', fuNeedLab: 'फ़्यूज़ करने के लिए अपनी एजेंसी के पास फ़्यूज़ लैब तक जाओ।', fuFee: 'फ़ीस', fuMissing: 'कमी है', fuReady: 'तैयार',
   paTitle: '⏸ रुका हुआ', resume: '▶ जारी रखें', sound: 'आवाज़', off: 'बंद', language: 'भाषा', controls: 'कंट्रोल',
@@ -219,7 +219,7 @@ const id = {
   m_buy: 'Rekrut {n} seleb', m_steal: 'Curi {n} seleb', m_collect: 'Kumpulkan ${n}', m_defend: 'Hentikan {n} pencuri', m_lock: 'Kunci agensimu {n} kali',
   m_flash: 'Buat {n} bot pingsan dengan FLASH', m_rare: 'Rekrut {n} seleb FAMOUS atau lebih', m_floor: 'Kunjungi lantai atas {n} kali', m_album: 'Temukan {n} seleb baru untuk album',
   stTitle: '🔥 BERUNTUN HARIAN', stDay: 'HARI {n}', stCeleb: 'Seleb SUPERSTAR!', stBack: 'Kembali besok untuk Hari {n}!', stGot: '🔥 Hadiah hari {n} diambil!',
-  alTitle: '📖 ALBUM SELEB', alFound: '{a} / {b} ditemukan', alBonus: 'Bonus album: +{x}% pendapatan (1% per seleb)', alPageDone: '📖 Halaman {r} lengkap! +${x}',
+  alTitle: '📖 ALBUM SELEB', alFound: '{a} / {b} ditemukan', alBonus: 'Selesaikan satu halaman untuk bonus uang dan 20 Permata Bintang', alPageDone: '📖 Halaman {r} lengkap! +${x}',
   fuTitle: '🧪 LAB FUSI', fuDesc: 'Gabungkan 3 seleb tertentu menjadi seleb EKSKLUSIF yang unik. Ketiga seleb akan terpakai, jadi lindungi dari pencuri dulu!',
   fuGo: '🧪 FUSI', fuNeedLab: 'Jalan ke Lab Fusi di sebelah agensimu untuk melakukan fusi.', fuFee: 'Biaya', fuMissing: 'KURANG', fuReady: 'SIAP',
   paTitle: '⏸ DIJEDA', resume: '▶ LANJUT', sound: 'Suara', off: 'OFF', language: 'Bahasa', controls: 'Kontrol',
@@ -347,7 +347,7 @@ Object.assign(en, { howTo: '❓ HOW TO PLAY', htNext: 'NEXT ▶', htBack: '◀',
   ht3t: 'Steal from rivals', ht3: 'Sneak into a bot agency, stand next to a podium and tap STEAL. Carry the celeb into your agency before the owner catches you.',
   ht4t: 'Defend your agency', ht4: 'Bots steal too! Step on your LOCK pad to put a laser across your door. Use 📸 FLASH to stun a thief and your celeb comes back.',
   ht5t: 'Grow bigger', ht5: 'Buy UPGRADES for speed and podiums. REBIRTH for permanent income boosts and new floors, reached by stairs or the elevator.',
-  ht6t: 'Collect and fuse', ht6: 'Fill your ALBUM with all 166 celebs. Bring 3 specific celebs to the Fuse Lab to create a one-of-a-kind EXCLUSIVE.',
+  ht6t: 'Collect and fuse', ht6: 'Fill your ALBUM with all 210 celebs. Bring 3 specific celebs to the Fuse Lab to create a one-of-a-kind EXCLUSIVE.',
   ht7t: 'Come back daily', ht7: 'Claim your daily streak, finish 3 daily missions, and catch Star Storms, Golden Hours and the weekly Admin Abuse.',
   ht8t: 'Controls' });
 Object.assign(es, { howTo: '❓ CÓMO JUGAR', htNext: 'SIGUIENTE ▶', htBack: '◀', htSkip: 'Saltar', htGo: '¡A JUGAR!', htStep: 'PASO {n} DE {m}',
@@ -356,7 +356,7 @@ Object.assign(es, { howTo: '❓ CÓMO JUGAR', htNext: 'SIGUIENTE ▶', htBack: '
   ht3t: 'Roba a los rivales', ht3: 'Entra en una agencia bot, ponte junto a un podio y toca ROBAR. Lleva al famoso a tu agencia antes de que el dueño te atrape.',
   ht4t: 'Defiende tu agencia', ht4: '¡Los bots también roban! Pisa tu placa de CIERRE para poner un láser en la puerta. Usa el 📸 FLASH para aturdir al ladrón y recuperar a tu famoso.',
   ht5t: 'Crece', ht5: 'Compra MEJORAS de velocidad y podios. RENACE para ganar más dinero para siempre y nuevos pisos, con escaleras o ascensor.',
-  ht6t: 'Colecciona y fusiona', ht6: 'Completa tu ÁLBUM con los 166 famosos. Lleva 3 famosos concretos al Lab. de Fusión para crear un EXCLUSIVO único.',
+  ht6t: 'Colecciona y fusiona', ht6: 'Completa tu ÁLBUM con los 210 famosos. Lleva 3 famosos concretos al Lab. de Fusión para crear un EXCLUSIVO único.',
   ht7t: 'Vuelve cada día', ht7: 'Reclama tu racha diaria, completa 3 misiones diarias y aprovecha las Tormentas Estelares, las Horas Doradas y el Admin Abuse semanal.',
   ht8t: 'Controles' });
 Object.assign(pt, { howTo: '❓ COMO JOGAR', htNext: 'PRÓXIMO ▶', htBack: '◀', htSkip: 'Pular', htGo: 'BORA JOGAR!', htStep: 'PASSO {n} DE {m}',
@@ -365,7 +365,7 @@ Object.assign(pt, { howTo: '❓ COMO JOGAR', htNext: 'PRÓXIMO ▶', htBack: '�
   ht3t: 'Roube dos rivais', ht3: 'Entre numa agência bot, fique perto de um pódio e toque em ROUBAR. Leve a celebridade para sua agência antes que o dono te pegue.',
   ht4t: 'Defenda sua agência', ht4: 'Os bots também roubam! Pise na placa de TRANCA para colocar um laser na porta. Use o 📸 FLASH para atordoar o ladrão e sua celebridade volta.',
   ht5t: 'Cresça', ht5: 'Compre MELHORIAS de velocidade e pódios. RENASÇA para ganhar mais renda para sempre e novos andares, com escada ou elevador.',
-  ht6t: 'Colecione e funda', ht6: 'Complete seu ÁLBUM com as 166 celebridades. Leve 3 celebridades específicas ao Lab. de Fusão para criar uma EXCLUSIVA única.',
+  ht6t: 'Colecione e funda', ht6: 'Complete seu ÁLBUM com as 210 celebridades. Leve 3 celebridades específicas ao Lab. de Fusão para criar uma EXCLUSIVA única.',
   ht7t: 'Volte todo dia', ht7: 'Resgate sua sequência diária, complete 3 missões diárias e aproveite as Tempestades Estelares, as Horas Douradas e o Admin Abuse semanal.',
   ht8t: 'Controles' });
 Object.assign(hi, { howTo: '❓ कैसे खेलें', htNext: 'आगे ▶', htBack: '◀', htSkip: 'छोड़ें', htGo: 'चलो खेलें!', htStep: 'चरण {n} / {m}',
@@ -374,7 +374,7 @@ Object.assign(hi, { howTo: '❓ कैसे खेलें', htNext: 'आग�
   ht3t: 'विरोधियों से चुराओ', ht3: 'किसी बॉट एजेंसी में घुसो, पोडियम के पास खड़े होकर चुराओ दबाओ। मालिक के पकड़ने से पहले सेलेब को अपनी एजेंसी में ले आओ।',
   ht4t: 'अपनी एजेंसी बचाओ', ht4: 'बॉट भी चोरी करते हैं! दरवाज़े पर लेज़र लगाने के लिए ताला पैड पर खड़े हो जाओ। चोर को रोकने के लिए 📸 फ़्लैश करो, तुम्हारा सेलेब वापस आ जाएगा।',
   ht5t: 'बड़े बनो', ht5: 'रफ़्तार और पोडियम के लिए अपग्रेड खरीदो। रीबर्थ करो और हमेशा के लिए ज़्यादा कमाई और नई मंज़िलें पाओ, जहाँ सीढ़ियों या लिफ़्ट से जा सकते हो।',
-  ht6t: 'इकट्ठा करो और फ़्यूज़ करो', ht6: 'अपने एल्बम में सभी 166 सेलेब्स भरो। 3 खास सेलेब्स को फ़्यूज़ लैब में लाकर एक अनोखा एक्सक्लूसिव बनाओ।',
+  ht6t: 'इकट्ठा करो और फ़्यूज़ करो', ht6: 'अपने एल्बम में सभी 210 सेलेब्स भरो। 3 खास सेलेब्स को फ़्यूज़ लैब में लाकर एक अनोखा एक्सक्लूसिव बनाओ।',
   ht7t: 'रोज़ वापस आओ', ht7: 'रोज़ की स्ट्रीक लो, 3 रोज़ के मिशन पूरे करो, और स्टार तूफ़ान, गोल्डन आवर और साप्ताहिक एडमिन एब्यूज़ का फ़ायदा उठाओ।',
   ht8t: 'कंट्रोल' });
 Object.assign(id, { howTo: '❓ CARA BERMAIN', htNext: 'LANJUT ▶', htBack: '◀', htSkip: 'Lewati', htGo: 'AYO MAIN!', htStep: 'LANGKAH {n} DARI {m}',
@@ -383,7 +383,7 @@ Object.assign(id, { howTo: '❓ CARA BERMAIN', htNext: 'LANJUT ▶', htBack: '�
   ht3t: 'Curi dari saingan', ht3: 'Menyelinap ke agensi bot, berdiri di dekat podium dan ketuk CURI. Bawa seleb ke agensimu sebelum pemiliknya menangkapmu.',
   ht4t: 'Lindungi agensimu', ht4: 'Bot juga mencuri! Injak pad KUNCI untuk memasang laser di pintumu. Pakai 📸 FLASH untuk membuat pencuri pingsan dan selebmu kembali.',
   ht5t: 'Jadi lebih besar', ht5: 'Beli UPGRADE untuk kecepatan dan podium. Lakukan REBIRTH untuk pendapatan permanen dan lantai baru, lewat tangga atau lift.',
-  ht6t: 'Koleksi dan fusi', ht6: 'Lengkapi ALBUM dengan 166 seleb. Bawa 3 seleb tertentu ke Lab Fusi untuk membuat seleb EKSKLUSIF yang unik.',
+  ht6t: 'Koleksi dan fusi', ht6: 'Lengkapi ALBUM dengan 210 seleb. Bawa 3 seleb tertentu ke Lab Fusi untuk membuat seleb EKSKLUSIF yang unik.',
   ht7t: 'Kembali setiap hari', ht7: 'Ambil hadiah beruntun harian, selesaikan 3 misi harian, dan ikuti Badai Bintang, Jam Emas, serta Admin Abuse mingguan.',
   ht8t: 'Kontrol' });
 
@@ -432,11 +432,11 @@ Object.assign(id, { mShop: 'TOKO', ssTitle: '💎 TOKO BINTANG', ssGems: 'Permat
   it_luck: 'Jimat Keberuntungan', itd_luck: '30 menit hoki ganda untuk seleb langka dan mutasi (bisa ditumpuk)' });
 
 
-Object.assign(en, { saveFail: "Your saved game couldn't be loaded, so progress in this session can't be saved. Reload the game to try again.", idleShield: '🛡️ Idle shield on: bots won\'t steal your All-Time GOATs while you\'re away.', music: 'Music', effects: 'Sound effects' });
-Object.assign(es, { saveFail: 'No se pudo cargar tu partida guardada, así que el progreso de esta sesión no se puede guardar. Vuelve a cargar el juego para intentarlo de nuevo.', idleShield: '🛡️ Escudo de inactividad: los bots no robarán a tus GOAT de la historia mientras no estés.', music: 'Música', effects: 'Efectos de sonido' });
-Object.assign(pt, { saveFail: 'Não foi possível carregar seu jogo salvo, então o progresso desta sessão não pode ser salvo. Recarregue o jogo para tentar de novo.', idleShield: '🛡️ Escudo de inatividade: os bots não vão roubar seus GOATs de todos os tempos enquanto você estiver fora.', music: 'Música', effects: 'Efeitos sonoros' });
-Object.assign(hi, { saveFail: 'तुम्हारा सेव किया गेम लोड नहीं हो सका, इसलिए इस सेशन की प्रगति सेव नहीं होगी। फिर से कोशिश करने के लिए गेम रीलोड करो।', idleShield: '🛡️ इनएक्टिव शील्ड चालू: तुम्हारे दूर रहने पर बॉट तुम्हारे ऑल-टाइम GOAT नहीं चुराएँगे।', music: 'संगीत', effects: 'साउंड इफ़ेक्ट' });
-Object.assign(id, { saveFail: 'Game tersimpanmu tidak bisa dimuat, jadi progres sesi ini tidak bisa disimpan. Muat ulang game untuk mencoba lagi.', idleShield: '🛡️ Perisai diam aktif: bot tidak akan mencuri GOAT sepanjang masamu saat kamu pergi.', music: 'Musik', effects: 'Efek suara' });
+Object.assign(en, { saveFail: "Your saved game couldn't be loaded, so progress in this session can't be saved. Reload the game to try again.", idleShield: '🛡️ Idle shield on: bots won\'t steal your All-Time GOATs, Exclusives or Limiteds while you\'re away.', music: 'Music', effects: 'Sound effects' });
+Object.assign(es, { saveFail: 'No se pudo cargar tu partida guardada, así que el progreso de esta sesión no se puede guardar. Vuelve a cargar el juego para intentarlo de nuevo.', idleShield: '🛡️ Escudo de inactividad: los bots no robarán a tus GOAT, Exclusivos ni Limitados mientras no estés.', music: 'Música', effects: 'Efectos de sonido' });
+Object.assign(pt, { saveFail: 'Não foi possível carregar seu jogo salvo, então o progresso desta sessão não pode ser salvo. Recarregue o jogo para tentar de novo.', idleShield: '🛡️ Escudo de inatividade: os bots não vão roubar seus GOATs, Exclusivos nem Limitados enquanto você estiver fora.', music: 'Música', effects: 'Efeitos sonoros' });
+Object.assign(hi, { saveFail: 'तुम्हारा सेव किया गेम लोड नहीं हो सका, इसलिए इस सेशन की प्रगति सेव नहीं होगी। फिर से कोशिश करने के लिए गेम रीलोड करो।', idleShield: '🛡️ इनएक्टिव शील्ड चालू: तुम्हारे दूर रहने पर बॉट तुम्हारे ऑल-टाइम GOAT, एक्सक्लूसिव और लिमिटेड सेलेब नहीं चुराएँगे।', music: 'संगीत', effects: 'साउंड इफ़ेक्ट' });
+Object.assign(id, { saveFail: 'Game tersimpanmu tidak bisa dimuat, jadi progres sesi ini tidak bisa disimpan. Muat ulang game untuk mencoba lagi.', idleShield: '🛡️ Perisai diam aktif: bot tidak akan mencuri GOAT, Eksklusif, atau Terbatas milikmu saat kamu pergi.', music: 'Musik', effects: 'Efek suara' });
 
 const TABLES = { en, es, pt, hi, id };
 let cur = en, curCode = 'en';
