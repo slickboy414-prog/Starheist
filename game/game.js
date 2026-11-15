@@ -15,9 +15,17 @@ const SAVE_KEY = 'starheist_save_v1';
 const SDK = {
   firstFrame() { try { IN_YT && YT.game.firstFrameReady(); } catch (e) {} },
   ready() { try { IN_YT && YT.game.gameReady(); } catch (e) {} },
+  // Returns { ok, data }. Inside YouTube, saveData may only follow a successful loadData,
+  // so a failed load is retried, and ok:false tells the game to stop saving.
   async load() {
-    if (IN_YT) { try { return (await YT.game.loadData()) || ''; } catch (e) { return ''; } }
-    try { return localStorage.getItem(SAVE_KEY) || ''; } catch (e) { return ''; }
+    if (IN_YT) {
+      for (let i = 0; i < 3; i++) {
+        try { return { ok: true, data: (await YT.game.loadData()) || '' }; }
+        catch (e) { if (i < 2) await new Promise((r) => setTimeout(r, 300 * (i + 1))); }
+      }
+      return { ok: false, data: '' };
+    }
+    try { return { ok: true, data: localStorage.getItem(SAVE_KEY) || '' }; } catch (e) { return { ok: true, data: '' }; }
   },
   async save(str) {
     if (IN_YT) { try { await YT.game.saveData(str); } catch (e) {} return; }
@@ -28,7 +36,8 @@ const SDK = {
   onPause(cb) { try { IN_YT && YT.system.onPause(cb); } catch (e) {} },
   onResume(cb) { try { IN_YT && YT.system.onResume(cb); } catch (e) {} },
   async lang() { try { if (IN_YT) return await YT.system.getLanguage(); } catch (e) {} return navigator.language || 'en'; },
-  score(v) { try { IN_YT && YT.engagement.sendScore({ value: Math.max(0, Math.floor(v)) }); } catch (e) {} },
+  score(v) { const n = Number.isFinite(v) ? Math.floor(v) : (v > 0 ? Number.MAX_SAFE_INTEGER : 0);
+    try { IN_YT && YT.engagement.sendScore({ value: clamp(n, 0, Number.MAX_SAFE_INTEGER) }); } catch (e) {} },
   error() { try { IN_YT && YT.health.logError(); } catch (e) {} },
   warn() { try { IN_YT && YT.health.logWarning(); } catch (e) {} },
 };
@@ -926,6 +935,8 @@ const STAR_ITEMS = [
   { id: 'luck', icon: '🍀', cost: 40, kind: 'timed' },   // 30 minutes of double luck (stacks)
 ];
 const LUCK_SECONDS = 1800;
+const IDLE_SHIELD_S = 60;
+const shielded = () => game.playing && (game.idleT || 0) >= IDLE_SHIELD_S;
 const effLuck = () => game.luck * (game.luckT > 0 ? 2 : 1);
 function addGems(n, why) {
   if (!game.playing || !(n > 0)) return;
@@ -1120,7 +1131,9 @@ const Snd = {
     this.music = this.ctx.createGain(); this.music.gain.value = 0.17; this.music.connect(this.master);
     this.apply(); this.startMusic();
   },
-  apply() { if (this.master) this.master.gain.setTargetAtTime(this.ytOn && game.soundOn !== false ? 1 : 0, this.ctx.currentTime, 0.05); },
+  apply() { if (!this.master) return; const t = this.ctx.currentTime;
+    this.master.gain.setTargetAtTime(this.ytOn ? 1 : 0, t, 0.05);
+    this.music.gain.setTargetAtTime(game.musicOn !== false ? 0.17 : 0, t, 0.05); this.sfx.gain.setTargetAtTime(game.sfxOn !== false ? 0.55 : 0, t, 0.05); },
   tone(f, d, type = 'square', v = 0.3, f2 = null, delay = 0, dest = null, at = null) {
     const c = this.ctx; if (!c) return; const t = (at ?? c.currentTime) + delay;
     const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, t);
@@ -1399,7 +1412,7 @@ function bestCarpetFor(b) {
 function pickStealTarget(b) {
   let best = null, bs = 0;
   // when the player's cooldown is ready, bots mostly come for the player's best celeb (more often at higher rebirths)
-  if (game.playerStealCd <= 0 && game.tut >= 2 && !player.base.locked && Math.random() < Math.min(0.9, 0.6 + 0.06 * (b.rebirth || 0))) {
+  if (game.playerStealCd <= 0 && game.tut >= 2 && !player.base.locked && !shielded() && Math.random() < Math.min(0.9, 0.6 + 0.06 * (b.rebirth || 0))) {
     for (const c of celebs) {
       if (c.owner !== player || c.state !== 'placed' || bots.some((o) => o !== b && o.ai.celeb === c)) continue;
       const sc = c.income * rand(0.7, 1.3); if (sc > bs) { bs = sc; best = c; }
@@ -1407,7 +1420,7 @@ function pickStealTarget(b) {
     if (best) return best;
   }
   for (const c of celebs) {
-    if (c.state !== 'placed' || c.owner === b || c.slot.base.locked) continue;
+    if (c.state !== 'placed' || c.owner === b || c.slot.base.locked || (c.owner === player && shielded())) continue;
     if (c.owner === player && (game.playerStealCd > 0 || game.tut < 2)) continue;
     if (bots.some((o) => o !== b && o.ai.celeb === c)) continue;
     const s = c.income * (c.owner === player ? 1.8 * (1 + 0.2 * (b.rebirth || 0)) : 1) * rand(0.5, 1.5);
@@ -1469,7 +1482,7 @@ function updateBot(b, dt) {
     }
     case 'steal': {
       const s = ai.slot, c = s && s.celeb;
-      if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
+      if (!c || c !== ai.celeb || c.state !== 'placed' || c.owner === b || (c.owner === player && shielded()) || (s.base.locked && !inside(s.base, b.pos.x, b.pos.z))) { toHome(b); break; }
       if (!b.path.length) b.path = routeToSlot(b.pos.x, b.pos.z, s, b.floor || 0);
       if (c.owner === player && !ai.warned && hdist(b.pos, player.base.doorOut) < 15) {
         ai.warned = true; banner(tr('sneaking', { bot: b.name }), '#ff9d00'); Snd.play('warn');
@@ -1746,7 +1759,7 @@ function updateHUD(dt) {
   if (hudT <= 0) {
     hudT = 0.1;
     el.cash.textContent = '$' + fmt(player.cash);
-    el.cps.textContent = `+$${fmt(playerCps())}/s` + (game.incomeMult > 1 ? ` (x${game.incomeMult})` : '') + (game.luckT > 0 ? ` 🍀${fmtClock(game.luckT)}` : '');
+    el.cps.textContent = `+$${fmt(playerCps())}/s` + (game.incomeMult > 1 ? ` (x${game.incomeMult})` : '') + (game.luckT > 0 ? ` 🍀${fmtClock(game.luckT)}` : '') + (shielded() ? ' 🛡️' : '');
     document.getElementById('btnGems').querySelector('b').textContent = game.gems || 0;
     if (activeModal === 'starshop' && game.luckT > 0) { const em = document.querySelector('#starshopBody em'); if (em) em.textContent = `🍀 ${tr('ssActive')} ${fmtClock(game.luckT)}`; }
     // action button
@@ -1844,7 +1857,7 @@ function toggleShop(force) { if (force === false) { if (activeModal === 'shop') 
 //  Input
 // ---------------------------------------------------------------------
 addEventListener('keydown', (e) => {
-  keys[e.code] = true;
+  keys[e.code] = true; game.idleT = 0;
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   Snd.init();
   if (!game.playing) { if ((e.code === 'Enter' || e.code === 'Space') && game.loaded) startGame(); return; }
@@ -1868,6 +1881,7 @@ const cvs = renderer.domElement;
 cvs.addEventListener('contextmenu', (e) => e.preventDefault());
 function becomeTouch(e) { if (e.pointerType === 'touch' && !isTouch) { isTouch = true; document.body.classList.add('touch'); computeUiScale(); } }
 addEventListener('pointerdown', becomeTouch, true);
+addEventListener('pointerdown', () => { game.idleT = 0; }, true);
 cvs.addEventListener('pointerdown', (e) => {
   Snd.init();
   if (e.pointerType !== 'mouse' && e.clientX < innerWidth * 0.45 && joy.id === null) {
@@ -1910,6 +1924,9 @@ const WEEK = 7 * 864e5, ADMIN_LEN = 30 * 60e3;
 const ADMIN_ANCHOR = Date.UTC(2026, 0, 3, 18, 0, 0); // a Saturday, 18:00 UTC
 function adminInfo(now = Date.now()) {
   if (game.adminForceUntil > now) return { active: true, left: (game.adminForceUntil - now) / 1000 };
+  // Clock went backwards (more than 10 min behind the latest time this save has seen): no event until
+  // real time passes that point again. This stops "jump forward, play the event, jump back" from repeating.
+  if (game.hiT && now < game.hiT - 6e5) { const s = ((game.hiT - ADMIN_ANCHOR) % WEEK + WEEK) % WEEK; return { active: false, next: game.hiT + (WEEK - s) }; }
   const since = ((now - ADMIN_ANCHOR) % WEEK + WEEK) % WEEK;
   if (since < ADMIN_LEN) return { active: true, left: (ADMIN_LEN - since) / 1000 };
   return { active: false, next: now + (WEEK - since) };
@@ -1951,13 +1968,14 @@ function serialize() {
     const slot = c.state === 'carried' ? c.homeSlot : c.slot;
     list.push({ d: c.def.id, m: c.mut.id, s: slot ? slot.idx : 0, st: Math.floor(c.stored) });
   }
-  return JSON.stringify({ v: 1, t: Date.now(), cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, so: game.soundOn, lang: game.lang, hw: game.seenHowTo ? 1 : 0, br: bots.map((b) => b.rebirth || 0), gm: game.gems || 0, ow: game.owned, lk: Math.floor(game.luckT || 0), gw: game.gemWeek ?? null, celebs: list });
+  game.hiT = Math.max(game.hiT || 0, Date.now());
+  return JSON.stringify({ v: 1, t: Date.now(), hi: game.hiT, cash: Math.floor(player.cash), up: game.up, rb: game.rebirth, pr: game.prestige, tut: game.tut, stats: game.stats, al: game.album, ad: game.albumDone, st: game.streak, mi: game.missions, mo: game.musicOn !== false ? 1 : 0, fx: game.sfxOn !== false ? 1 : 0, lang: game.lang, hw: game.seenHowTo ? 1 : 0, br: bots.map((b) => b.rebirth || 0), gm: game.gems || 0, ow: game.owned, lk: Math.floor(game.luckT || 0), gw: game.gemWeek ?? null, celebs: list });
 }
 let saving = false;
 async function doSave() {
   if (!game.playing || saving) return;
   saving = true;
-  try { await SDK.save(serialize()); } finally { saving = false; }
+  try { const s = serialize(); if (!game.saveBlocked) await SDK.save(s); } finally { saving = false; }
   const s = Math.floor(game.stats.bestNet);
   if (s > game.stats.lastScore) { game.stats.lastScore = s; SDK.score(s); }
 }
@@ -1978,6 +1996,8 @@ function applySave(str) {
   game.gems = Math.floor(fin(d.gm, 1e9)); game.luckT = fin(d.lk, 86400 * 30); game.gemWeek = Number.isFinite(d.gw) ? d.gw : null;
   if (d.ow && typeof d.ow === 'object') for (const it of ['vip', 'guard', 'jet']) game.owned[it] = d.ow[it] ? 1 : 0;
   game.savedBotRb = Array.isArray(d.br) ? d.br.map((x) => clamp(x | 0, 0, REBIRTHS.length)) : null;
+  game.hiT = Math.max(fin(d.hi, 1e15), fin(d.t, 1e15));
+  game.musicOn = d.mo !== undefined ? !!d.mo : d.so !== false; game.sfxOn = d.fx !== undefined ? !!d.fx : d.so !== false;
   game.soundOn = d.so !== false; game.lang = typeof d.lang === 'string' ? d.lang : ''; game.seenHowTo = !!d.hw;
   updateNameTag(); applyPrestigeLook();
   Object.assign(game.stats, d.stats || {});
@@ -2074,7 +2094,7 @@ function updateIndicators() {
 // ---------------------------------------------------------------------
 function update(dt) {
   game.t += dt;
-  if (game.playing) game.time += dt;
+  if (game.playing) { game.time += dt; const was = shielded(); game.idleT = (game.idleT || 0) + dt; if (!was && shielded()) feed(tr('idleShield')); }
   game.stealCd -= dt; if (game.playing) game.playerStealCd -= dt;
   updateEvents(dt);
   game.spawnT -= dt;
@@ -2128,7 +2148,7 @@ function frame(now) {
 function pause() { if (game.paused) return; game.paused = true; for (const k in keys) keys[k] = false; joy.id = null; joy.x = joy.y = 0; try { Snd.ctx && Snd.ctx.suspend(); } catch (e) {} doSave(); }
 function resume() { if (!game.paused) return; game.paused = false; last = performance.now(); try { Snd.ctx && Snd.ctx.resume(); } catch (e) {} }
 SDK.onPause(pause); SDK.onResume(resume);
-document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else if (!IN_YT) resume(); });
+if (!IN_YT) document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); else resume(); });
 
 // =====================================================================
 //  v3 features: menus, daily streak & missions, celeb album, fuse lab,
@@ -2492,7 +2512,8 @@ function renderPause() {
   document.getElementById('pauseBody').innerHTML = `
     <button id="paResume" class="pa-big stroke">${tr('resume')}</button>
     <button id="paHow" class="pa-big stroke" style="background:linear-gradient(180deg,#ffd84d,#ff9d00)">${tr('howTo')}</button>
-    <div class="pa-row"><span>🔊 ${tr('sound')}</span><button id="paSound" class="${game.soundOn ? 'on' : ''}">${game.soundOn ? tr('on') : tr('off')}</button></div>
+    <div class="pa-row"><span>🎵 ${tr('music')}</span><button id="paMusic" class="${game.musicOn !== false ? 'on' : ''}">${game.musicOn !== false ? tr('on') : tr('off')}</button></div>
+    <div class="pa-row"><span>🔔 ${tr('effects')}</span><button id="paFx" class="${game.sfxOn !== false ? 'on' : ''}">${game.sfxOn !== false ? tr('on') : tr('off')}</button></div>
     <div class="pa-row col"><span>🌐 ${tr('language')}</span><div class="pa-langs">${langBtns}</div></div>
     <div class="pa-row col"><span>🎮 ${tr('controls')}</span><small>${isTouch ? tr('ctrlTouch') : tr('ctrlKeys')}</small></div>
     <p class="pa-fine">${tr('fine')}</p>`;
@@ -2501,7 +2522,7 @@ document.getElementById('pauseBody').addEventListener('pointerdown', (e) => {
   const t0 = e.target.closest('button'); if (!t0) return; e.preventDefault();
   if (t0.id === 'paResume') { closeModal(); return; }
   if (t0.id === 'paHow') { openHowTo(0); return; }
-  if (t0.id === 'paSound') { game.soundOn = !game.soundOn; Snd.apply(); queueSave(); renderPause(); return; }
+  if (t0.id === 'paMusic' || t0.id === 'paFx') { const k = t0.id === 'paMusic' ? 'musicOn' : 'sfxOn'; game[k] = game[k] === false; Snd.apply(); queueSave(); renderPause(); return; }
   if (t0.dataset.lang) { game.lang = t0.dataset.lang; setLang(game.lang); applyLangUI(); queueSave(); renderPause(); }
 });
 
@@ -2611,6 +2632,10 @@ function startGame() {
   const p = player.base.doorIn; player.floor = 0; player.pos.set(p.x, 0.12, p.z + 0.5); player.yaw = Math.PI; camYaw = 0;
   camTarget.set(player.pos.x, 1.6, player.pos.z);
   if (!game.seenHowTo) openHowTo(0);
+  if (game.saveBlocked) queuePopup((box) => {
+    box.innerHTML = `<h3 class="stroke">⚠️</h3><div>${tr('saveFail')}</div><button class="stroke" id="saveFailOk">${tr('close')}</button>`;
+    bindBtn(box.querySelector('#saveFailOk'), () => nextPopup());
+  });
   if (offlineEarned > 0) queuePopup((box) => {
     box.innerHTML = `<h3 class="stroke">${tr('welcomeBack')}</h3><div>${tr('earnedAway')}</div><p class="stroke">+$${fmt(offlineEarned)}</p><button class="stroke" id="claimBtn">${tr('collect')}</button>`;
     bindBtn(box.querySelector('#claimBtn'), () => { player.cash += offlineEarned; game.stats.earned += offlineEarned; offlineEarned = 0; Snd.play('win'); burst(player.pos.x, 2, player.pos.z, 60); queueSave(); nextPopup(); });
@@ -2635,7 +2660,8 @@ async function boot() {
   for (let x = CARPET_X0 + 2; x < CARPET_X1 - 4; x += rand(5, 7)) spawnCarpetCeleb(x, Math.random() < 0.92 ? null : 3);
   onResize();
   requestAnimationFrame(frame);
-  const data = await SDK.load();
+  const ld = await SDK.load(), data = ld.data;
+  game.saveBlocked = !ld.ok;
   offlineEarned = applySave(data);
   setLang(game.lang || await SDK.lang()); applyLangUI();
   if (!data) player.cash = 100;
@@ -2650,4 +2676,4 @@ async function boot() {
 }
 boot();
 // test hook (only with ?debug)
-if (location.search.includes('debug')) window.__sh = { buyStarItem, addGems, playerSpeed, playerIncomeMult, spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };
+if (location.search.includes('debug')) window.__sh = { doSave, shielded, buyStarItem, addGems, playerSpeed, playerIncomeMult, spawnCarpetCeleb, goatArrival, botRebirth, botCanRebirth, openHowTo, finishHowTo, computeUiScale, get uiScale() { return uiScale; }, RECIPES, LIMITED_IDS, EXCLUSIVE_IDS, recordAlbum, mission, ensureMissions, claimStreak, doFuse, doPrestige, startMove, endMove, openModal, closeModal, applyLangUI, setLang, tr, featuredId, limitedId, playerSlots, refreshFloors, freeSlot, updateFloorVisibility, toggleRebirth, doRebirth, rebirthStatus, CELEBS, scene, camera, renderer, glassMat2, personMat, forceAdmin(minutes = 30) { game.event = null; game.adminForceUntil = Date.now() + minutes * 60e3; updateEvents(0.016); }, game, get player() { return player; }, bots, celebs, bases, update, buy, grab, doFlash, lockBase, deliver, sell, startGame };

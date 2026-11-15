@@ -47,9 +47,12 @@ async function boot(b, opts = {}) {
 }
 
 (async () => {
-  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  // A fresh browser for every section, so one section's leftovers (e.g. the 2-hour run) can't time out the next.
+  let b = null;
+  const fresh = async () => { if (b) await b.close(); b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }); };
 
   // ---------------- 1. BOOT TESTS ----------------
+  await fresh();
   {
     const r = await boot(b);
     const ui = r.loaded && await r.p.evaluate(() => ({ btn: !document.getElementById('playBtn').disabled, celebs: window.__sh.celebs.length, bots: window.__sh.bots.length }));
@@ -98,13 +101,14 @@ async function boot(b, opts = {}) {
   }
 
   // ---------------- 2. YOUTUBE PLAYABLES SDK (mocked) ----------------
+  await fresh();
   for (const mode of ['normal', 'loadData fails', 'loadData hangs 3s']) {
     const init = { fn: (mode) => {
-      const log = (window.__yt = { calls: [], saves: [], scores: [] });
+      const log = (window.__yt = { calls: [], saves: [], rejected: 0, scores: [], loadOk: false });
       window.ytgame = { IN_PLAYABLES_ENV: true,
         game: { firstFrameReady() { log.calls.push('firstFrameReady'); }, gameReady() { log.calls.push('gameReady'); },
-          loadData() { log.calls.push('loadData'); if (mode === 'loadData fails') return Promise.reject(new Error('net')); if (mode === 'loadData hangs 3s') return new Promise((r) => setTimeout(() => r(''), 3000)); return Promise.resolve(''); },
-          saveData(s) { log.saves.push(s); return Promise.resolve(); } },
+          loadData() { log.calls.push('loadData'); if (mode === 'loadData fails') return Promise.reject(new Error('net')); if (mode === 'loadData hangs 3s') return new Promise((r) => setTimeout(() => { log.loadOk = true; r(''); }, 3000)); log.loadOk = true; return Promise.resolve(''); },
+          saveData(s) { if (!log.loadOk) { log.rejected++; return Promise.reject(new Error('load first')); } log.saves.push(s); return Promise.resolve(); } },
         system: { isAudioEnabled() { return false; }, onAudioEnabledChange(cb) { log.audioCb = cb; }, onPause(cb) { log.pause = cb; }, onResume(cb) { log.resume = cb; }, getLanguage() { return Promise.resolve('es-ES'); } },
         engagement: { sendScore(o) { log.scores.push(o); return Promise.resolve(); } },
         health: { logError() { log.calls.push('logError'); }, logWarning() { log.calls.push('logWarning'); } } };
@@ -120,20 +124,23 @@ async function boot(b, opts = {}) {
       S.player.cash = 123456.7; await new Promise((r) => setTimeout(r, 3500));
       const last = y.saves[y.saves.length - 1] || '';
       let parsed = null; try { parsed = JSON.parse(last); } catch (e) {}
-      return { calls: y.calls, frozen, resumed, saves: y.saves.length, saveBytes: last.length, saveOk: !!parsed && parsed.v === 1, scores: y.scores.map((s) => s.value), lang: document.documentElement.lang };
+      return { calls: y.calls, frozen, resumed, rejected: y.rejected, blocked: !!S.game.saveBlocked, saves: y.saves.length, saveBytes: last.length, saveOk: !!parsed && parsed.v === 1, scores: y.scores.map((s) => s.value), lang: document.documentElement.lang };
     });
     const order = yt.calls.indexOf('firstFrameReady') > -1 && yt.calls.indexOf('gameReady') > yt.calls.indexOf('firstFrameReady');
-    const scoresOk = yt.scores.every((v) => Number.isInteger(v) && v >= 0);
-    ok('YouTube SDK: ' + mode, order && yt.frozen && yt.resumed && yt.saves > 0 && yt.saveOk && yt.saveBytes < 3 * 1024 * 1024 && scoresOk && !r.errs.length,
-      `firstFrame→gameReady=${order}, pause freezes=${yt.frozen}, resume=${yt.resumed}, saves=${yt.saves} (${yt.saveBytes} bytes), scores=${JSON.stringify(yt.scores)}, lang=${yt.lang}${r.errs.length ? ' ERR ' + r.errs[0] : ''}`);
+    const scoresOk = yt.scores.every((v) => Number.isSafeInteger(v) && v >= 0);
+    // When loading fails, the right outcome is no save attempts at all (and the game says so), not accepted saves.
+    const saveRule = mode === 'loadData fails' ? (yt.saves === 0 && yt.rejected === 0 && yt.blocked) : (yt.saves > 0 && yt.rejected === 0 && yt.saveOk && yt.saveBytes < 3 * 1024 * 1024);
+    ok('YouTube SDK: ' + mode, order && yt.frozen && yt.resumed && saveRule && scoresOk && !r.errs.length,
+      `firstFrame→gameReady=${order}, pause freezes=${yt.frozen}, resume=${yt.resumed}, saves=${yt.saves} (${yt.saveBytes} bytes), rejected=${yt.rejected}, save blocked=${yt.blocked}, scores=${JSON.stringify(yt.scores)}, lang=${yt.lang}${r.errs.length ? ' ERR ' + r.errs[0] : ''}`);
     await r.ctx.close();
   }
 
   // ---------------- 3. CHAOS FUZZ ----------------
+  await fresh();
   {
     const r = await boot(b);
     await r.p.evaluate(() => { const S = window.__sh; S.startGame(); });
-    const memBefore = await r.p.evaluate(() => ({ ...window.__sh.renderer.info.memory, children: window.__sh.scene.children.length }));
+    const memBefore = await r.p.evaluate(() => ({ ...window.__sh.renderer.info.memory, children: window.__sh.scene.children.length, celebs: window.__sh.celebs.length }));
     const sizes = [[390, 664], [1280, 720], [750, 342], [810, 1080], [320, 568], [1920, 1080]];
     let invFails = [], steps = 0;
     for (let round = 0; round < 12; round++) {
@@ -172,31 +179,35 @@ async function boot(b, opts = {}) {
     ok('Chaos fuzz (18,000 random actions, 6 screen sizes, all menus, languages, rebirths, events)', invFails.length === 0 && r.errs.length === 0,
       `${invFails.length} integrity problems${invFails.length ? ': ' + invFails.slice(0, 3).join(' | ') : ''}${r.errs.length ? ' ERRORS: ' + [...new Set(r.errs)].slice(0, 3).join(' | ') : ''}`);
     const growth = memAfter.geometries - memBefore.geometries, texGrowth = memAfter.textures - memBefore.textures;
-    ok('Memory leak check after fuzz', memAfter.children - memBefore.children < 150 && texGrowth < 250 && memAfter.celebs < 260,
-      `scene objects ${memBefore.children}→${memAfter.children}, geometries ${memBefore.geometries}→${memAfter.geometries}, textures ${memBefore.textures}→${memAfter.textures}, celebs alive ${memAfter.celebs}`);
+    // Each live celeb owns about 6 merged geometries; anything beyond that budget is a leak.
+    const geoBudget = 150 + 8 * Math.max(0, memAfter.celebs - memBefore.celebs);
+    ok('Memory leak check after fuzz', memAfter.children - memBefore.children < 150 && texGrowth < 250 && memAfter.celebs < 260 && growth <= geoBudget,
+      `scene objects ${memBefore.children}→${memAfter.children}, geometries ${memBefore.geometries}→${memAfter.geometries} (growth ${growth}, budget ${geoBudget}), textures ${memBefore.textures}→${memAfter.textures}, celebs alive ${memAfter.celebs}`);
     await r.ctx.close();
   }
 
   // ---------------- 4. LONG RUN + SPEED ----------------
+  await fresh();
   {
     const r = await boot(b);
     const out = await r.p.evaluate(() => {
       const S = window.__sh, P = S.player; S.startGame(); S.finishHowTo(); S.game.tut = 4; S.game.rebirth = 9; S.refreshFloors(); P.cash = 1e9;
       for (let i = 0; i < 40; i++) { const c = S.celebs.find((x) => x.state === 'carpet'); if (!c) { S.update(0.5); continue; } P.pos.set(c.pos.x, 0, c.pos.z); S.buy(P, c); }
-      P.pos.set(-70, 0, -50);
+      P.pos.set(-70, 0, -50); const ownedStart = S.celebs.filter((c) => c.owner === P).length;
       const bad = []; const t0 = performance.now(); const steps = 2 * 3600 * 20;
       for (let i = 0; i < steps; i++) { S.update(0.05); if (i % 2000 === 0) { const e = window.__inv(); if (e.length) bad.push(e[0]); } }
       const total = performance.now() - t0;
       const t1 = performance.now(); for (let i = 0; i < 300; i++) { S.update(1 / 60); S.renderer.render(S.scene, S.camera); } const frame = (performance.now() - t1) / 300;
-      return { bad, perStep: total / steps, frame, celebs: S.celebs.length, owned: S.celebs.filter((c) => c.owner === P).length, botRb: S.bots.map((b) => b.rebirth || 0), cash: P.cash };
+      return { bad, perStep: total / steps, frame, celebs: S.celebs.length, ownedStart, owned: S.celebs.filter((c) => c.owner === P).length, botRb: S.bots.map((b) => b.rebirth || 0), cash: P.cash };
     });
-    ok('Long run: 2 simulated hours, player with 40 celebs on 5 floors', out.bad.length === 0 && Number.isFinite(out.cash) && !r.errs.length,
-      `bots rebirths ${out.botRb.join(',')}, celebs alive ${out.celebs}, player still owns ${out.owned}${out.bad.length ? ' INVARIANT: ' + out.bad[0] : ''}`);
+    ok('Long run: 2 simulated hours, idle player keeps every celeb', out.bad.length === 0 && Number.isFinite(out.cash) && out.owned === out.ownedStart && !r.errs.length,
+      `bots rebirths ${out.botRb.join(',')}, celebs alive ${out.celebs}, player owns ${out.owned} of ${out.ownedStart}${out.bad.length ? ' INVARIANT: ' + out.bad[0] : ''}`);
     ok('Simulation speed', out.perStep < 4, `${out.perStep.toFixed(2)} ms per game-logic step; ${out.frame.toFixed(1)} ms per full frame in a software GPU (a real phone GPU is much faster)`);
     await r.ctx.close();
   }
 
   // ---------------- 5. RAPID LIFECYCLE ABUSE ----------------
+  await fresh();
   {
     const r = await boot(b, { device: devices['iPhone 13'] });
     const out = await r.p.evaluate(async () => {
@@ -211,7 +222,7 @@ async function boot(b, opts = {}) {
     await r.ctx.close();
   }
 
-  await b.close();
+  if (b) await b.close();
   console.log(results.join('\n'));
   console.log(`\n${results.length - failures}/${results.length} passed`);
 })();
