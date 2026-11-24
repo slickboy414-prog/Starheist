@@ -12,6 +12,10 @@ import { t as tr, setLang, getLang, LANGS } from './i18n.js';
 const YT = (typeof window.ytgame !== 'undefined') ? window.ytgame : null;
 const IN_YT = !!(YT && YT.IN_PLAYABLES_ENV);
 const SAVE_KEY = 'starheist_save_v1';
+// m10: a YouTube call that never answers must not hang the game. Each loadData attempt gets LOAD_TIMEOUT_MS
+// and counts as failed when it runs out; 3 attempts + backoff = about 11.4 s, well under the 20 s title-screen fallback.
+const LOAD_TIMEOUT_MS = 3500, LANG_TIMEOUT_MS = 3000;
+const withTimeout = (p, ms) => Promise.race([Promise.resolve(p), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const SDK = {
   firstFrame() { try { IN_YT && YT.game.firstFrameReady(); } catch (e) {} },
   ready() { try { IN_YT && YT.game.gameReady(); } catch (e) {} },
@@ -20,7 +24,7 @@ const SDK = {
   async load() {
     if (IN_YT) {
       for (let i = 0; i < 3; i++) {
-        try { return { ok: true, data: (await YT.game.loadData()) || '' }; }
+        try { return { ok: true, data: (await withTimeout(YT.game.loadData(), LOAD_TIMEOUT_MS)) || '' }; }
         catch (e) { if (i < 2) await new Promise((r) => setTimeout(r, 300 * (i + 1))); }
       }
       return { ok: false, data: '' };
@@ -35,7 +39,7 @@ const SDK = {
   onAudioChange(cb) { try { IN_YT && YT.system.onAudioEnabledChange(cb); } catch (e) {} },
   onPause(cb) { try { IN_YT && YT.system.onPause(cb); } catch (e) {} },
   onResume(cb) { try { IN_YT && YT.system.onResume(cb); } catch (e) {} },
-  async lang() { try { if (IN_YT) return await YT.system.getLanguage(); } catch (e) {} return navigator.language || 'en'; },
+  async lang() { try { if (IN_YT) return await withTimeout(YT.system.getLanguage(), LANG_TIMEOUT_MS); } catch (e) {} return navigator.language || 'en'; },
   score(v) { const n = Number.isFinite(v) ? Math.floor(v) : (v > 0 ? Number.MAX_SAFE_INTEGER : 0);
     try { IN_YT && YT.engagement.sendScore({ value: clamp(n, 0, Number.MAX_SAFE_INTEGER) }); } catch (e) {} },
   error() { try { IN_YT && YT.health.logError(); } catch (e) {} },
@@ -2668,14 +2672,18 @@ async function boot() {
   for (let x = CARPET_X0 + 2; x < CARPET_X1 - 4; x += rand(5, 7)) spawnCarpetCeleb(x, Math.random() < 0.92 ? null : 3);
   onResize();
   requestAnimationFrame(frame);
+  const langP = SDK.lang(); // asked in parallel with the save, so its time limit doesn't add to the load's
   const ld = await SDK.load(), data = ld.data;
   game.saveBlocked = !ld.ok;
   offlineEarned = applySave(data);
-  setLang(game.lang || await SDK.lang()); applyLangUI();
+  setLang(game.lang || await langP); applyLangUI();
   if (!data) player.cash = 100;
   setupBots();
   game.loaded = true; window.__starLoaded = true;
   el.play.disabled = false;
+  if (window.__starFailShown) { // the title fallback fired before we finished: put the normal title back
+    window.__starFailShown = false; const f = document.getElementById('fine'); if (f) { f.style.color = ''; f.textContent = tr('fine'); }
+  }
   refreshTitleText();
   if (window.__starWantPlay) startGame(); // PLAY was tapped while the game was still loading
   // YouTube requires firstFrameReady before gameReady

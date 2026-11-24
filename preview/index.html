@@ -381,8 +381,9 @@
   var b = document.getElementById('playBtn');
   b.addEventListener('click', function () { if (!window.__starLoaded) window.__starWantPlay = true; });
   window.__starLoadFail = function () {
-    if (window.__starLoaded) return;
-    b.disabled = true; b.textContent = '⚠️ CAN\'T LOAD';
+    // only outside YouTube: inside YouTube the files are always there, and the game handles a slow save service itself (m10)
+    if (window.__starLoaded || window.ytgame) return;
+    window.__starFailShown = true; b.disabled = true; b.textContent = '⚠️ CAN\'T LOAD';
     var f = document.getElementById('fine');
     if (f) { f.style.color = '#ffd166'; f.textContent = 'This copy of the game cannot load its files. Open Star Heist from its game link instead.'; }
   };
