@@ -1,6 +1,7 @@
 // Star Heist destruction test suite
 // Run: (cd game && python3 -m http.server 8765) then: node tests/stress-test.js   (needs: npm i playwright)
 const { chromium, devices } = require('playwright');
+const { runFuzz, newSeed } = require('./chaos-fuzz');
 const URL = 'http://localhost:8765/?debug';
 const results = []; let failures = 0;
 const ok = (name, pass, info = '') => { results.push(`${pass ? 'PASS' : 'FAIL'}  ${name}${info ? '  — ' + info : ''}`); if (!pass) failures++; };
@@ -135,55 +136,23 @@ async function boot(b, opts = {}) {
     await r.ctx.close();
   }
 
-  // ---------------- 3. CHAOS FUZZ ----------------
+  // ---------------- 3. CHAOS FUZZ (seeded, m11) ----------------
+  // One seed drives every random choice in the page (see tests/chaos-fuzz.js). Default: a new random seed each run.
+  // Replay a run exactly with:  SH_SEED=<seed> node tests/stress-test.js
   await fresh();
   {
-    const r = await boot(b);
-    await r.p.evaluate(() => { const S = window.__sh; S.startGame(); });
-    const memBefore = await r.p.evaluate(() => ({ ...window.__sh.renderer.info.memory, children: window.__sh.scene.children.length, celebs: window.__sh.celebs.length }));
-    const sizes = [[390, 664], [1280, 720], [750, 342], [810, 1080], [320, 568], [1920, 1080]];
-    let invFails = [], steps = 0;
-    for (let round = 0; round < 12; round++) {
-      await r.p.setViewportSize({ width: sizes[round % sizes.length][0], height: sizes[round % sizes.length][1] });
-      const out = await r.p.evaluate((round) => {
-        const S = window.__sh, P = S.player, G = S.game, bad = [];
-        const KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyE', 'KeyF', 'KeyL', 'KeyQ', 'KeyM', 'KeyB', 'KeyR', 'KeyP', 'Escape', 'Space', 'Enter', 'ArrowUp'];
-        const key = (code, type) => window.dispatchEvent(new KeyboardEvent(type, { code, bubbles: true }));
-        const tap = (el) => el && el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }));
-        const rnd = (n) => Math.floor(Math.random() * n);
-        for (let i = 0; i < 1500; i++) {
-          const a = rnd(20);
-          if (a < 6) { const k = KEYS[rnd(KEYS.length)]; key(k, 'keydown'); if (Math.random() < 0.7) key(k, 'keyup'); }
-          else if (a < 9) { const btns = [...document.querySelectorAll('button')].filter((x) => x.offsetParent); tap(btns[rnd(btns.length)]); }
-          else if (a === 9) { const t = [S.celebs[rnd(S.celebs.length)], null][rnd(2)]; if (t) { P.floor = t.floor || 0; P.stair = null; P.pos.set(t.pos.x + 1, t.pos.y, t.pos.z); } }
-          else if (a === 10) { P.pos.set((Math.random() - 0.5) * 170, 0, (Math.random() - 0.5) * 130); P.floor = 0; P.stair = null; }
-          else if (a === 11) { P.cash = [0, 1e3, 1e7, 1e13, 1e300][rnd(5)]; }
-          else if (a === 12) { G.rebirth = rnd(11); S.refreshFloors(); }
-          else if (a === 13 && Math.random() < 0.1) S.forceAdmin(0.5);
-          else if (a === 14) { const ms = ['shop', 'rebirth', 'missions', 'album', 'fuse', 'pause', 'howto']; S.openModal(ms[rnd(ms.length)]); }
-          else if (a === 15) S.closeModal();
-          else if (a === 16 && S.bots.length) { const bt = S.bots[rnd(5)]; bt.cash = 1e9; if (S.botCanRebirth(bt)) S.botRebirth(bt); }
-          else if (a === 17) { const c = S.celebs.find((x) => x.owner === P && x.state === 'placed'); if (c) { S.startMove(c); S.endMove(S.playerSlots()[rnd(S.playerSlots().length)]); } }
-          else if (a === 18) { S.setLang(['en', 'es', 'pt', 'hi', 'id'][rnd(5)]); S.applyLangUI(); }
-          S.update([1 / 60, 1 / 30, 0.05, 0.05, 0][rnd(5)]);
-          if (i % 50 === 0) { const e = window.__inv(); if (e.length) bad.push(i + ': ' + e[0]); }
-        }
-        for (const k of KEYS) key(k, 'keyup');
-        S.closeModal();
-        return { bad: bad.slice(0, 3), celebs: S.celebs.length };
-      }, round);
-      steps += 1500; invFails.push(...out.bad);
-    }
-    await r.p.evaluate(() => { const S = window.__sh; for (let i = 0; i < 300; i++) S.update(1 / 30); S.renderer.render(S.scene, S.camera); });
-    const memAfter = await r.p.evaluate(() => ({ ...window.__sh.renderer.info.memory, children: window.__sh.scene.children.length, celebs: window.__sh.celebs.length }));
-    ok('Chaos fuzz (18,000 random actions, 6 screen sizes, all menus, languages, rebirths, events)', invFails.length === 0 && r.errs.length === 0,
-      `${invFails.length} integrity problems${invFails.length ? ': ' + invFails.slice(0, 3).join(' | ') : ''}${r.errs.length ? ' ERRORS: ' + [...new Set(r.errs)].slice(0, 3).join(' | ') : ''}`);
+    const seed = process.env.SH_SEED != null ? (+process.env.SH_SEED >>> 0) : newSeed();
+    console.log(`chaos fuzz seed: ${seed}   (replay: SH_SEED=${seed} node tests/stress-test.js)`);
+    const r = await runFuzz(b, seed);
+    const { invFails, memBefore, memAfter } = r;
+    ok(`Chaos fuzz, seed ${seed} (18,000 random actions, 6 screen sizes, all menus, languages, rebirths, events)`, invFails.length === 0 && r.errs.length === 0,
+      `${invFails.length} integrity problems${invFails.length ? ': ' + invFails.slice(0, 3).join(' | ') : ''}${r.errs.length ? ' ERRORS: ' + [...new Set(r.errs)].slice(0, 3).join(' | ') : ''}` +
+      (r.first ? `\n      first error at round ${r.first.round}, step ${r.first.step}; actions before it:\n        ` + r.first.actions.join('\n        ') : ''));
     const growth = memAfter.geometries - memBefore.geometries, texGrowth = memAfter.textures - memBefore.textures;
     // Each live celeb owns about 6 merged geometries; anything beyond that budget is a leak.
     const geoBudget = 150 + 8 * Math.max(0, memAfter.celebs - memBefore.celebs);
     ok('Memory leak check after fuzz', memAfter.children - memBefore.children < 150 && texGrowth < 250 && memAfter.celebs < 260 && growth <= geoBudget,
       `scene objects ${memBefore.children}→${memAfter.children}, geometries ${memBefore.geometries}→${memAfter.geometries} (growth ${growth}, budget ${geoBudget}), textures ${memBefore.textures}→${memAfter.textures}, celebs alive ${memAfter.celebs}`);
-    await r.ctx.close();
   }
 
   // ---------------- 4. LONG RUN + SPEED ----------------

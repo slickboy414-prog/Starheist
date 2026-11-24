@@ -1258,6 +1258,8 @@ function drawCelebLabel(c) {
 }
 function removeCeleb(c) {
   const i = celebs.indexOf(c); if (i >= 0) celebs.splice(i, 1);
+  c.removed = true; // m11: stale references (targets, AI plans) can see it is gone
+  for (const sl of [c.slot, c.homeSlot]) if (sl && sl.celeb === c) clearSlot(sl);
   scene.remove(c.p.root); disposeSprite(c.label);
   c.p.root.traverse((o) => { if (o.isMesh && o.userData.merged) o.geometry.dispose(); });
   if (c.p.aura) { const k = rainbowBasics.indexOf(c.p.aura.material); if (k >= 0) rainbowBasics.splice(k, 1); c.p.aura.material.dispose(); }
@@ -1299,7 +1301,7 @@ function clearSlot(slot) { slot.celeb = null; slot.ring.material.color.set(0x777
 //  Core actions: buy / grab / deliver / return / sell / lock / flash
 // ---------------------------------------------------------------------
 function buy(a, c) {
-  if (c.state !== 'carpet') return false;
+  if (!c || c.removed || c.state !== 'carpet') return false;
   const cost = price(c);
   if (a.cash < cost) { if (a.isPlayer) { Snd.play('error'); floatText(tr('needCash', { x: fmt(cost) }), c.pos.x, 3.6, c.pos.z, '#ff6b6b'); } return false; }
   let s = freeSlot(a);
@@ -1318,7 +1320,7 @@ function buy(a, c) {
   return true;
 }
 function grab(a, c) {
-  if (c.state !== 'placed' || c.owner === a) return false;
+  if (!c || c.removed || c.state !== 'placed' || c.owner === a) return false;
   c.state = 'carried'; c.carrier = a; c.homeOwner = c.owner; c.homeSlot = c.slot; a.carrying = c;
   c.p.root.scale.setScalar(c.baseScale * 0.8);
   Snd.play('steal');
@@ -1360,7 +1362,7 @@ function returnHome(c) {
   if (hdist(c.pos, player.pos) < 30) floatText(tr('returned'), c.pos.x, 3.6, c.pos.z, '#9be7ff');
 }
 function sell(c) {
-  if (!c || c.owner !== player || c.state !== 'placed') return;
+  if (!c || c.removed || c.owner !== player || c.state !== 'placed') return;
   const v = Math.floor(price(c) * 0.5 + c.stored);
   player.cash += v; game.stats.earned += c.stored;
   floatText(tr('sold', { x: fmt(v) }), c.pos.x, 3.6, c.pos.z, '#ffe14d'); burst(c.pos.x, 2, c.pos.z, 20, [0xffcc00]);
@@ -1624,9 +1626,15 @@ function updatePlayer(dt) {
     }
   }
 }
+// m11: target and sellTarget are cached by updatePlayer(), which runs BEFORE updateCelebs() and the bots in the
+// same update(). A celeb removed after that (walked off the carpet, swapped out or rebirthed away by a bot, fused,
+// rebirth reset) stayed in the cache, and buy()/grab()/sell() accepted it: buying one put a celeb that is no
+// longer in the game into a podium slot (the ghost). Every action now checks the celeb is still in the game.
+const alive = (c) => !!c && !c.removed && celebs.includes(c);
 function doAction() {
   if (!game.playing || game.shopOpen) return;
   const t = target;
+  if (t.c && !alive(t.c)) { target = { kind: null, c: null }; return; }
   if (t.kind === 'fuse') { openModal('fuse'); return; }
   if (t.kind === 'place' || t.kind === 'swap') { endMove(t.slot); return; }
   if (t.kind === 'cancelMove') { endMove(null); return; }
@@ -1643,8 +1651,8 @@ function doLockBtn() {
   if (!inside(b, player.pos.x, player.pos.z) || player.floor) { Snd.play('error'); floatText(tr('goHomeLock'), player.pos.x, player.pos.y + 3.4, player.pos.z, '#ff9ec4'); return; }
   if (!lockBase(b)) Snd.play('error');
 }
-function doSell() { if (sellTarget) sell(sellTarget); }
-function doMove() { if (player.moveCeleb) endMove(null); else if (sellTarget) startMove(sellTarget); }
+function doSell() { if (alive(sellTarget)) sell(sellTarget); }
+function doMove() { if (player.moveCeleb) endMove(null); else if (alive(sellTarget)) startMove(sellTarget); }
 
 // ---------------------------------------------------------------------
 //  Celeb update
@@ -2453,7 +2461,7 @@ function doPrestige() {
 
 // ---------- rearranging podiums ----------
 function startMove(c) {
-  if (!c || c.owner !== player || c.state !== 'placed' || player.carrying || player.moveCeleb) return false;
+  if (!c || c.removed || c.owner !== player || c.state !== 'placed' || player.carrying || player.moveCeleb) return false;
   player.moveCeleb = c; c.state = 'moving'; c.p.root.scale.setScalar(c.baseScale * 0.8);
   if (c.slot.label) c.slot.label.sprite.visible = false;
   Snd.play('pop'); return true;
